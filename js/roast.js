@@ -116,6 +116,8 @@
       lastStart: ms.reduce((b, m) => (b == null || nightOrder(m) > nightOrder(b) ? m : b), null),
       lhTotal: sum((m) => m.last_hits),
       sessions: sessions.length,
+      // durata media di una serata (dall'inizio della prima partita alla fine dell'ultima), in ore
+      nightHours: sessions.length ? sessions.reduce((t, ss) => t + (ss[ss.length - 1].start_time + ss[ss.length - 1].duration - ss[0].start_time), 0) / sessions.length / 3600 : 0,
       curve: byIdx.map(group),
       lateN: late.length, lateHours: late.reduce((t, m) => t + m.duration, 0) / 3600,
       mmrDelta: (ranked.filter((m) => m.win).length * 2 - ranked.length) * 25,
@@ -144,11 +146,11 @@
         label: String(clamp(30 + s.lateN * 3 + s.sessions * 4 + Math.max(0, sober - late) / 3)),
         text: pickFor(["本庭建议：开黑前先吹一下酒精测试仪。", "喝到第几局，他自己也数不清了。", "键盘上的威士忌，比他的眼位还多。"], ctx) };
     }
-    if (meter === "twoGames") {
-      const title = "说好两把·实际每晚";
-      if (!s.n) return { title, voto: 0, label: "0", cls: "g-mid", text: "本周真的一把没打。第一次说到做到。" };
-      return { title, voto: 0, cls: "g-mid", label: (s.n / Math.max(1, s.sessions)).toFixed(1),
-        text: pickFor(["“两把就走”的“两”，是个约数。", "他的“两把”，汇率约等于五把。", "走？走去哪？下一把已经在排队了。"], ctx) };
+    if (meter === "allNighter") {
+      const title = "通宵兑现率";
+      if (!s.n) return { title, voto: 0, label: "0%", cls: "g-bad", text: "本周喊了通宵，一把没打。兑现率：零。" };
+      return { title, voto: 0, cls: "g-bad", label: Math.min(99, Math.round((s.nightHours / 8) * 100)) + "%",
+        text: pickFor(["喊的是通宵，打的是夜宵时间。", "他的“通宵”和别人的“通宵”，不是同一个单位。", "通宵口号已喊完，人已下线。"], ctx) };
     }
     if (meter === "axes") {
       const title = "三板斧浓度";
@@ -373,17 +375,17 @@
         ["本周深夜修仙{late}局，修为已达【{xlevel}】。照这个速度，很快就升天了。", "修仙中，勿扰", "境界：{xlevel}"],
         ["凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。", "深夜修仙", "离升天不远了"]] },
 
-      // ----- 南极神 -----
-      { id: "s-late", hero: () => s.lastStart?.hero_id, when: () => T("twoAndGo") && s.lastStart && lateHour(s.lastStart) , weight: 90, icon: "🕛", title: "说好的早睡呢", v: [
-        ["本周最晚一局{lastTime}才开。说好两把就走，走着走着就到了第二天。", "就两把", "（{lastTime}开新局）"]] },
+      // ----- 蜗牛大神 -----
+      { id: "s-run", hero: () => 63, when: () => T("allNighter"), weight: 92, icon: "🏃", title: "通宵跑路王", v: [
+        ["每次喊“通宵”喊得最响的是他，两三把之后第一个跑的也是他。剩下四个人面面相觑：说好的通宵呢？", "今晚通宵！", "剩下四个人：？"]] },
+      { id: "s-snail", hero: () => 53, when: () => T("allNighter"), weight: 88, icon: "🐌", title: "蜗牛的速度", v: [
+        ["外号蜗牛大神。喊通宵的速度像火箭，下线的速度——也像火箭。只有“蜗牛”两个字跟他不沾边。", "喊通宵：火箭", "下线：也是火箭"]] },
       { id: "s-pool", hero: () => s.heroes[1]?.hero_id, when: () => T("allHeroes") && s.n >= 5 && s.distinctHeroes / s.n >= 0.5, weight: 84, icon: "🌊", title: "英雄池深不见底", v: [
         ["{n}场{distinct}个英雄。英雄池深到Yoki神的三板斧扔进去，都听不到回声。", "{n}场{distinct}个英雄", "三板斧：自愧不如"]] },
       { id: "s-loud", hero: () => 2, when: () => T("loud"), weight: 86, icon: "📢", title: "人形扩音器", v: [
         ["嗓门是全队最大的。对面没开麦，也知道他今晚要“干”。", "对面没开麦", "也听见他在喊干"]] },
       { id: "s-meta", when: () => T("tooGood"), weight: 80, icon: "🧑‍⚖️", title: "律师团加班", v: [
         ["本庭律师团加班三天，翻遍他的比赛，最后只能起诉他一条：说话不算数。", "起诉理由", "说话不算数"]] },
-      { id: "s-jin", hero: () => 74, when: () => T("jinMidKiller"), weight: 82, icon: "🥊", title: "金神克星", v: [
-        ["当年轻轻松松把金神的中路打爆。金神打不过，只好拉他进自己的车队——打不过就加入。", "打不过", "就拉他组排"]] },
 
       // ----- Yoki神 -----
       { id: "y-arcana", hero: () => DROW, when: () => T("drowArcana"), weight: 92, icon: "💎", title: "至宝改变人生", v: [
@@ -514,13 +516,15 @@
       reply: s.n ? `本周${s.n}场，纯辅助${s.pureSup}场。他的字典里，“辅助”这个词被至宝特效挡住了。` : "他的字典里，“辅助”这个词被至宝特效挡住了。" });
     if (t.has("threeAxes") && s.n) q.push({ quote: "我这三板斧够用了", stamp: "被ban警告", heroId: s.heroes[0]?.hero_id,
       reply: `够用？本周${s.n}场里三板斧砍了${s.top3}场。对面ban掉三个英雄，他就只能去找传说中的第四把斧头。` });
-    // ----- 南极神 -----
-    if (t.has("twoAndGo") && s.n) q.push({ quote: "就玩两把，玩完就走", stamp: "数学不好",
-      reply: `本周${s.sessions}个晚上打了${s.n}把，平均每晚${(s.n / Math.max(1, s.sessions)).toFixed(1)}把。数学老师已经哭晕在厕所。` });
+    // ----- 蜗牛大神 -----
+    if (t.has("allNighter")) q.push({ quote: "今晚通宵！谁先走谁是狗！", stamp: "跑路",
+      reply: s.n && s.n / Math.max(1, s.sessions) <= 3.5
+        ? `本周平均每晚${(s.n / Math.max(1, s.sessions)).toFixed(1)}把，然后人就没了。本庭不评论谁是狗。`
+        : "喊完这句没多久，DC里只剩一个灰色的头像。本庭不评论谁是狗。" });
     if (t.has("loud")) q.push({ quote: "干干干！！！", stamp: "扰民",
       reply: "每局开始前的固定口号。喊得最响，DC里其他人的耳机音量统一调到了10%。" });
     if (t.has("jinMidKiller")) q.push({ quote: "金神的中路？轻轻松松", stamp: "补刀",
-      reply: "金神说自己是无敌中单——直到遇见了他。这一刀，比任何嘲讽都狠。" });
+      reply: "这句话他能说一辈子。金神每听一次，血压就高一次。" });
     q.usedMatches = usedM;
     return q;
   }
@@ -542,7 +546,7 @@
     if (traits.has("jakiroOnly")) cards.push({ icon: "🐉", label: "双头龙场次", value: String(s.matches.filter((m) => m.hero_id === JAKIRO).length), sub: "本周被迫辅助" });
     if (traits.has("drowArcana")) { const dw = s.matches.filter((m) => m.hero_id === DROW); cards.push({ icon: "💎", label: "至宝小黑出场", value: `${dw.length}场`, sub: dw.length ? `胜率 ${Math.round((dw.filter((m) => m.win).length / dw.length) * 100)}%` : "本周没拿出来炫" }); }
     if (traits.has("noSupport")) cards.push({ icon: "🚫", label: "纯辅助场次", value: String(s.pureSup), sub: `本周共${s.n}场` });
-    if (traits.has("twoAndGo") && s.lastStart) cards.push({ icon: "🕛", label: "最晚开局", value: new Date(s.lastStart.start_time * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }), sub: `本周${s.sessions}个晚上 · 共${s.n}局`, cls: "neg" });
+    if (traits.has("allNighter") && s.sessions) cards.push({ icon: "🌃", label: "平均每晚在线", value: `${s.nightHours.toFixed(1)} 小时`, sub: "通宵按8小时计算", cls: "neg" });
     if (traits.has("allHeroes")) cards.push({ icon: "🌊", label: "本周用过的英雄", value: `${s.distinctHeroes} 个`, sub: `${s.n}场比赛` });
     if (traits.has("cantLastHit") && s.core && s.lh10 < 50) cards.push({ icon: "🗡️", label: "核心局补刀", value: `${Math.round(s.lh10)}/10分钟`, sub: "打核心时的平均值", cls: "neg" });
     return {

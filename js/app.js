@@ -187,6 +187,7 @@
       <div class="wanted-photo">${avatar(p, p.name, "avatar-wanted")}<div class="wanted-meter"><small>${esc(v.title || "成绩")}</small><b>${esc(v.label)}</b></div></div>
       <h3>${esc(p.name)}</h3>
       <p class="wanted-crime">罪名：${esc(p.cfg.bounty || p.cfg.accusa || "打刀塔")}</p>
+      ${p.cfg.bio ? `<p class="wanted-bio">简介：${esc(p.cfg.bio)}</p>` : ""}
       <div class="wanted-bounty"><span>悬赏</span><b>🪙 ${p.ctx.hidden ? "机密" : bounty.toLocaleString(LOCALE)}</b><span>金</span></div>
       <div class="wanted-stats">
         <div><b>${p.ctx.hidden ? "?" : s.n}</b><span>场</span></div>
@@ -236,6 +237,7 @@
               <span class="tag">${esc(cfg.accusa || defaultTag)}</span>
               <h1>${esc(p.name)}</h1>
               ${p.steamName && p.steamName !== p.name ? `<p class="aka">Steam：${esc(p.steamName)}${cfg.persona?.claimedRank ? ` · 自称“${esc(cfg.persona.claimedRank)}实力”` : ""}</p>` : ""}
+              ${cfg.bio ? `<p class="bio">简介：${esc(cfg.bio)}</p>` : ""}
               <div class="phero-meta">
                 ${medal(prof.rank_tier)}
                 <div><span class="muted small">段位</span><b>${esc(medalName(prof.rank_tier))}${prof.leaderboard_rank ? ` · #${prof.leaderboard_rank}` : ""}</b></div>
@@ -372,13 +374,6 @@
     ].filter((m) => m[mode]);
     if (!metrics.length) return;
     const better = mode === "better";
-    let together = "";
-    if (better) {
-      try {
-        const rows = await fetch(`https://api.opendota.com/api/players/${p.id}/matches?included_account_id=${q.id}&project=start_time`).then((r) => r.json());
-        if (Array.isArray(rows) && rows.length) together = `两人生涯同场${rows.length}局。`;
-      } catch {}
-    }
     el.innerHTML = `
       <section class="block">
         <div class="block-head"><h2>${better ? `${esc(q.name)}克星` : "宿敌对比"}</h2><span class="muted small">${esc(p.name)} vs ${esc(q.name)} · ${better ? `只列${esc(q.name)}输掉的项目` : "只列他输掉的项目"}</span></div>
@@ -393,7 +388,7 @@
             return `<div class="nem-row"><span class="nem-val">${m.fmt(m.av)}</span>
               <div class="nem-bar"><i class="l" style="width:${(Math.abs(m.av) / tot) * 100}%"></i><i class="r" style="width:${(Math.abs(m.bv) / tot) * 100}%"></i><em>${m.label}</em></div>
               <span class="nem-val win">${m.fmt(m.bv)}</span></div>`; }).join("")}
-          <p class="muted small">${better ? `本周${metrics.length}项数据，${esc(q.name)}全部落后。${together}` : `连被${esc(q.name)}说菜都没法反驳：以上${metrics.length}项全部输给了他。`}</p>
+          <p class="muted small">${better ? `本周${metrics.length}项数据，${esc(q.name)}全部落后。` : `连被${esc(q.name)}说菜都没法反驳：以上${metrics.length}项全部输给了他。`}</p>
         </div>
       </section>`;
   }

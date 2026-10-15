@@ -559,3 +559,5 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .nemesis.flip .nem-val.win { color: var(--red); }
 .nemesis.flip .nem-bar i.l { background: linear-gradient(90deg, #2f9b4f, #5ed37c); }
 .nemesis.flip .nem-bar i.r { background: linear-gradient(90deg, #e8473c, #9c241b); }
+.bio { margin: -10px 0 16px; font-weight: 700; font-size: 14.5px; color: var(--pc, var(--gold)); }
+.wanted-bio { margin: -4px 0 0; font-size: 12.5px; font-weight: 700; color: #6b4320; }

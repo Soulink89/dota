@@ -5,8 +5,9 @@
 //  "alias" e "accusa" sono opzionali: se mancano si usa il nome Steam.
 //
 //  "color" (opzionale): colore personale della pagina. "bounty": il reato sul manifesto 通缉令.
+//  "bio" (opzionale): presentazione (简介) mostrata sotto il nome.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
-//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "twoGames" (partite per sera); assente = voto su 100
+//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
 //    traits:      i suoi vizi, a scelta tra:
@@ -45,7 +46,7 @@
 //      noSupport  non ha mai giocato supporto
 //      pingStudent una sera Ping神 gli ha fatto la lezione e lui ha risposto solo "嗯嗯"
 //      hardToRoast gioca bene: "il tribunale non trova di cosa accusarlo"
-//      twoAndGo   dice "gioco due partite e vado" (e invece no)
+//      allNighter urla "stanotte si gioca fino all'alba" e scappa dopo 2-3 partite
 //      loud       voce altissima, urla "干干干"
 //      allHeroes  sa giocare qualunque eroe
 //      tooGood    gioca bene: il tribunale fatica a trovare accuse
@@ -106,14 +107,15 @@ window.TRIBUNALE_CONFIG = {
     },
     {
       steam64: "76561198092667598",
-      alias: "南极神",
-      accusa: "两把就走（并没有）",
+      alias: "蜗牛大神",
+      accusa: "喊通宵的男人",
+      bio: "随便虐过金神的“无敌中单”",
       color: "#93c5fd",
-      bounty: "两把诈骗罪",
+      bounty: "通宵诈骗罪",
       persona: {
-        meter: "twoGames",
+        meter: "allNighter",
         victim: "金神",
-        traits: ["twoAndGo", "loud", "allHeroes", "tooGood", "jinMidKiller"],
+        traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
       },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },
