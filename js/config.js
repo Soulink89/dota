@@ -6,7 +6,7 @@
 //
 //  "color" (opzionale): colore personale della pagina. "bounty": il reato sul manifesto 通缉令.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
-//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数); assente = voto su 100
+//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
 //    traits:      i suoi vizi, a scelta tra:
@@ -28,6 +28,18 @@
 //      partyFear  ha paura di giocare in party col gruppo per non perdere MMR
 //      ancientOneDay è salito ad Ancient per un giorno ed è ridisceso
 //      xiuxian    gioca fino a tarda notte (修仙), con livello di 修仙
+//      babysit    ha bisogno di protezione (保姆) per 30 minuti
+//      milkAfk    a metà partita sparisce per dare il latte al figlio
+//      scared     ha paura di combattere
+//      streamer   fa dirette in prima persona
+//      russianCommander  l'unico che riesce a dare ordini ai russi
+//      drowCurse  non vince mai con Drow Ranger (小黑)
+//      jinTarget  preso sempre in giro da 金神
+//      positions  gioca solo pos 1 o 3
+//      tinyPool   pool di eroi minuscolo
+//      jakiroOnly unico supporto: Jakiro (双头龙)
+//      laneLoser  perde sempre la lane
+//    nemesis:     alias di un altro giocatore: confronto 宿敌对比 (solo dove perde lui)
 // ============================================================
 window.TRIBUNALE_CONFIG = {
   siteName: "刀塔法庭",
@@ -55,6 +67,18 @@ window.TRIBUNALE_CONFIG = {
       persona: {
         meter: "drunk",
         traits: ["theorist", "allRounder", "cantLastHit", "drunk", "smoker", "mmrAnxiety", "partyFear", "ancientOneDay", "xiuxian"],
+      },
+    },
+    {
+      steam64: "76561198070245875",
+      alias: "B神",
+      accusa: "人称呆逼",
+      color: "#4fc3f7",
+      bounty: "畏战罪",
+      persona: {
+        meter: "babysit",
+        nemesis: "金神",
+        traits: ["babysit", "milkAfk", "scared", "streamer", "russianCommander", "drowCurse", "jinTarget", "positions", "tinyPool", "jakiroOnly", "laneLoser"],
       },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },

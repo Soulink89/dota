@@ -35,7 +35,9 @@
         const stats = R.computeStats(data.matches, DAYS);
         // index: ogni giocatore riceve varianti diverse delle battute; week: ruotano ogni settimana
         const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier,
-          index: CFG.players.indexOf(cfg), week: Math.floor((Date.now() / 86400000 + 3) / 7) };
+          index: CFG.players.indexOf(cfg), week: Math.floor((Date.now() / 86400000 + 3) / 7),
+          // partite nascoste: "Expose Public Match Data" disattivato in Dota 2
+          hidden: !(data.matches || []).length && !(data.wl && data.wl.win + data.wl.lose) && data.source !== "demo" };
         const quotes = R.quotes(stats, ctx, heroes);
         ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
         const roasts = R.buildRoasts(stats, name, heroes, ctx);
@@ -254,6 +256,11 @@
         </div>
       </section>
 
+      ${p.ctx.hidden ? `
+      <section class="classified">
+        <div class="classified-stamp">机密</div>
+        <div><h3>比赛数据：不予公开</h3><p>Dota 2 设置 → 社交 → “公开比赛数据”：关闭。以下判决依据群友证词。</p></div>
+      </section>` : `
       <section class="kpis">
         ${kpi("场次", s.n ? counter(s.n) : "0", `浪费了 ${fmt1(s.hours)} 小时人生`)}
         ${kpi("胜率", s.n ? counter(Math.round(s.wr), "%") : "–", `${s.wins}胜 · ${s.losses}负`)}
@@ -261,7 +268,7 @@
         ${kpi("送头", s.n ? counter(s.deaths) : "0", s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", "neg")}
         ${kpi("平均GPM", s.n ? counter(Math.round(s.avgGpm)) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
         ${kpi("最惨一局", s.mostDeaths ? `${s.mostDeaths.deaths}死` : "–", s.mostDeaths ? `${esc(p.heroes[s.mostDeaths.hero_id]?.localized_name || "")} · ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}` : "–", "neg")}
-      </section>
+      </section>`}
 
       ${p.quotes.length ? `
       <section class="block">
@@ -279,6 +286,7 @@
       </section>` : ""}
 
       ${specialBlock(p.special)}
+      ${cfg.persona?.nemesis ? `<div id="nemesis"></div>` : ""}
 
       ${s.n ? `
       <section class="block">
@@ -339,9 +347,46 @@
       document.getElementById("charges-count").textContent = `共 ${split.charges.length} 项指控`;
     };
     renderJokes(p.split);
+    if (cfg.persona?.nemesis) renderNemesis(p, cfg.persona.nemesis);
     document.getElementById("reroll")?.addEventListener("click", () => renderJokes(splitRoasts(p.roasts, true)));
   }
 
+
+  // 宿敌对比: solo le voci in cui il giocatore va peggio del suo "nemico"
+  async function renderNemesis(p, nemesisAlias) {
+    const el = document.getElementById("nemesis");
+    const ncfg = CFG.players.find((c) => c.alias === nemesisAlias);
+    if (!el || !ncfg || !p.stats.n) return;
+    let q;
+    try { q = await getPlayer(ncfg); } catch { return; }
+    if (!q.stats.n) return;
+    const a = p.stats, b = q.stats;
+    const metrics = [
+      { label: "胜率", av: a.wr, bv: b.wr, fmt: (x) => Math.round(x) + "%", worse: a.wr < b.wr },
+      { label: "KDA", av: a.avgKda, bv: b.avgKda, fmt: (x) => x.toFixed(2), worse: a.avgKda < b.avgKda },
+      { label: "场均死亡", av: a.avgDeaths, bv: b.avgDeaths, fmt: (x) => x.toFixed(1), worse: a.avgDeaths > b.avgDeaths },
+      { label: "平均GPM", av: a.avgGpm, bv: b.avgGpm, fmt: (x) => Math.round(x), worse: a.avgGpm < b.avgGpm },
+      { label: "场均击杀", av: a.kills / a.n, bv: b.kills / b.n, fmt: (x) => x.toFixed(1), worse: a.kills / a.n < b.kills / b.n },
+    ].filter((m) => m.worse);
+    if (!metrics.length) return;
+    el.innerHTML = `
+      <section class="block">
+        <div class="block-head"><h2>宿敌对比</h2><span class="muted small">${esc(p.name)} vs ${esc(q.name)} · 只列他输掉的项目</span></div>
+        <div class="sp-panel nemesis">
+          <div class="nem-head">
+            <div>${avatar(p, p.name)}<b>${esc(p.name)}</b></div>
+            <span class="nem-vs">VS</span>
+            <div>${avatar(q, q.name)}<b>${esc(q.name)}</b></div>
+          </div>
+          ${metrics.map((m) => {
+            const tot = Math.abs(m.av) + Math.abs(m.bv) || 1;
+            return `<div class="nem-row"><span class="nem-val">${m.fmt(m.av)}</span>
+              <div class="nem-bar"><i class="l" style="width:${(Math.abs(m.av) / tot) * 100}%"></i><i class="r" style="width:${(Math.abs(m.bv) / tot) * 100}%"></i><em>${m.label}</em></div>
+              <span class="nem-val win">${m.fmt(m.bv)}</span></div>`; }).join("")}
+          <p class="muted small">连被${esc(q.name)}说菜都没法反驳：以上${metrics.length}项全部输给了他。</p>
+        </div>
+      </section>`;
+  }
   // ---------- grafici ----------
   function kdChart(matches, heroes) {
     const ms = [...matches].reverse();
@@ -381,7 +426,7 @@
   }
 
   function specialBlock(sp) {
-    if (!sp || (!sp.cards.length && !sp.curve && !sp.xiuxian)) return "";
+    if (!sp || (!sp.cards.length && !sp.curve && !sp.xiuxian && !sp.babysit)) return "";
     const curve = sp.curve ? `
       <div class="sp-panel sp-curve">
         <div class="sp-head"><span>🥃</span><div><h4>酒精曲线</h4><p class="muted small">每晚第几局的胜率——越喝越……</p></div></div>
@@ -400,12 +445,22 @@
         <div class="xiu-steps">${["炼气", "筑基", "金丹", "元婴", "化神", "渡劫", "飞升"].map((l) => `<span class="${l === sp.xiuxian.level ? "on" : ""}">${l}</span>`).join("")}</div>
         <p class="muted small">${sp.xiuxian.next ? `距离【${esc(sp.xiuxian.next)}】还差 ${fmt1(sp.xiuxian.toNext)} 小时深夜刀塔。再往后就不是飞升，是升天。` : "已飞升。下一步：升天。"}</p>
       </div>` : "";
+    const bs = sp.babysit ? (() => {
+      const max = Math.max(40, (sp.babysit.minutes || 0) + 5), pct = (m) => (m / max) * 100;
+      return `
+      <div class="sp-panel sp-baby">
+        <div class="sp-head"><span>👩‍🍼</span><div><h4>保姆计时器</h4><p class="muted small">前期需要被保护多少分钟才能自己走路</p></div></div>
+        <div class="baby-row"><span>普通人</span><div class="baby-track"><i style="width:${pct(sp.babysit.normal)}%"></i><em style="left:${pct(sp.babysit.normal)}%">${sp.babysit.normal}分钟</em></div></div>
+        <div class="baby-row hot"><span>B神</span><div class="baby-track"><i class="${sp.babysit.minutes ? "" : "inf"}" style="width:${sp.babysit.minutes ? pct(sp.babysit.minutes) : 100}%"></i><em style="left:${sp.babysit.minutes ? pct(sp.babysit.minutes) : 96}%">${sp.babysit.minutes ? sp.babysit.minutes + "分钟" : "∞"}</em></div></div>
+        <div class="baby-scale">${[0, 10, 20, 30, 40].filter((m) => m <= max).map((m) => `<span style="left:${pct(m)}%">${m}'</span>`).join("")}</div>
+      </div>`; })() : "";
     return `
       <section class="block">
         <div class="block-head"><h2>专项调查</h2><span class="muted small">部分数据为估算，但丢人是真的</span></div>
         ${sp.cards.length ? `<div class="sp-cards">${sp.cards.map((c) => `
           <div class="kpi sp-card"><span class="sp-icon">${c.icon}</span><span class="kpi-label">${esc(c.label)}</span><b class="kpi-val ${c.cls || ""}">${esc(c.value)}</b><span class="kpi-sub">${esc(c.sub)}</span></div>`).join("")}</div>` : ""}
         ${curve || xx ? `<div class="sp-grid">${curve}${xx}</div>` : ""}
+        ${bs}
       </section>`;
   }
 

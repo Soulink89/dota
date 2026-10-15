@@ -20,7 +20,10 @@
     return { level: XIUXIAN[i][1], next: next?.[1] ?? null, hours,
       pct: next ? ((hours - XIUXIAN[i][0]) / (next[0] - XIUXIAN[i][0])) * 100 : 100, toNext: next ? next[0] - hours : 0 };
   }
-  const CURVE_LABELS = ["第1局 · 清醒", "第2局 · 微醺", "第3局 · 上头", "第4局+ · 断片"];
+  // minuti di "保姆" stimati: più basso il GPM, più a lungo va protetto
+  const babysitMinutes = (s) => Math.max(10, Math.min(60, Math.round((30 * 450) / Math.max(250, s.avgGpm || 250))));
+  const DROW = 6, JAKIRO = 64;
+  const CURVE_LABELS =["第1局 · 清醒", "第2局 · 微醺", "第3局 · 上头", "第4局+ · 断片"];
 
   // OpenDota quasi mai ha la corsia per le partite non analizzate: usiamo gli eroi tipici da mid.
   const MID_HEROES = new Set([10, 11, 13, 17, 21, 22, 25, 34, 36, 39, 43, 45, 46, 47, 49, 52, 59, 74, 76, 106, 113, 120, 126]);
@@ -135,6 +138,12 @@
         label: String(clamp(30 + s.lateN * 3 + s.sessions * 4 + Math.max(0, sober - late) / 3)),
         text: pickFor(["本庭建议：开黑前先吹一下酒精测试仪。", "喝到第几局，他自己也数不清了。", "键盘上的威士忌，比他的眼位还多。"], ctx) };
     }
+    if (meter === "babysit") {
+      const title = "需要保姆（分钟）";
+      if (!s.n) return { title, voto: 0, label: "∞", cls: "g-bad", text: pickFor(["比赛数据都不敢公开，保姆也不知道该保多久。", "数据隐藏中。保姆已待命，时长：无限。"], ctx) };
+      return { title, voto: 0, cls: "g-bad", label: String(babysitMinutes(s)),
+        text: pickFor(["保姆费按分钟结算，本周账单已经超支。", "建议队里招一个全职保姆，五险一金那种。", "保姆排班表已经排到下个月了。"], ctx) };
+    }
     if (!s.n) return { voto: null, label: "缺考", text: "本周缺考。要么出门摸草了，要么换小号了。" };
     let v = 60 + (s.wr - 50) * 1.1 + (s.avgKda - 2.6) * 7 - Math.max(0, s.avgDeaths - 8) * 2.5;
     v = Math.max(0, Math.min(100, Math.round(v)));
@@ -207,6 +216,7 @@
       mmrD: (s.mmrDelta > 0 ? "+" : "") + s.mmrDelta, late: s.lateN, xlevel: xiuxian(s.lateHours).level,
       partyN: s.party.n, partyWr: Math.round(s.party.wr),
       name, n: s.n, wr: Math.round(s.wr), w: s.wins, l: s.losses,
+      avgK: s.n ? (s.kills / s.n).toFixed(1) : 0, gpm: Math.round(s.avgGpm),
       hours: s.hours.toFixed(1), hours2: (s.hours * 2).toFixed(0), deaths: s.deaths, avgD: s.avgDeaths.toFixed(1), kda: s.avgKda.toFixed(2),
       streak: s.streak, worst: s.worstRun,
       favHero: fav ? H(fav.hero_id) : "", favGames: fav?.games,
@@ -222,7 +232,7 @@
 
     const rules = [
       // ----- generiche -----
-      { id: "absent", generic: 1, when: () => s.n === 0, weight: 100, icon: "🌱", title: "在逃人员", titles: ["在逃人员", "疑似练小号", "失踪人口"], v: [
+      { id: "absent", generic: 1, when: () => s.n === 0 && !ctx.hidden, weight: 100, icon: "🌱", title: "在逃人员", titles: ["在逃人员", "疑似练小号", "失踪人口"], v: [
         ["{name} 已经7天没打刀了。可能性：出门摸草了、谈恋爱了，或者哭着卸载了。", "七天零场", "戒断反应即将到来"],
         ["{name} 本周一局没打。本庭怀疑他在偷偷练小号，准备下周回来继续丢人。", "本周零场", "在偷偷练小号"],
         ["{name} 失踪7天。寻人启事：最后一次出现时正在甩锅。", "寻人启事", "最后出现在泉水"]] },
@@ -340,6 +350,30 @@
       { id: "p-xiuxian", when: () => T("xiuxian") && s.lateN > 0, weight: 83, icon: "🧘", title: "修仙中", v: [
         ["本周深夜修仙{late}局，修为已达【{xlevel}】。照这个速度，很快就升天了。", "修仙中，勿扰", "境界：{xlevel}"],
         ["凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。", "深夜修仙", "离升天不远了"]] },
+
+      // ----- B神 -----
+      { id: "b-hidden", hero: () => 32, when: () => ctx.hidden, weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
+        ["比赛数据设为不公开。打得怎么样？本庭查不到，但他自己心里有数。", "比赛记录", "不敢公开"],
+        ["连OpenDota都查不到他的比赛。隐身技能，比他的任何一个英雄都练得好。", "隐身技能", "满级"]] },
+      { id: "b-pos", hero: () => 1, when: () => T("positions"), weight: 86, icon: "1️⃣", title: "只会1号位和3号位", v: [
+        ["只会1号位和3号位。2号位？那是金神吹牛的地盘，他不敢去。", "1号位或3号位", "其他位置：不会"]] },
+      { id: "b-pool", hero: () => DROW, when: () => T("tinyPool") && (!s.n || s.distinctHeroes <= 5), weight: 84, icon: "🖐️", title: "一只手的英雄池", v: [
+        ["英雄池三四个，选英雄阶段永远是全场最快的——反正就那几个。", "选英雄阶段", "3秒选完"]] },
+      { id: "b-jakiro", hero: () => JAKIRO, when: () => T("jakiroOnly"), weight: 78, icon: "🐉", title: "被迫辅助", v: [
+        ["被迫打辅助时只会一个双头龙。双头龙两个头，一个在叹气，一个在等他喂奶回来。", "被迫打辅助", "双头龙（唯一）"]] },
+      { id: "b-lane", hero: () => 2, when: () => T("laneLoser"), weight: 88, icon: "🛣️", title: "对线？被线对", v: s.n
+        ? [["几乎每盘线上劣势，本周平均GPM {gpm}。对线期结束，经济还停在新手教程水平。", "对线期", "被线对"]]
+        : [["几乎每盘线上劣势。对线期结束时，对面已经出完核心装，他还在问保姆在哪。", "对线期", "被线对"]] },
+      { id: "b-dad", hero: () => 102, when: () => T("milkAfk"), weight: 74, icon: "🍼", title: "双重身份", v: [
+        ["游戏里要别人当保姆，游戏外自己当保姆。双重身份，两边都忙不过来。", "游戏里要保姆", "游戏外当保姆"]] },
+      { id: "b-russian", hero: () => 99, when: () => T("russianCommander"), weight: 76, icon: "🇷🇺", title: "外语人才", v: [
+        ["俄语水平：能指挥毛子。中文水平：吵不过金神。", "俄语", "满级"]] },
+      { id: "b-jin", hero: () => 17, when: () => T("jinTarget"), weight: 82, icon: "🎯", title: "金神的固定靶子", v: [
+        ["被金神天天说菜。被一个传奇1说菜，这才是本周最大的伤害。", "被金神说菜", "暴击伤害"]] },
+      { id: "b-drow", hero: () => DROW, when: () => T("drowCurse") && s.matches.some((m) => m.hero_id === DROW && !m.win), weight: 90, icon: "🏹", title: "小黑诅咒", v: [
+        ["本周又拿了小黑，又输了。小黑的胜率在他手里是一个常数：0。", "小黑", "从未赢过"]] },
+      { id: "b-scared", hero: () => 67, when: () => T("scared") && s.n >= 3 && s.kills / s.n < 5, weight: 80, icon: "🫣", title: "人头？不敢要", v: [
+        ["场均击杀{avgK}个。别人打团他在打野，别人打野他在回城。", "场均{avgK}杀", "安全第一"]] },
     ];
 
     const out = [];
@@ -367,7 +401,6 @@
   function quotes(s, ctx = {}, heroes = {}) {
     const persona = ctx.persona || {};
     const t = new Set(persona.traits || []);
-    if (!s.n) return [];
     const H = (id) => heroes[id]?.localized_name || "某英雄";
     const kd = (m) => `${m.kills}/${m.deaths}/${m.assists}`;
     const rank = medalName(ctx.rankTier), mmr = approxMmr(ctx.rankTier) ?? "?";
@@ -391,7 +424,7 @@
       reply: `请看${H(kdaM.hero_id)}这把：${kd(kdaM)}。这一把的KDA，他选择性失忆了。` });
     if (t.has("blameTeam") && s.losses) q.push({ quote: "输了都是队友的锅", stamp: "甩锅",
       reply: `${s.losses}场失败，他自己场均死${s.inLosses.avgDeaths.toFixed(1)}次。队友：这锅太沉，背不动。` });
-    if (t.has("rigged")) q.push({ quote: "Steam给我匹配系统局", stamp: "碰瓷",
+    if (t.has("rigged") && s.n) q.push({ quote: "Steam给我匹配系统局", stamp: "碰瓷",
       reply: s.wr >= 50 ? `胜率${Math.round(s.wr)}%的系统局？系统：我对你还不够好吗？` : `胜率${Math.round(s.wr)}%。系统：别碰瓷，我也很无辜。` });
     const mvpM = t.has("selfMvp") && take(s.matches.filter((m) => m.win), (m) => -m.kda);
     if (mvpM) q.push({ quote: "赢了都是我MVP", stamp: "自封", heroId: mvpM.hero_id,
@@ -403,6 +436,24 @@
     const trashM = t.has("trashTalk") && take(s.matches, (m) => m.deaths);
     if (trashM) q.push({ quote: `${rival}太菜了`, stamp: "双标", heroId: trashM.hero_id,
       reply: `说这话的人，本周用${H(trashM.hero_id)}一局死了${trashM.deaths}次。${rival}：谢谢，有被安慰到。` });
+    // ----- B神 -----
+    if (t.has("babysit")) q.push({ quote: "保我！再保我十分钟！", stamp: "巨婴",
+      reply: s.n ? `别人保6、7分钟就够了，他要保${babysitMinutes(s)}分钟。保姆都能考个育婴师证了。` : "别人保6、7分钟就够了，他要保30分钟。保姆都能考个育婴师证了。" });
+    if (t.has("milkAfk")) q.push({ quote: "等一下，我去给孩子喂个奶", stamp: "挂机",
+      reply: "回来时基地已经没了。孩子吃饱了，四个队友饿死了。" });
+    if (t.has("scared")) q.push({ quote: "别打别打，等我六级", stamp: "胆小",
+      reply: "等到六级，等到BKB，等到三十分钟，等到基地爆炸。他一直在等，从来没打。" });
+    if (t.has("streamer")) q.push({ quote: "兄弟们，看我第一视角", stamp: "炒作",
+      reply: "第一视角直播，观众看得比他打得还急。弹幕刷屏：保姆呢？保姆呢？" });
+    if (t.has("russianCommander")) q.push({ quote: "Davai! Davai! 跟我上！", stamp: "外交官",
+      reply: "全服唯一能指挥毛子的中国玩家。毛子全听他的——他自己的队友一个都不听。" });
+    if (t.has("drowCurse")) {
+      const dw = s.matches.filter((m) => m.hero_id === DROW);
+      q.push({ quote: "这把小黑稳了", stamp: "诅咒",
+        reply: dw.length ? `本周小黑${dw.filter((m) => m.win).length}胜${dw.filter((m) => !m.win).length}负。小黑：我跟你有仇吗？` : "说完这句话的每一局，小黑都输了。小黑：我跟你有仇吗？" });
+    }
+    if (t.has("jinTarget")) q.push({ quote: "我不菜！金神你别说话！", stamp: "实锤",
+      reply: "金神天天说他菜。金神说了一辈子大话，本庭认定：只有这一句是真的。" });
     q.usedMatches = usedM;
     return q;
   }
@@ -410,18 +461,24 @@
   // ---------- 专项调查: pannelli speciali, solo dati che lo mettono in ridicolo ----------
   function specials(s, ctx = {}) {
     const traits = new Set(ctx.persona?.traits || []);
-    if (!s.n) return null;
+    // B神: il timer del 保姆 c'è anche senza dati
+    const babysit = traits.has("babysit") ? { minutes: s.n ? babysitMinutes(s) : null, normal: 7 } : null;
+    if (!s.n) return babysit ? { cards: [], curve: null, xiuxian: null, babysit } : null;
     const cards = [];
     if (traits.has("drunk")) cards.push({ icon: "🥃", label: "威士忌（估算）", value: `${s.sessions} 瓶`, sub: `按一晚一瓶估算 · ${s.sessions}个晚上` });
     if (traits.has("smoker")) cards.push({ icon: "🚬", label: "香烟（估算）", value: `${s.n} 根`, sub: `按一局一根估算 · ${s.n}局` });
     if (traits.has("mmrAnxiety") && s.mmrDelta < 0) cards.push({ icon: "📉", label: "天梯分（估算）", value: String(s.mmrDelta), sub: `${s.wins}胜${s.losses}负 · 每局±25分`, cls: "neg" });
     if (traits.has("partyFear") && s.party.n && s.party.wr < 55) cards.push({ icon: "🙈", label: "组排胜率", value: `${Math.round(s.party.wr)}%`, sub: `组排${s.party.n}场 · 单排${s.solo.n}场`, cls: "neg" });
     if (traits.has("theorist")) cards.push({ icon: "🎙️", label: "DC发言 vs 补刀", value: "∞ : " + s.lhTotal, sub: "本周补刀总数" });
+    if (traits.has("tinyPool")) cards.push({ icon: "🖐️", label: "本周英雄池", value: `${s.distinctHeroes} 个`, sub: `${s.n}场比赛用过的英雄数` });
+    if (traits.has("drowCurse")) { const dw = s.matches.filter((m) => m.hero_id === DROW); cards.push({ icon: "🏹", label: "小黑战绩", value: dw.length ? `${dw.filter((m) => m.win).length}胜${dw.filter((m) => !m.win).length}负` : "0场", sub: "本周卓尔游侠", cls: "neg" }); }
+    if (traits.has("jakiroOnly")) cards.push({ icon: "🐉", label: "双头龙场次", value: String(s.matches.filter((m) => m.hero_id === JAKIRO).length), sub: "本周被迫辅助" });
     if (traits.has("cantLastHit") && s.core && s.lh10 < 50) cards.push({ icon: "🗡️", label: "核心局补刀", value: `${Math.round(s.lh10)}/10分钟`, sub: "打核心时的平均值", cls: "neg" });
     return {
       cards,
       curve: traits.has("drunk") && s.sessions ? s.curve.map((g, i) => ({ label: CURVE_LABELS[i], n: g.n, wr: g.wr })) : null,
       xiuxian: traits.has("xiuxian") ? { ...xiuxian(s.lateHours), games: s.lateN } : null,
+      babysit,
     };
   }
 
