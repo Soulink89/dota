@@ -6,6 +6,15 @@
   const kdaOf = (m) => (m.kills + m.assists) / Math.max(1, m.deaths);
   const mins = (s) => Math.round(s / 60);
 
+  // Medaglie e MMR approssimativo (ogni medaglia = 5 stelle da ~154 MMR)
+  const MEDALS = ["", "先锋", "卫士", "中军", "统帅", "传奇", "万古流芳", "超凡入圣", "冠绝一世"];
+  const medalName = (t) => (t ? (t >= 80 ? "冠绝一世" : `${MEDALS[Math.floor(t / 10)]} ${t % 10}`) : "未定级");
+  const approxMmr = (t) => (t ? Math.round(((Math.floor(t / 10) - 1) * 770 + Math.max(0, (t % 10) - 1) * 154) / 100) * 100 : null);
+
+  // OpenDota quasi mai ha la corsia per le partite non analizzate: usiamo gli eroi tipici da mid.
+  const MID_HEROES = new Set([10, 11, 13, 17, 21, 22, 25, 34, 36, 39, 43, 45, 46, 47, 49, 52, 59, 74, 76, 106, 113, 120, 126]);
+  const isMid = (m) => (m.lane_role ? m.lane_role === 2 : MID_HEROES.has(m.hero_id));
+
   function computeStats(matches, days) {
     const cutoff = Date.now() / 1000 - days * 86400;
     const ms = (matches || [])
@@ -32,6 +41,13 @@
 
     const maxBy = (f) => ms.reduce((b, m) => (b == null || f(m) > f(b) ? m : b), null);
     const minBy = (f) => ms.reduce((b, m) => (b == null || f(m) < f(b) ? m : b), null);
+    const group = (list) => {
+      const k = list.reduce((t, m) => t + m.kills, 0), d = list.reduce((t, m) => t + m.deaths, 0), a = list.reduce((t, m) => t + m.assists, 0);
+      const w = list.filter((m) => m.win).length;
+      return { n: list.length, wins: w, losses: list.length - w, wr: list.length ? (w / list.length) * 100 : 0,
+        kda: (k + a) / Math.max(1, d), avgDeaths: list.length ? d / list.length : 0 };
+    };
+    const winsList = ms.filter((m) => m.win), lossList = ms.filter((m) => !m.win);
 
     return {
       matches: ms, n, wins, losses: n - wins,
@@ -53,6 +69,10 @@
       turbo: ms.filter((m) => m.game_mode === 23).length,
       lowestGpm: minBy((m) => m.gold_per_min ?? 9999),
       zeroKill: ms.filter((m) => m.kills === 0).length,
+      mid: group(ms.filter(isMid)),
+      inWins: group(winsList),
+      inLosses: group(lossList),
+      worstWin: winsList.reduce((b, m) => (b == null || m.kda < b.kda ? m : b), null),
     };
   }
 
@@ -99,10 +119,18 @@
   };
 
   // ---------- Regole delle battute ----------
-  function buildRoasts(s, name, heroes) {
+  function buildRoasts(s, name, heroes, ctx = {}) {
     const H = (id) => heroes[id]?.localized_name || "神秘英雄";
     const fav = s.heroes[0];
+    const persona = ctx.persona || {};
+    const traits = new Set(persona.traits || []);
     const v = {
+      rank: medalName(ctx.rankTier), mmr: approxMmr(ctx.rankTier) ?? "?",
+      claimed: persona.claimedRank || "超凡入圣", rival: persona.rival || "队友",
+      midN: s.mid.n, midWr: Math.round(s.mid.wr), midD: s.mid.avgDeaths.toFixed(1), midL: s.mid.losses,
+      lossD: s.inLosses.avgDeaths.toFixed(1), winKda: s.inWins.kda.toFixed(1),
+      worstWinKda: s.worstWin ? `${s.worstWin.kills}/${s.worstWin.deaths}/${s.worstWin.assists}` : "",
+      worstWinHero: s.worstWin ? H(s.worstWin.hero_id) : "",
       name, n: s.n, wr: Math.round(s.wr), w: s.wins, l: s.losses,
       hours: s.hours.toFixed(1), deaths: s.deaths, kda: s.avgKda.toFixed(2),
       gpm: Math.round(s.avgGpm), streak: s.streak, worst: s.worstRun,
@@ -177,6 +205,47 @@
         meme: ["胜率 {wr}%", "稳定的平庸"] },
     ];
 
+    // ---------- Battute su misura (attivate dai "traits" in config.js) ----------
+    const T = (t) => traits.has(t);
+    const personaRules = [
+      { id: "p-brag", when: () => T("brag") && s.n > 0, weight: 92, icon: "🎺", title: "吹牛专业户",
+        texts: ["自称{claimed}实力，系统显示{rank}（约{mmr}分）。中间差的那一截，大概是被系统偷走了。", "嘴上{claimed}，账号{rank}。这个落差，比他的中路塔掉得还快。"],
+        meme: ["自称：{claimed}", "实际：{rank}"] },
+      { id: "p-mid-bad", when: () => T("midKing") && s.mid.n >= 2 && s.mid.wr < 60, weight: 90, icon: "👑", title: "“无敌中单”",
+        texts: ["自称无敌中单。本周玩中路英雄{midN}场，胜率{midWr}%，场均死{midD}次。无敌的应该是对面中单吧。"],
+        meme: ["我是无敌中单", "中路胜率 {midWr}%"] },
+      { id: "p-mid-good", when: () => T("midKing") && s.mid.n >= 2 && s.mid.wr >= 60, weight: 70, icon: "👑", title: "“无敌中单”（本周版）",
+        texts: ["中路英雄{midN}场胜率{midWr}%。好吧，这周确实有点东西——接下来三个月都会拿这个吹。"],
+        meme: ["中路胜率 {midWr}%", "接下来我要吹三个月"] },
+      { id: "p-kda-ok", when: () => T("kdaBrag") && s.n >= 3 && s.avgKda >= 3.5, weight: 66, icon: "📈", title: "KDA信徒",
+        texts: ["KDA {kda}，这周确实还行。但请注意：KDA不能换成分，所以他还是{rank}。"],
+        meme: ["我KDA很好的", "所以为什么还是{rank}"] },
+      { id: "p-kda-bad", when: () => T("kdaBrag") && s.n >= 3 && s.avgKda < 3.5, weight: 80, icon: "📉", title: "KDA信徒",
+        texts: ["天天吹KDA，本周KDA {kda}。建议换个东西吹。"],
+        meme: ["我KDA很好的", "KDA：{kda}"] },
+      { id: "p-blame", when: () => T("blameTeam") && s.losses > 0, weight: 88, icon: "🫵", title: "甩锅大师",
+        texts: ["输了{l}把，按他的说法全是队友的锅。可是输的局里他场均死{lossD}次——队友再能背，也背不动这么多。", "{l}场失败，{l}口锅，全部甩给队友。物流效率比顺丰还高。"],
+        meme: ["都是队友的锅", "（输的局我场均死{lossD}次）"] },
+      { id: "p-rigged", when: () => T("rigged") && s.n > 0, weight: 84, icon: "🎰", title: "系统局受害者",
+        texts: s.wr >= 50
+          ? ["坚称Steam给他安排系统局。本周胜率{wr}%——如果这是系统局，系统对他还挺好的。"]
+          : ["胜率{wr}%，他说是系统局。系统表示：这锅我不背。"],
+        meme: ["这是系统局", "——某{rank}玩家"] },
+      { id: "p-mvp", when: () => T("selfMvp") && s.wins > 0 && s.worstWin, weight: 78, icon: "🥇", title: "自封MVP",
+        texts: ["赢了{w}把，每把都是他MVP（他自己评的）。其中一把{worstWinHero}打了{worstWinKda}，这也叫MVP？", "赢了是我MVP，输了是队友的锅。这套逻辑，本庭听了都想点赞。"],
+        meme: ["赢了：我是MVP", "输了：队友的锅"], hero: () => s.worstWin.hero_id },
+      { id: "p-targeted", when: () => T("targeted") && s.mid.losses > 0, weight: 82, icon: "🎯", title: "被针对专家",
+        texts: ["中路输了{midL}把，每把都是“被针对了”“对面故意选克制我的”。兄弟，对面根本不知道你是谁。"],
+        meme: ["对面故意针对我", "对面：你谁啊？"] },
+      { id: "p-lastpick", when: () => T("lastPick"), weight: 64, icon: "⏱️", title: "最后一选",
+        texts: ["每局都要最后一个选英雄，生怕被克制。选完照样被打爆，然后说被针对。完美闭环。"],
+        meme: ["我要最后一个选", "依然被克制"] },
+      { id: "p-trash", when: () => T("trashTalk") && s.mostDeaths, weight: 86, icon: "🗣️", title: "嘴强王者",
+        texts: ["天天嘲讽{rival}。但本周他自己最惨的一局死了{md}次，{rival}看了都要笑出声。", "嘲讽{rival}的时候声音最大，送人头的时候也不含糊：单局最多{md}死。"],
+        meme: ["嘲讽{rival}的男人", "一局死了{md}次"], hero: () => s.mostDeaths.hero_id },
+    ];
+    rules.push(...personaRules);
+
     const out = rules
       .filter((r) => { try { return r.when(); } catch { return false; } })
       .map((r) => ({
@@ -193,5 +262,54 @@
     return out.sort((a, b) => b.weight - a.weight);
   }
 
-  window.TribunaleRoast = { computeStats, verdict, buildRoasts, isWin };
+  // ---------- 吹牛鉴定: le sue frasi contro i dati ----------
+  // verdict: "true" = 属实, "half" = 存疑, "false" = 吹牛
+  function factCheck(s, ctx = {}) {
+    const persona = ctx.persona || {};
+    const traits = new Set(persona.traits || []);
+    if (!traits.size || !s.n) return [];
+    const tier = ctx.rankTier || 0;
+    const claimedIdx = MEDALS.indexOf(persona.claimedRank || "");
+    const level = (x, good, ok) => (x >= good ? "true" : x >= ok ? "half" : "false");
+    const checks = [];
+
+    if (traits.has("brag") && persona.claimedRank) checks.push({
+      claim: `“我是${persona.claimedRank}实力”`,
+      reality: `${medalName(tier)} · 约${approxMmr(tier) ?? "?"}分`,
+      verdict: claimedIdx > 0 && Math.floor(tier / 10) >= claimedIdx ? "true" : "false",
+    });
+    if (traits.has("midKing") && s.mid.n) checks.push({
+      claim: "“我是无敌中单，打爆一切”",
+      reality: `中路英雄 ${s.mid.n}场 · 胜率${Math.round(s.mid.wr)}% · 场均死${s.mid.avgDeaths.toFixed(1)}次`,
+      verdict: s.mid.n >= 3 && s.mid.wr >= 80 && s.mid.avgDeaths < 5 ? "true" : s.mid.wr >= 55 ? "half" : "false",
+    });
+    if (traits.has("kdaBrag")) checks.push({
+      claim: "“我KDA很好的”",
+      reality: `本周KDA ${s.avgKda.toFixed(2)}`,
+      verdict: level(s.avgKda, 4, 2.5),
+    });
+    if (traits.has("blameTeam") && s.losses) checks.push({
+      claim: "“输了都是队友的锅”",
+      reality: `输的局里他场均死${s.inLosses.avgDeaths.toFixed(1)}次`,
+      verdict: s.inLosses.avgDeaths >= 7 ? "false" : s.inLosses.avgDeaths >= 4 ? "half" : "true",
+    });
+    if (traits.has("rigged")) checks.push({
+      claim: "“Steam给我匹配系统局”",
+      reality: `本周胜率${Math.round(s.wr)}%`,
+      verdict: s.wr >= 50 ? "false" : "half",
+    });
+    if (traits.has("selfMvp") && s.wins) checks.push({
+      claim: "“赢了都是我MVP”",
+      reality: `赢的局平均KDA ${s.inWins.kda.toFixed(1)}`,
+      verdict: level(s.inWins.kda, 6, 3.5),
+    });
+    if (traits.has("targeted") && s.mid.losses) checks.push({
+      claim: "“对面故意选英雄针对我”",
+      reality: `对面 ${s.mid.losses} 局都没查过他是谁`,
+      verdict: "false",
+    });
+    return checks;
+  }
+
+  window.TribunaleRoast = { computeStats, verdict, buildRoasts, factCheck, isWin, medalName, approxMmr };
 })();

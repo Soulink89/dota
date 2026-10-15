@@ -6,7 +6,7 @@
   const DAYS = CFG.days || 7;
   const LOCALE = "zh-CN";
 
-  const MEDALS = ["", "先锋", "卫士", "中军", "统帅", "传奇", "万古流芳", "超凡入圣", "冠绝一世"];
+
   const GAME_MODES = { 1: "全英雄选择", 2: "队长模式", 3: "随机征召", 4: "单一征召", 5: "全部随机", 16: "队长征召", 18: "技能征召", 22: "全英雄选择", 23: "加速模式" };
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -19,7 +19,7 @@
     const g = Math.round(d / 86400);
     return g === 1 ? "昨天" : `${g}天前`;
   }
-  const medalName = (t) => (t ? (t >= 80 ? "冠绝一世" : `${MEDALS[Math.floor(t / 10)]} ${t % 10}`) : "未定级");
+  const medalName = R.medalName;
   const defaultTag = "被告";
 
   // ---------- caricamento ----------
@@ -32,7 +32,9 @@
         const p = data.profile?.profile || {};
         const name = cfg.alias || p.personaname || `玩家 ${id}`;
         const stats = R.computeStats(data.matches, DAYS);
-        return { id, cfg, data, heroes, name, stats, verdict: R.verdict(stats), roasts: R.buildRoasts(stats, name, heroes) };
+        const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier };
+        return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx,
+          verdict: R.verdict(stats), roasts: R.buildRoasts(stats, name, heroes, ctx), facts: R.factCheck(stats, ctx) };
       })().catch((e) => { cache.delete(id); throw e; }));
     }
     return cache.get(id);
@@ -172,6 +174,7 @@
             <div class="phero-id">
               <span class="tag">${esc(cfg.accusa || defaultTag)}</span>
               <h1>${esc(p.name)}</h1>
+              ${p.steamName && p.steamName !== p.name ? `<p class="aka">Steam：${esc(p.steamName)}${cfg.persona?.claimedRank ? ` · 自称“${esc(cfg.persona.claimedRank)}实力”` : ""}</p>` : ""}
               <div class="phero-meta">
                 ${medal(prof.rank_tier)}
                 <div><span class="muted small">段位</span><b>${esc(medalName(prof.rank_tier))}${prof.leaderboard_rank ? ` · #${prof.leaderboard_rank}` : ""}</b></div>
@@ -201,6 +204,17 @@
         ${kpi("平均GPM", s.n ? Math.round(s.avgGpm) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
         ${kpi("当前连续", s.n ? `${s.streak}${s.streakWin ? "连胜" : "连败"}` : "–", s.n ? (s.streakWin ? "火力全开" : "自由落体") : "–", s.n ? (s.streakWin ? "pos" : "neg") : "")}
       </section>
+
+      ${p.facts.length ? `
+      <section class="block">
+        <div class="block-head"><h2>吹牛鉴定</h2><span class="muted small">他说的 vs 数据说的</span></div>
+        <div class="facts">${p.facts.map((f, i) => `
+          <article class="fact fact-${f.verdict}" style="--d:${i * 70}ms">
+            <div class="fact-claim"><span class="muted small">他说</span><b>${esc(f.claim)}</b></div>
+            <div class="fact-reality"><span class="muted small">数据说</span><b>${esc(f.reality)}</b></div>
+            <div class="stamp">${{ true: "属实", half: "存疑", false: "吹牛" }[f.verdict]}</div>
+          </article>`).join("")}</div>
+      </section>` : ""}
 
       <section class="block">
         <div class="block-head"><h2>战绩走势</h2><span class="muted small">从旧到新</span></div>
@@ -240,7 +254,7 @@
     setTicker(p.roasts.map((r) => `<b>${esc(p.name)}</b>：${esc(r.text)}`));
 
     document.getElementById("reroll")?.addEventListener("click", () => {
-      const fresh = R.buildRoasts(s, p.name, p.heroes);
+      const fresh = R.buildRoasts(s, p.name, p.heroes, p.ctx);
       const shuffled = fresh.sort(() => Math.random() - 0.5).slice(0, 3);
       const off = Math.floor(Math.random() * memeHeroes.length);
       document.getElementById("memes").innerHTML = shuffled.map((r, i) => memeCard(r, p.heroes[r.heroId] || memeHeroes[(i + off) % memeHeroes.length], i)).join("");
