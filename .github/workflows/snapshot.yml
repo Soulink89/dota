@@ -1,0 +1,25 @@
+name: Aggiorna statistiche
+
+on:
+  schedule:
+    - cron: "17 */2 * * *" # ogni 2 ore
+  workflow_dispatch: {}     # pulsante "Run workflow" manuale
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/snapshot.mjs
+      - name: Salva i dati se cambiati
+        run: |
+          git config user.name "tribunale-bot"
+          git config user.email "tribunale-bot@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet || (git commit -m "Aggiorna statistiche" && git push)
