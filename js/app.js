@@ -34,7 +34,7 @@
         const stats = R.computeStats(data.matches, DAYS);
         const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier };
         return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx,
-          verdict: R.verdict(stats), roasts: R.buildRoasts(stats, name, heroes, ctx), facts: R.factCheck(stats, ctx) };
+          verdict: R.verdict(stats), roasts: R.buildRoasts(stats, name, heroes, ctx), facts: R.factCheck(stats, ctx), special: R.specials(stats, ctx) };
       })().catch((e) => { cache.delete(id); throw e; }));
     }
     return cache.get(id);
@@ -216,6 +216,8 @@
           </article>`).join("")}</div>
       </section>` : ""}
 
+      ${specialBlock(p.special)}
+
       <section class="block">
         <div class="block-head"><h2>战绩走势</h2><span class="muted small">从旧到新</span></div>
         ${resultStrip(s)}
@@ -259,6 +261,34 @@
       const off = Math.floor(Math.random() * memeHeroes.length);
       document.getElementById("memes").innerHTML = shuffled.map((r, i) => memeCard(r, p.heroes[r.heroId] || memeHeroes[(i + off) % memeHeroes.length], i)).join("");
     });
+  }
+
+  function specialBlock(sp) {
+    if (!sp || (!sp.cards.length && !sp.curve && !sp.xiuxian)) return "";
+    const curve = sp.curve ? `
+      <div class="sp-panel sp-curve">
+        <div class="sp-head"><span>🥃</span><div><h4>酒精曲线</h4><p class="muted small">每晚第几局的胜率</p></div></div>
+        <div class="curve">${sp.curve.map((c, i) => `
+          <div class="curve-col" style="--h:${c.n ? Math.max(6, c.wr) : 0}%;--d:${i * 120}ms">
+            <b class="${c.n ? (c.wr >= 50 ? "pos" : "neg") : "muted"}">${c.n ? Math.round(c.wr) + "%" : "–"}</b>
+            <div class="curve-bar"><i class="lvl${i}"></i></div>
+            <span>${esc(c.label)}</span><em>${c.n}场</em>
+          </div>`).join("")}</div>
+      </div>` : "";
+    const xx = sp.xiuxian ? `
+      <div class="sp-panel sp-xiu">
+        <div class="sp-head"><span>🧘</span><div><h4>修仙进度</h4><p class="muted small">23点后开的局：${sp.xiuxian.games}场 · ${fmt1(sp.xiuxian.hours)}小时</p></div></div>
+        <div class="xiu-level">${esc(sp.xiuxian.level)}</div>
+        <div class="xiu-bar"><i style="width:${Math.min(100, sp.xiuxian.pct).toFixed(0)}%"></i></div>
+        <p class="muted small">${sp.xiuxian.next ? `距离【${esc(sp.xiuxian.next)}】还差 ${fmt1(sp.xiuxian.toNext)} 小时深夜刀塔` : "已飞升。下一步：升天。"}</p>
+      </div>` : "";
+    return `
+      <section class="block">
+        <div class="block-head"><h2>专项调查</h2><span class="muted small">部分数据为估算</span></div>
+        ${sp.cards.length ? `<div class="sp-cards">${sp.cards.map((c) => `
+          <div class="kpi sp-card"><span class="kpi-label">${c.icon} ${esc(c.label)}</span><b class="kpi-val ${c.cls || ""}">${esc(c.value)}</b><span class="kpi-sub">${esc(c.sub)}</span></div>`).join("")}</div>` : ""}
+        ${curve || xx ? `<div class="sp-grid">${curve}${xx}</div>` : ""}
+      </section>`;
   }
 
   function kpi(label, value, sub, cls = "") {

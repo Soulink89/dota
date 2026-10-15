@@ -11,6 +11,17 @@
   const medalName = (t) => (t ? (t >= 80 ? "冠绝一世" : `${MEDALS[Math.floor(t / 10)]} ${t % 10}`) : "未定级");
   const approxMmr = (t) => (t ? Math.round(((Math.floor(t / 10) - 1) * 770 + Math.max(0, (t % 10) - 1) * 154) / 100) * 100 : null);
 
+  // Livelli di 修仙 in base alle ore giocate di notte
+  const XIUXIAN = [[0, "炼气"], [2, "筑基"], [5, "金丹"], [8, "元婴"], [12, "化神"], [16, "渡劫"], [20, "飞升"]];
+  function xiuxian(hours) {
+    let i = 0;
+    while (i + 1 < XIUXIAN.length && hours >= XIUXIAN[i + 1][0]) i++;
+    const next = XIUXIAN[i + 1];
+    return { level: XIUXIAN[i][1], next: next?.[1] ?? null, hours,
+      pct: next ? ((hours - XIUXIAN[i][0]) / (next[0] - XIUXIAN[i][0])) * 100 : 100, toNext: next ? next[0] - hours : 0 };
+  }
+  const CURVE_LABELS = ["第1局 · 清醒", "第2局 · 微醺", "第3局 · 上头", "第4局+ · 断片"];
+
   // OpenDota quasi mai ha la corsia per le partite non analizzate: usiamo gli eroi tipici da mid.
   const MID_HEROES = new Set([10, 11, 13, 17, 21, 22, 25, 34, 36, 39, 43, 45, 46, 47, 49, 52, 59, 74, 76, 106, 113, 120, 126]);
   const isMid = (m) => (m.lane_role ? m.lane_role === 2 : MID_HEROES.has(m.hero_id));
@@ -49,6 +60,25 @@
     };
     const winsList = ms.filter((m) => m.win), lossList = ms.filter((m) => !m.win);
 
+    // core/supporto stimato dai last hit al minuto
+    const lhpm = (m) => (m.last_hits ?? 0) / Math.max(1, m.duration / 60);
+    const coreList = ms.filter((m) => lhpm(m) >= 3.5), supList = ms.filter((m) => lhpm(m) < 3.5);
+    const lh10 = coreList.length ? (coreList.reduce((t, m) => t + lhpm(m), 0) / coreList.length) * 10 : 0;
+
+    // serate: partite a meno di 90 minuti dalla fine della precedente
+    const sessions = [];
+    for (const m of [...ms].reverse()) {
+      const cur = sessions[sessions.length - 1], prev = cur?.[cur.length - 1];
+      if (prev && m.start_time - (prev.start_time + prev.duration) < 90 * 60) cur.push(m); else sessions.push([m]);
+    }
+    const byIdx = [[], [], [], []];
+    for (const sess of sessions) sess.forEach((m, i) => byIdx[Math.min(i, 3)].push(m));
+
+    // partite "da 修仙": iniziate tra le 23 e le 6 (ora locale)
+    const late = ms.filter((m) => { const h = new Date(m.start_time * 1000).getHours(); return h >= 23 || h < 6; });
+    const ranked = ms.filter((m) => m.lobby_type === 7);
+    const party = ms.filter((m) => m.party_size > 1), solo = ms.filter((m) => m.party_size === 1);
+
     return {
       matches: ms, n, wins, losses: n - wins,
       wr: n ? (wins / n) * 100 : 0,
@@ -73,6 +103,14 @@
       inWins: group(winsList),
       inLosses: group(lossList),
       worstWin: winsList.reduce((b, m) => (b == null || m.kda < b.kda ? m : b), null),
+      distinctHeroes: heroes.length,
+      core: coreList.length, sup: supList.length, lh10,
+      lhTotal: sum((m) => m.last_hits),
+      sessions: sessions.length,
+      curve: byIdx.map(group),
+      lateN: late.length, lateHours: late.reduce((t, m) => t + m.duration, 0) / 3600,
+      mmrDelta: (ranked.filter((m) => m.win).length * 2 - ranked.length) * 25,
+      party: group(party), solo: group(solo),
     };
   }
 
@@ -118,6 +156,9 @@
     22: ["宙斯：大招放得勤，补刀没几根。"],
   };
 
+  const groupWr = (gs) => { const n = gs.reduce((t, g) => t + g.n, 0); return n ? (gs.reduce((t, g) => t + g.wins, 0) / n) * 100 : 0; };
+  const groupN = (gs) => gs.reduce((t, g) => t + g.n, 0);
+
   // ---------- Regole delle battute ----------
   function buildRoasts(s, name, heroes, ctx = {}) {
     const H = (id) => heroes[id]?.localized_name || "神秘英雄";
@@ -131,6 +172,10 @@
       lossD: s.inLosses.avgDeaths.toFixed(1), winKda: s.inWins.kda.toFixed(1),
       worstWinKda: s.worstWin ? `${s.worstWin.kills}/${s.worstWin.deaths}/${s.worstWin.assists}` : "",
       worstWinHero: s.worstWin ? H(s.worstWin.hero_id) : "",
+      distinct: s.distinctHeroes, core: s.core, sup: s.sup, lh10: Math.round(s.lh10), avgLh: Math.round(s.avgLh), lhTotal: s.lhTotal,
+      wr1: Math.round(s.curve[0].wr), wr3: Math.round(groupWr(s.curve.slice(2))), bottles: s.sessions,
+      mmrD: (s.mmrDelta > 0 ? "+" : "") + s.mmrDelta, late: s.lateN, xlevel: xiuxian(s.lateHours).level,
+      partyN: s.party.n, partyWr: Math.round(s.party.wr), soloN: s.solo.n,
       name, n: s.n, wr: Math.round(s.wr), w: s.wins, l: s.losses,
       hours: s.hours.toFixed(1), deaths: s.deaths, kda: s.avgKda.toFixed(2),
       gpm: Math.round(s.avgGpm), streak: s.streak, worst: s.worstRun,
@@ -243,6 +288,46 @@
       { id: "p-trash", when: () => T("trashTalk") && s.mostDeaths, weight: 86, icon: "🗣️", title: "嘴强王者",
         texts: ["天天嘲讽{rival}。但本周他自己最惨的一局死了{md}次，{rival}看了都要笑出声。", "嘲讽{rival}的时候声音最大，送人头的时候也不含糊：单局最多{md}死。"],
         meme: ["嘲讽{rival}的男人", "一局死了{md}次"], hero: () => s.mostDeaths.hero_id },
+      { id: "p-allround", when: () => T("allRounder") && s.distinctHeroes >= 5, weight: 80, icon: "🎲", title: "全能选手",
+        texts: s.wr < 50
+          ? ["本周{n}场用了{distinct}个英雄，一号位到五号位全试了一遍。什么位置都会打，什么位置都会输。"]
+          : ["{n}场{distinct}个英雄，核心{core}场、辅助{sup}场。什么位置都会打，这次是真的。"],
+        meme: s.wr < 50 ? ["什么位置都会打", "什么位置都会输"] : ["{distinct}个英雄", "总有一个能赢"] },
+      { id: "p-lasthit", when: () => T("cantLastHit") && s.n > 0, weight: 76, icon: "🗡️", title: "补刀残疾人士",
+        texts: s.core
+          ? ["自称不会补刀——这是本庭收到的唯一一句真话：打核心时平均每10分钟补刀{lh10}个。", "说自己不会补刀，本周核心局每10分钟{lh10}刀。兵线：谢谢你放过我们。"]
+          : ["自称不会补刀，所以本周干脆全打辅助，平均补刀{avgLh}。聪明的规避。"],
+        meme: ["我不会补刀", "终于说了句实话"] },
+      { id: "p-theory", when: () => T("theorist") && s.n > 0, weight: 87, icon: "🎙️", title: "DC首席理论家",
+        texts: ["DC里理论一套一套的，本周实战KDA {kda}、胜率{wr}%。理论超凡入圣，实战{rank}。", "在DC指导了全队一晚上，结论：大家都有问题，除了他。", "话多到语音频道需要扩容。本周他说的话比他补的刀还多（补刀一共才{lhTotal}个）。", "评判别人头头是道，轮到自己：{l}场失败，没有一场是他的问题（他说的）。"],
+        meme: ["理论：超凡入圣", "实战：{rank}"] },
+      { id: "p-drunk", when: () => T("drunk") && s.curve[0].n > 0 && groupN(s.curve.slice(2)) > 0, weight: 93, icon: "🥃", title: "醉拳传人",
+        texts: s.curve[0].wr > groupWr(s.curve.slice(2))
+          ? ["每晚第1局（清醒）胜率{wr1}%，第3局以后（上头）胜率{wr3}%。威士忌才是他最大的对手。"]
+          : ["离谱：喝得越多赢得越多。第1局胜率{wr1}%，第3局以后{wr3}%。建议直接喝完一瓶再排。"],
+        meme: ["一晚一瓶威士忌", "醉拳打法，第3局胜率{wr3}%"] },
+      { id: "p-whisky", when: () => T("drunk") && s.sessions > 0, weight: 60, icon: "🍾", title: "酒精账单",
+        texts: ["本周开了{bottles}个晚上，按一晚一瓶算，估计喝掉{bottles}瓶威士忌。醉驾英雄，扣的是天梯分。"],
+        meme: ["本周{bottles}瓶威士忌", "肝：救命"] },
+      { id: "p-smoke", when: () => T("smoker") && s.n > 0, weight: 62, icon: "🚬", title: "一局一根",
+        texts: ["每局结束都要来一根，本周{n}局={n}根烟。肺比他的高地还脆。", "{n}局游戏，{n}根烟。游戏时长{hours}小时，抽烟时长另算。"],
+        meme: ["每局一根烟", "本周已抽{n}根"] },
+      { id: "p-mmr", when: () => T("mmrAnxiety") && s.n > 0, weight: 85, icon: "📊", title: "天梯分焦虑症",
+        texts: s.mmrDelta < 0
+          ? ["比谁都在乎天梯分，本周估算{mmrD}分。在乎也没用啊兄弟。"]
+          : ["本周估算{mmrD}分，今晚可以多喝一杯了。下周记得还回去。"],
+        meme: ["我很在乎天梯分", "本周：{mmrD}"] },
+      { id: "p-party", when: () => T("partyFear") && s.party.n > 0, weight: 74, icon: "🙈", title: "开黑恐惧症",
+        texts: ["说怕跟主团开黑掉分。本周组排{partyN}场，胜率{partyWr}%——看来掉分跟主团没关系。"],
+        meme: ["跟主团开黑？", "不了，怕掉分"] },
+      { id: "p-ancient", when: () => T("ancientOneDay"), weight: 89, icon: "🎟️", title: "万古一日游",
+        texts: (ctx.rankTier || 0) >= 61
+          ? ["又上万古了！本庭郑重提醒：这次请坚持超过24小时。"]
+          : ["上了万古1，待了一天，又掉回{rank}。万古一日游，门票都没回本。", "万古的空气只呼吸了一天。现居地：{rank}。"],
+        meme: ["万古一日游", "现居：{rank}"] },
+      { id: "p-xiuxian", when: () => T("xiuxian") && s.lateN > 0, weight: 83, icon: "🧘", title: "修仙中",
+        texts: ["本周深夜修仙{late}局，修为已达【{xlevel}】。照这个速度，很快就升天了。", "凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。"],
+        meme: ["修仙中，勿扰", "当前境界：{xlevel}"] },
     ];
     rules.push(...personaRules);
 
@@ -308,8 +393,54 @@
       reality: `对面 ${s.mid.losses} 局都没查过他是谁`,
       verdict: "false",
     });
+    if (traits.has("allRounder")) checks.push({
+      claim: "“我什么位置都会打”",
+      reality: `${s.distinctHeroes}个英雄 · 核心${s.core}场 · 辅助${s.sup}场`,
+      verdict: s.core && s.sup && s.distinctHeroes >= 5 ? "true" : "half",
+    });
+    if (traits.has("cantLastHit") && s.core) checks.push({
+      claim: "“我不会补刀”",
+      reality: `核心局每10分钟补刀 ${Math.round(s.lh10)} 个`,
+      verdict: s.lh10 < 50 ? "true" : s.lh10 < 65 ? "half" : "false",
+    });
+    if (traits.has("theorist")) checks.push({
+      claim: "“听我的准没错”",
+      reality: `本周胜率${Math.round(s.wr)}% · KDA ${s.avgKda.toFixed(2)}`,
+      verdict: s.wr >= 60 ? "true" : s.wr >= 50 ? "half" : "false",
+    });
+    if (traits.has("drunk") && s.curve[0].n && groupN(s.curve.slice(2))) checks.push({
+      claim: "“喝了酒我更强”",
+      reality: `清醒局胜率${Math.round(s.curve[0].wr)}% · 上头局${Math.round(groupWr(s.curve.slice(2)))}%`,
+      verdict: groupWr(s.curve.slice(2)) > s.curve[0].wr ? "true" : "false",
+    });
+    if (traits.has("mmrAnxiety")) checks.push({
+      claim: "“我很稳，不会掉分”",
+      reality: `本周天梯分估算 ${s.mmrDelta > 0 ? "+" : ""}${s.mmrDelta}`,
+      verdict: s.mmrDelta > 0 ? "true" : s.mmrDelta === 0 ? "half" : "false",
+    });
+    if (traits.has("ancientOneDay")) checks.push({
+      claim: "“我是万古选手”",
+      reality: medalName(tier),
+      verdict: tier >= 61 ? "true" : "false",
+    });
     return checks;
   }
 
-  window.TribunaleRoast = { computeStats, verdict, buildRoasts, factCheck, isWin, medalName, approxMmr };
+  // ---------- 专项调查: pannelli speciali attivati dai traits ----------
+  function specials(s, ctx = {}) {
+    const traits = new Set(ctx.persona?.traits || []);
+    if (!s.n) return null;
+    const cards = [];
+    if (traits.has("drunk")) cards.push({ icon: "🥃", label: "威士忌（估算）", value: `${s.sessions} 瓶`, sub: `本周开黑${s.sessions}个晚上 · 一晚一瓶` });
+    if (traits.has("smoker")) cards.push({ icon: "🚬", label: "香烟（估算）", value: `${s.n} 根`, sub: "一局一根，从不落下" });
+    if (traits.has("mmrAnxiety")) cards.push({ icon: "📊", label: "天梯分变化（估算）", value: `${s.mmrDelta > 0 ? "+" : ""}${s.mmrDelta}`, sub: "按每局±25分估算", cls: s.mmrDelta >= 0 ? "pos" : "neg" });
+    if (traits.has("partyFear")) cards.push({ icon: "🙈", label: "组排 / 单排", value: `${s.party.n} / ${s.solo.n}`, sub: s.party.n ? `组排胜率 ${Math.round(s.party.wr)}%` : "从不开黑" });
+    return {
+      cards,
+      curve: traits.has("drunk") && s.sessions ? s.curve.map((g, i) => ({ label: CURVE_LABELS[i], n: g.n, wr: g.wr })) : null,
+      xiuxian: traits.has("xiuxian") ? { ...xiuxian(s.lateHours), games: s.lateN } : null,
+    };
+  }
+
+  window.TribunaleRoast = { computeStats, verdict, buildRoasts, factCheck, specials, isWin, medalName, approxMmr };
 })();

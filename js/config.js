@@ -17,6 +17,15 @@
 //      targeted   quando perde in mid dice di essere "被针对"
 //      lastPick   sceglie sempre per ultimo per paura dei counter
 //      trashTalk  prende in giro gli altri (usa rival)
+//      theorist   teorico in Discord: parla tanto, insegna, giudica
+//      allRounder dice di saper giocare in ogni ruolo
+//      cantLastHit dice di non saper fare last hit
+//      drunk      gioca bevendo (curva dell'alcol: winrate per partita della serata)
+//      smoker     una sigaretta dopo ogni partita
+//      mmrAnxiety ossessionato dall'MMR
+//      partyFear  ha paura di giocare in party col gruppo per non perdere MMR
+//      ancientOneDay è salito ad Ancient per un giorno ed è ridisceso
+//      xiuxian    gioca fino a tarda notte (修仙), con livello di 修仙
 // ============================================================
 window.TRIBUNALE_CONFIG = {
   siteName: "刀塔法庭",
@@ -30,6 +39,14 @@ window.TRIBUNALE_CONFIG = {
         claimedRank: "超凡入圣",
         rival: "呆逼",
         traits: ["brag", "midKing", "kdaBrag", "blameTeam", "rigged", "selfMvp", "targeted", "lastPick", "trashTalk"],
+      },
+    },
+    {
+      steam64: "76561198110591464",
+      alias: "Ping神",
+      accusa: "DC首席理论家",
+      persona: {
+        traits: ["theorist", "allRounder", "cantLastHit", "drunk", "smoker", "mmrAnxiety", "partyFear", "ancientOneDay", "xiuxian"],
       },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },

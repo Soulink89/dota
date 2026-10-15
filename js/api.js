@@ -9,7 +9,7 @@
   const MATCH_FIELDS = [
     "hero_id", "kills", "deaths", "assists", "duration", "start_time",
     "player_slot", "radiant_win", "game_mode", "lobby_type", "last_hits",
-    "gold_per_min", "xp_per_min", "hero_damage", "tower_damage", "hero_healing", "party_size",
+    "gold_per_min", "xp_per_min", "hero_damage", "tower_damage", "hero_healing", "party_size", "lane_role",
   ];
 
   const toAccountId = (steam64) => String(BigInt(steam64) - STEAM64_BASE);

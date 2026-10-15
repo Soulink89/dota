@@ -5,7 +5,7 @@ import vm from "node:vm";
 
 const OD = "https://api.opendota.com/api";
 const FIELDS = ["hero_id", "kills", "deaths", "assists", "duration", "start_time", "player_slot", "radiant_win",
-  "game_mode", "lobby_type", "last_hits", "gold_per_min", "xp_per_min", "hero_damage", "tower_damage", "hero_healing", "party_size"];
+  "game_mode", "lobby_type", "last_hits", "gold_per_min", "xp_per_min", "hero_damage", "tower_damage", "hero_healing", "party_size", "lane_role"];
 
 const ctx = { window: {} };
 vm.runInNewContext(await readFile(new URL("../js/config.js", import.meta.url), "utf8"), ctx);
