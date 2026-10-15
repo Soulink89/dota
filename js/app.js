@@ -287,7 +287,7 @@
       </section>` : ""}
 
       ${specialBlock(p.special, p.heroes)}
-      ${cfg.persona?.nemesis ? `<div id="nemesis"></div>` : ""}
+      ${cfg.persona?.nemesis || cfg.persona?.victim ? `<div id="nemesis"></div>` : ""}
 
       ${s.n ? `
       <section class="block">
@@ -349,12 +349,13 @@
     };
     renderJokes(p.split);
     if (cfg.persona?.nemesis) renderNemesis(p, cfg.persona.nemesis);
+    else if (cfg.persona?.victim) renderNemesis(p, cfg.persona.victim, "better");
     document.getElementById("reroll")?.addEventListener("click", () => renderJokes(splitRoasts(p.roasts, true)));
   }
 
 
-  // 宿敌对比: solo le voci in cui il giocatore va peggio del suo "nemico"
-  async function renderNemesis(p, nemesisAlias) {
+  // 宿敌对比 (mode "worse": solo dove il giocatore perde) / 克星 (mode "better": solo dove batte il rivale)
+  async function renderNemesis(p, nemesisAlias, mode = "worse") {
     const el = document.getElementById("nemesis");
     const ncfg = CFG.players.find((c) => c.alias === nemesisAlias);
     if (!el || !ncfg || !p.stats.n) return;
@@ -363,17 +364,25 @@
     if (!q.stats.n) return;
     const a = p.stats, b = q.stats;
     const metrics = [
-      { label: "胜率", av: a.wr, bv: b.wr, fmt: (x) => Math.round(x) + "%", worse: a.wr < b.wr },
-      { label: "KDA", av: a.avgKda, bv: b.avgKda, fmt: (x) => x.toFixed(2), worse: a.avgKda < b.avgKda },
-      { label: "场均死亡", av: a.avgDeaths, bv: b.avgDeaths, fmt: (x) => x.toFixed(1), worse: a.avgDeaths > b.avgDeaths },
-      { label: "平均GPM", av: a.avgGpm, bv: b.avgGpm, fmt: (x) => Math.round(x), worse: a.avgGpm < b.avgGpm },
-      { label: "场均击杀", av: a.kills / a.n, bv: b.kills / b.n, fmt: (x) => x.toFixed(1), worse: a.kills / a.n < b.kills / b.n },
-    ].filter((m) => m.worse);
+      { label: "胜率", av: a.wr, bv: b.wr, fmt: (x) => Math.round(x) + "%", worse: a.wr < b.wr, better: a.wr > b.wr },
+      { label: "KDA", av: a.avgKda, bv: b.avgKda, fmt: (x) => x.toFixed(2), worse: a.avgKda < b.avgKda, better: a.avgKda > b.avgKda },
+      { label: "场均死亡", av: a.avgDeaths, bv: b.avgDeaths, fmt: (x) => x.toFixed(1), worse: a.avgDeaths > b.avgDeaths, better: a.avgDeaths < b.avgDeaths },
+      { label: "平均GPM", av: a.avgGpm, bv: b.avgGpm, fmt: (x) => Math.round(x), worse: a.avgGpm < b.avgGpm, better: a.avgGpm > b.avgGpm },
+      { label: "场均击杀", av: a.kills / a.n, bv: b.kills / b.n, fmt: (x) => x.toFixed(1), worse: a.kills / a.n < b.kills / b.n, better: a.kills / a.n > b.kills / b.n },
+    ].filter((m) => m[mode]);
     if (!metrics.length) return;
+    const better = mode === "better";
+    let together = "";
+    if (better) {
+      try {
+        const rows = await fetch(`https://api.opendota.com/api/players/${p.id}/matches?included_account_id=${q.id}&project=start_time`).then((r) => r.json());
+        if (Array.isArray(rows) && rows.length) together = `两人生涯同场${rows.length}局。`;
+      } catch {}
+    }
     el.innerHTML = `
       <section class="block">
-        <div class="block-head"><h2>宿敌对比</h2><span class="muted small">${esc(p.name)} vs ${esc(q.name)} · 只列他输掉的项目</span></div>
-        <div class="sp-panel nemesis">
+        <div class="block-head"><h2>${better ? `${esc(q.name)}克星` : "宿敌对比"}</h2><span class="muted small">${esc(p.name)} vs ${esc(q.name)} · ${better ? `只列${esc(q.name)}输掉的项目` : "只列他输掉的项目"}</span></div>
+        <div class="sp-panel nemesis ${better ? "flip" : ""}">
           <div class="nem-head">
             <div>${avatar(p, p.name)}<b>${esc(p.name)}</b></div>
             <span class="nem-vs">VS</span>
@@ -384,7 +393,7 @@
             return `<div class="nem-row"><span class="nem-val">${m.fmt(m.av)}</span>
               <div class="nem-bar"><i class="l" style="width:${(Math.abs(m.av) / tot) * 100}%"></i><i class="r" style="width:${(Math.abs(m.bv) / tot) * 100}%"></i><em>${m.label}</em></div>
               <span class="nem-val win">${m.fmt(m.bv)}</span></div>`; }).join("")}
-          <p class="muted small">连被${esc(q.name)}说菜都没法反驳：以上${metrics.length}项全部输给了他。</p>
+          <p class="muted small">${better ? `本周${metrics.length}项数据，${esc(q.name)}全部落后。${together}` : `连被${esc(q.name)}说菜都没法反驳：以上${metrics.length}项全部输给了他。`}</p>
         </div>
       </section>`;
   }

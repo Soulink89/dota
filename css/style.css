@@ -555,3 +555,7 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .axe.other { background: repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 8px, transparent 8px 16px), var(--panel); }
 .axe.other::before { display: none; }
 .axe.other b { color: var(--muted); }
+.nemesis.flip .nem-val { color: var(--green); }
+.nemesis.flip .nem-val.win { color: var(--red); }
+.nemesis.flip .nem-bar i.l { background: linear-gradient(90deg, #2f9b4f, #5ed37c); }
+.nemesis.flip .nem-bar i.r { background: linear-gradient(90deg, #e8473c, #9c241b); }
