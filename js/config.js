@@ -6,7 +6,7 @@
 //
 //  "color" (opzionale): colore personale della pagina. "bounty": il reato sul manifesto 通缉令.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
-//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆); assente = voto su 100
+//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
 //    traits:      i suoi vizi, a scelta tra:
@@ -39,7 +39,13 @@
 //      tinyPool   pool di eroi minuscolo
 //      jakiroOnly unico supporto: Jakiro (双头龙)
 //      laneLoser  perde sempre la lane
-//    nemesis:     alias di un altro giocatore: confronto 宿敌对比 (solo dove perde lui)
+//      threeAxes  "三板斧": gioca sempre gli stessi 3 eroi (barra con i ritratti)
+//      drowArcana ha trovato l'arcana di Drow (小黑至宝) e gioca solo lei
+//      drow15     dice di poter giocare Drow in ogni ruolo, da 1 a 5
+//      noSupport  non ha mai giocato supporto
+//      pingStudent una sera Ping神 gli ha fatto la lezione e lui ha risposto solo "嗯嗯"
+//      hardToRoast gioca bene: "il tribunale non trova di cosa accusarlo"
+//    nemesis:    alias di un altro giocatore: confronto 宿敌对比 (solo dove perde lui)
 // ============================================================
 window.TRIBUNALE_CONFIG = {
   siteName: "刀塔法庭",
@@ -79,6 +85,17 @@ window.TRIBUNALE_CONFIG = {
         meter: "babysit",
         nemesis: "金神",
         traits: ["babysit", "milkAfk", "scared", "streamer", "russianCommander", "drowCurse", "jinTarget", "positions", "tinyPool", "jakiroOnly", "laneLoser"],
+      },
+    },
+    {
+      steam64: "76561198072997187",
+      alias: "Yoki神",
+      accusa: "小黑1-5号位",
+      color: "#5eead4",
+      bounty: "至宝炫耀罪",
+      persona: {
+        meter: "axes",
+        traits: ["threeAxes", "drowArcana", "drow15", "noSupport", "pingStudent", "hardToRoast"],
       },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },

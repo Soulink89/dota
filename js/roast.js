@@ -108,6 +108,8 @@
       worstWin: winsList.reduce((b, m) => (b == null || m.kda < b.kda ? m : b), null),
       distinctHeroes: heroes.length,
       core: coreList.length, sup: supList.length, lh10,
+      pureSup: ms.filter((m) => lhpm(m) < 2.5).length,
+      top3: heroes.slice(0, 3).reduce((t, h) => t + h.games, 0),
       lhTotal: sum((m) => m.last_hits),
       sessions: sessions.length,
       curve: byIdx.map(group),
@@ -137,6 +139,12 @@
       return { title: "本周上头指数", voto: 0, cls: "g-bad",
         label: String(clamp(30 + s.lateN * 3 + s.sessions * 4 + Math.max(0, sober - late) / 3)),
         text: pickFor(["本庭建议：开黑前先吹一下酒精测试仪。", "喝到第几局，他自己也数不清了。", "键盘上的威士忌，比他的眼位还多。"], ctx) };
+    }
+    if (meter === "axes") {
+      const title = "三板斧浓度";
+      if (!s.n) return { title, voto: 0, label: "–", cls: "g-mid", text: "本周没出斧。斧头在磨，人在睡。" };
+      return { title, voto: 0, cls: "g-mid", label: Math.round((s.top3 / s.n) * 100) + "%",
+        text: pickFor(["三板斧砍到现在，斧头都卷刃了。", "第四把斧头：仍在建设中。", "斧头就三把，用得比谁都勤。"], ctx) };
     }
     if (meter === "babysit") {
       const title = "需要保姆（分钟）";
@@ -217,6 +225,8 @@
       partyN: s.party.n, partyWr: Math.round(s.party.wr),
       name, n: s.n, wr: Math.round(s.wr), w: s.wins, l: s.losses,
       avgK: s.n ? (s.kills / s.n).toFixed(1) : 0, gpm: Math.round(s.avgGpm),
+      dg: s.matches.filter((m) => m.hero_id === DROW).length,
+      dwr: (() => { const d = s.matches.filter((m) => m.hero_id === DROW); return d.length ? Math.round((d.filter((m) => m.win).length / d.length) * 100) : 0; })(),
       hours: s.hours.toFixed(1), hours2: (s.hours * 2).toFixed(0), deaths: s.deaths, avgD: s.avgDeaths.toFixed(1), kda: s.avgKda.toFixed(2),
       streak: s.streak, worst: s.worstRun,
       favHero: fav ? H(fav.hero_id) : "", favGames: fav?.games,
@@ -351,14 +361,33 @@
         ["本周深夜修仙{late}局，修为已达【{xlevel}】。照这个速度，很快就升天了。", "修仙中，勿扰", "境界：{xlevel}"],
         ["凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。", "深夜修仙", "离升天不远了"]] },
 
+      // ----- Yoki神 -----
+      { id: "y-arcana", hero: () => DROW, when: () => T("drowArcana"), weight: 92, icon: "💎", title: "至宝改变人生", v: [
+        ["抽出小黑至宝那天起，他的刀塔就只剩小黑了。至宝特效，比他的人生规划还清晰。", "抽到小黑至宝", "从此只玩小黑"]] },
+      { id: "y-drowwr", hero: () => DROW, when: () => T("drowArcana") && s.matches.filter((m) => m.hero_id === DROW).length >= 2, weight: 86, icon: "🏹", title: "至宝不加属性", v: [
+        ["本周小黑{dg}场，胜率{dwr}%。至宝加特效，不加胜率。", "小黑至宝", "不加胜率"]] },
+      { id: "y-cheat", hero: () => fav?.hero_id, when: () => T("drowArcana") && fav && fav.hero_id !== DROW, weight: 90, icon: "🫢", title: "嘴上小黑", v: [
+        ["嘴上天天小黑，本周玩得最多的却是{favHero}（{favGames}场）。小黑：我只是个至宝展示架。", "嘴上：小黑", "手上：{favHero}"]] },
+      { id: "y-ping", hero: () => 39, when: () => T("pingStudent"), weight: 88, icon: "🎓", title: "Ping神的学生", v: [
+        ["被Ping神在DC里教导了一整晚，从站位讲到人生。他全程只回了两个字：嗯嗯。", "Ping神：你听我说", "Yoki：嗯嗯"]] },
+      { id: "y-clean", when: () => T("hardToRoast") && s.n >= 5 && s.wr >= 55, weight: 84, icon: "🔍", title: "黑料稀缺", v: [
+        ["本庭翻遍他{n}场比赛，胜率{wr}%，能黑的东西少得可怜。只好黑他的至宝了。", "本庭找黑料", "找不到"]] },
+      { id: "y-carry", hero: () => s.heroes[1]?.hero_id, when: () => T("noSupport") && s.n >= 5 && s.pureSup === 0, weight: 80, icon: "🚫", title: "辅助？什么辅助", v: [
+        ["本周{n}场，每一场都在拿资源。队友的经济？那是什么，能吃吗？", "经济分配", "全部归我"]] },
+
       // ----- B神 -----
-      { id: "b-hidden", hero: () => 32, when: () => ctx.hidden, weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
+      { id: "b-hidden", hero: () => 62, when: () => ctx.hidden, weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
         ["比赛数据设为不公开。打得怎么样？本庭查不到，但他自己心里有数。", "比赛记录", "不敢公开"],
-        ["连OpenDota都查不到他的比赛。隐身技能，比他的任何一个英雄都练得好。", "隐身技能", "满级"]] },
-      { id: "b-pos", hero: () => 1, when: () => T("positions"), weight: 86, icon: "1️⃣", title: "只会1号位和3号位", v: [
+        ["连OpenDota都查不到他的比赛。打得怎么样，只有他自己知道。", "OpenDota", "查无此人"]] },
+      { id: "b-pos", hero: () => 44, when: () => T("positions"), weight: 86, icon: "1️⃣", title: "只会1号位和3号位", v: [
         ["只会1号位和3号位。2号位？那是金神吹牛的地盘，他不敢去。", "1号位或3号位", "其他位置：不会"]] },
-      { id: "b-pool", hero: () => DROW, when: () => T("tinyPool") && (!s.n || s.distinctHeroes <= 5), weight: 84, icon: "🖐️", title: "一只手的英雄池", v: [
+      { id: "b-pool", hero: () => 18, when: () => T("tinyPool") && (!s.n || s.distinctHeroes <= 5), weight: 84, icon: "🖐️", title: "一只手的英雄池", v: [
+        ["英雄池：剑圣、幻刺、斯温，最近又加了个猥琐力丸。四个英雄，一只手还剩一根手指。", "英雄池", "剑圣 幻刺 斯温 力丸"],
         ["英雄池三四个，选英雄阶段永远是全场最快的——反正就那几个。", "选英雄阶段", "3秒选完"]] },
+      { id: "b-riki", hero: () => 32, when: () => T("tinyPool"), weight: 81, icon: "🥷", title: "猥琐SA", v: [
+        ["最近迷上猥琐力丸：隐身、绕后、背刺，全程不想被任何人看见。", "猥琐力丸", "打架？我隐身了"]] },
+      { id: "b-carry", hero: () => 8, when: () => T("positions"), weight: 73, icon: "⚔️", title: "三件套", v: [
+        ["剑圣、幻刺、斯温：三个都要发育，三个都爱刷野。打团？等我出完装。", "剑圣 幻刺 斯温", "打团？等我出装"]] },
       { id: "b-jakiro", hero: () => JAKIRO, when: () => T("jakiroOnly"), weight: 78, icon: "🐉", title: "被迫辅助", v: [
         ["被迫打辅助时只会一个双头龙。双头龙两个头，一个在叹气，一个在等他喂奶回来。", "被迫打辅助", "双头龙（唯一）"]] },
       { id: "b-lane", hero: () => 2, when: () => T("laneLoser"), weight: 88, icon: "🛣️", title: "对线？被线对", v: s.n
@@ -454,6 +483,13 @@
     }
     if (t.has("jinTarget")) q.push({ quote: "我不菜！金神你别说话！", stamp: "实锤",
       reply: "金神天天说他菜。金神说了一辈子大话，本庭认定：只有这一句是真的。" });
+    // ----- Yoki神 -----
+    if (t.has("drow15")) q.push({ quote: "小黑1到5号位都能玩", stamp: "离谱", heroId: DROW,
+      reply: "五号位小黑？队友问他插不插眼，他说：我的箭就是眼。" });
+    if (t.has("noSupport")) q.push({ quote: "辅助？我不会，我只会carry", stamp: "核心病",
+      reply: s.n ? `本周${s.n}场，纯辅助${s.pureSup}场。他的字典里，“辅助”这个词被至宝特效挡住了。` : "他的字典里，“辅助”这个词被至宝特效挡住了。" });
+    if (t.has("threeAxes") && s.n) q.push({ quote: "我这三板斧够用了", stamp: "被ban警告", heroId: s.heroes[0]?.hero_id,
+      reply: `够用？本周${s.n}场里三板斧砍了${s.top3}场。对面ban掉三个英雄，他就只能去找传说中的第四把斧头。` });
     q.usedMatches = usedM;
     return q;
   }
@@ -473,12 +509,15 @@
     if (traits.has("tinyPool")) cards.push({ icon: "🖐️", label: "本周英雄池", value: `${s.distinctHeroes} 个`, sub: `${s.n}场比赛用过的英雄数` });
     if (traits.has("drowCurse")) { const dw = s.matches.filter((m) => m.hero_id === DROW); cards.push({ icon: "🏹", label: "小黑战绩", value: dw.length ? `${dw.filter((m) => m.win).length}胜${dw.filter((m) => !m.win).length}负` : "0场", sub: "本周卓尔游侠", cls: "neg" }); }
     if (traits.has("jakiroOnly")) cards.push({ icon: "🐉", label: "双头龙场次", value: String(s.matches.filter((m) => m.hero_id === JAKIRO).length), sub: "本周被迫辅助" });
+    if (traits.has("drowArcana")) { const dw = s.matches.filter((m) => m.hero_id === DROW); cards.push({ icon: "💎", label: "至宝小黑出场", value: `${dw.length}场`, sub: dw.length ? `胜率 ${Math.round((dw.filter((m) => m.win).length / dw.length) * 100)}%` : "本周没拿出来炫" }); }
+    if (traits.has("noSupport")) cards.push({ icon: "🚫", label: "纯辅助场次", value: String(s.pureSup), sub: `本周共${s.n}场` });
     if (traits.has("cantLastHit") && s.core && s.lh10 < 50) cards.push({ icon: "🗡️", label: "核心局补刀", value: `${Math.round(s.lh10)}/10分钟`, sub: "打核心时的平均值", cls: "neg" });
     return {
       cards,
       curve: traits.has("drunk") && s.sessions ? s.curve.map((g, i) => ({ label: CURVE_LABELS[i], n: g.n, wr: g.wr })) : null,
       xiuxian: traits.has("xiuxian") ? { ...xiuxian(s.lateHours), games: s.lateN } : null,
       babysit,
+      axes: traits.has("threeAxes") ? { top: s.heroes.slice(0, 3).map((h) => ({ hero_id: h.hero_id, games: h.games })), others: s.n - s.top3, n: s.n } : null,
     };
   }
 

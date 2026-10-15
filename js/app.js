@@ -61,6 +61,7 @@
   // Notizie flash per il ticker: solo dati, così non ripetono le battute delle pagine
   function headlines(p) {
     const s = p.stats, n = esc(p.name), H = (id) => esc(p.heroes[id]?.localized_name || "");
+    if (p.ctx.hidden) return [`<b>${n}</b>：比赛数据未公开，本庭无法统计`];
     if (!s.n) return [`<b>${n}</b>：本周一局未打`];
     const out = [`<b>${n}</b>：本周${s.n}场 · ${s.wins}胜${s.losses}负`];
     if (s.mostDeaths) out.push(`<b>${n}</b>：最惨一局 ${H(s.mostDeaths.hero_id)} ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}`);
@@ -186,11 +187,11 @@
       <div class="wanted-photo">${avatar(p, p.name, "avatar-wanted")}<div class="wanted-meter"><small>${esc(v.title || "成绩")}</small><b>${esc(v.label)}</b></div></div>
       <h3>${esc(p.name)}</h3>
       <p class="wanted-crime">罪名：${esc(p.cfg.bounty || p.cfg.accusa || "打刀塔")}</p>
-      <div class="wanted-bounty"><span>悬赏</span><b>🪙 ${bounty.toLocaleString(LOCALE)}</b><span>金</span></div>
+      <div class="wanted-bounty"><span>悬赏</span><b>🪙 ${p.ctx.hidden ? "机密" : bounty.toLocaleString(LOCALE)}</b><span>金</span></div>
       <div class="wanted-stats">
-        <div><b>${s.n}</b><span>场</span></div>
-        <div><b>${s.n ? Math.round(s.wr) + "%" : "–"}</b><span>胜率</span></div>
-        <div><b>${s.deaths}</b><span>送头</span></div>
+        <div><b>${p.ctx.hidden ? "?" : s.n}</b><span>场</span></div>
+        <div><b>${p.ctx.hidden ? "?" : s.n ? Math.round(s.wr) + "%" : "–"}</b><span>胜率</span></div>
+        <div><b>${p.ctx.hidden ? "?" : s.deaths}</b><span>送头</span></div>
       </div>
       ${resultStrip(s)}
       ${top ? `<p class="wanted-quote">${top.icon} ${esc(top.text)}</p>` : ""}
@@ -285,7 +286,7 @@
           </article>`; }).join("")}</div>
       </section>` : ""}
 
-      ${specialBlock(p.special)}
+      ${specialBlock(p.special, p.heroes)}
       ${cfg.persona?.nemesis ? `<div id="nemesis"></div>` : ""}
 
       ${s.n ? `
@@ -425,8 +426,8 @@
     </div>`;
   }
 
-  function specialBlock(sp) {
-    if (!sp || (!sp.cards.length && !sp.curve && !sp.xiuxian && !sp.babysit)) return "";
+  function specialBlock(sp, heroesMap = {}) {
+    if (!sp || (!sp.cards.length && !sp.curve && !sp.xiuxian && !sp.babysit && !sp.axes)) return "";
     const curve = sp.curve ? `
       <div class="sp-panel sp-curve">
         <div class="sp-head"><span>🥃</span><div><h4>酒精曲线</h4><p class="muted small">每晚第几局的胜率——越喝越……</p></div></div>
@@ -445,6 +446,11 @@
         <div class="xiu-steps">${["炼气", "筑基", "金丹", "元婴", "化神", "渡劫", "飞升"].map((l) => `<span class="${l === sp.xiuxian.level ? "on" : ""}">${l}</span>`).join("")}</div>
         <p class="muted small">${sp.xiuxian.next ? `距离【${esc(sp.xiuxian.next)}】还差 ${fmt1(sp.xiuxian.toNext)} 小时深夜刀塔。再往后就不是飞升，是升天。` : "已飞升。下一步：升天。"}</p>
       </div>` : "";
+    const ax = sp.axes && sp.axes.n ? `
+      <div class="sp-panel sp-axes">
+        <div class="sp-head"><span>🪓</span><div><h4>三板斧</h4><p class="muted small">本周${sp.axes.n}场，按英雄分配</p></div></div>
+        <div class="axes-bar">${sp.axes.top.map((a, i) => { const h = heroesMap[a.hero_id]; return `<div class="axe" style="flex:${a.games};--d:${i * 150}ms;${h ? `background-image:url('${API.heroImg(h)}')` : ""}"><b>${a.games}</b><span>${esc(h?.localized_name || "")}</span></div>`; }).join("")}${sp.axes.others ? `<div class="axe other" style="flex:${sp.axes.others}"><b>${sp.axes.others}</b><span>其他</span></div>` : ""}</div>
+      </div>` : "";
     const bs = sp.babysit ? (() => {
       const max = Math.max(40, (sp.babysit.minutes || 0) + 5), pct = (m) => (m / max) * 100;
       return `
@@ -460,7 +466,7 @@
         ${sp.cards.length ? `<div class="sp-cards">${sp.cards.map((c) => `
           <div class="kpi sp-card"><span class="sp-icon">${c.icon}</span><span class="kpi-label">${esc(c.label)}</span><b class="kpi-val ${c.cls || ""}">${esc(c.value)}</b><span class="kpi-sub">${esc(c.sub)}</span></div>`).join("")}</div>` : ""}
         ${curve || xx ? `<div class="sp-grid">${curve}${xx}</div>` : ""}
-        ${bs}
+        ${bs}${ax}
       </section>`;
   }
 
