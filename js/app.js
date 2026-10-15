@@ -33,13 +33,42 @@
         const p = data.profile?.profile || {};
         const name = cfg.alias || p.personaname || `玩家 ${id}`;
         const stats = R.computeStats(data.matches, DAYS);
-        const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier };
+        // index: ogni giocatore riceve varianti diverse delle battute; week: ruotano ogni settimana
+        const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier,
+          index: CFG.players.indexOf(cfg), week: Math.floor((Date.now() / 86400000 + 3) / 7) };
+        const quotes = R.quotes(stats, ctx, heroes);
+        ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
+        const roasts = R.buildRoasts(stats, name, heroes, ctx);
         return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx,
-          verdict: R.verdict(stats, ctx), roasts: R.buildRoasts(stats, name, heroes, ctx),
-          quotes: R.quotes(stats, ctx, heroes), special: R.specials(stats, ctx) };
+          verdict: R.verdict(stats, ctx), roasts, quotes, special: R.specials(stats, ctx),
+          split: splitRoasts(roasts) };
       })().catch((e) => { cache.delete(id); throw e; }));
     }
     return cache.get(id);
+  }
+
+  // Ogni battuta compare una sola volta: 3 diventano meme (preferibilmente con un eroe), le altre capi d'accusa.
+  // roasts[0] resta nei capi d'accusa perché è anche la frase del manifesto in home.
+  function splitRoasts(roasts, shuffle = false) {
+    const pool = roasts.slice(1);
+    if (shuffle) pool.sort(() => Math.random() - 0.5);
+    const memes = [...pool.filter((r) => r.heroId), ...pool.filter((r) => !r.heroId)].slice(0, 3);
+    return { memes, charges: roasts.filter((r) => !memes.includes(r)) };
+  }
+
+  // Notizie flash per il ticker: solo dati, così non ripetono le battute delle pagine
+  function headlines(p) {
+    const s = p.stats, n = esc(p.name), H = (id) => esc(p.heroes[id]?.localized_name || "");
+    if (!s.n) return [`<b>${n}</b>：本周一局未打`];
+    const out = [`<b>${n}</b>：本周${s.n}场 · ${s.wins}胜${s.losses}负`];
+    if (s.mostDeaths) out.push(`<b>${n}</b>：最惨一局 ${H(s.mostDeaths.hero_id)} ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}`);
+    out.push(`<b>${n}</b>：当前${s.streak}${s.streakWin ? "连胜" : "连败"}`);
+    if (s.heroes[0]) out.push(`<b>${n}</b>：本周最常用英雄 ${H(s.heroes[0].hero_id)}（${s.heroes[0].games}场）`);
+    return out;
+  }
+  async function allHeadlines() {
+    const res = await Promise.allSettled(CFG.players.map(getPlayer));
+    return res.filter((r) => r.status === "fulfilled").flatMap((r) => headlines(r.value));
   }
 
   // ---------- pezzi riutilizzabili ----------
@@ -125,13 +154,12 @@
       </section>`;
 
     const cards = document.querySelectorAll("#cards .wanted.skeleton");
-    const tickerItems = [], loaded = [];
+    const loaded = [];
     await Promise.all(CFG.players.map(async (cfg, i) => {
       try {
         const p = await getPlayer(cfg);
         loaded.push(p);
         cards[i].outerHTML = wantedPoster(p, i);
-        p.roasts.slice(0, 3).forEach((r) => tickerItems.push(`<b>${esc(p.name)}</b>：${esc(r.text)}`));
       } catch (e) {
         cards[i].outerHTML = `<article class="wanted wanted-empty"><h3>证据暂缺</h3><p>OpenDota 没有响应，请稍后再试。</p></article>`;
       }
@@ -143,7 +171,7 @@
       <div class="cs"><span>📉</span><b>${counter(sum((s) => s.losses))}</b><em>合计输掉场次</em></div>
       <div class="cs"><span>🧑‍⚖️</span><b>${counter(loaded.length)}</b><em>在押被告</em></div>`;
     animateCounters(document.getElementById("court-stats"));
-    setTicker(tickerItems);
+    allHeadlines().then(setTicker);
   }
 
   function wantedPoster(p, i) {
@@ -274,16 +302,12 @@
           <h2>本周表情包</h2>
           <button class="btn btn-ghost btn-sm" id="reroll">🎲 换一批</button>
         </div>
-        <div class="memes" id="memes">${p.roasts.slice(0, 3).map((r, i) => memeCard(r, p.heroes[r.heroId] || memeHeroes[i % memeHeroes.length], i)).join("")}</div>
+        <div class="memes" id="memes"></div>
       </section>
 
       <section class="block">
-        <div class="block-head"><h2>罪状</h2><span class="muted small">共 ${p.roasts.length} 项指控</span></div>
-        <div class="charges">${p.roasts.map((r, i) => `
-          <article class="charge" style="--d:${i * 60}ms">
-            <div class="charge-icon">${r.icon}</div>
-            <div><h4>${esc(r.title)}</h4><p>${esc(r.text)}</p></div>
-          </article>`).join("")}</div>
+        <div class="block-head"><h2>罪状</h2><span class="muted small" id="charges-count"></span></div>
+        <div class="charges" id="charges"></div>
       </section>` : ""}
 
       ${s.heroes.length ? `
@@ -300,14 +324,22 @@
       </div>`;
 
     animateCounters(app);
-    setTicker(p.roasts.map((r) => `<b>${esc(p.name)}</b>：${esc(r.text)}`));
+    allHeadlines().then(setTicker);
 
-    document.getElementById("reroll")?.addEventListener("click", () => {
-      const fresh = R.buildRoasts(s, p.name, p.heroes, p.ctx);
-      const shuffled = fresh.sort(() => Math.random() - 0.5).slice(0, 3);
-      const off = Math.floor(Math.random() * memeHeroes.length);
-      document.getElementById("memes").innerHTML = shuffled.map((r, i) => memeCard(r, p.heroes[r.heroId] || memeHeroes[(i + off) % memeHeroes.length], i)).join("");
-    });
+    // meme e capi d'accusa si dividono le battute: nessuna compare due volte
+    const renderJokes = (split) => {
+      const memesEl = document.getElementById("memes"), chargesEl = document.getElementById("charges");
+      if (!memesEl) return;
+      memesEl.innerHTML = split.memes.map((r, i) => memeCard(r, p.heroes[r.heroId] || memeHeroes[i % memeHeroes.length], i)).join("");
+      chargesEl.innerHTML = split.charges.map((r, i) => `
+          <article class="charge" style="--d:${i * 60}ms">
+            <div class="charge-icon">${r.icon}</div>
+            <div><h4>${esc(r.title)}</h4><p>${esc(r.text)}</p></div>
+          </article>`).join("");
+      document.getElementById("charges-count").textContent = `共 ${split.charges.length} 项指控`;
+    };
+    renderJokes(p.split);
+    document.getElementById("reroll")?.addEventListener("click", () => renderJokes(splitRoasts(p.roasts, true)));
   }
 
   // ---------- grafici ----------
