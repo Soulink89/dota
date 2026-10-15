@@ -517,10 +517,10 @@
     if (t.has("threeAxes") && s.n) q.push({ quote: "我这三板斧够用了", stamp: "被ban警告", heroId: s.heroes[0]?.hero_id,
       reply: `够用？本周${s.n}场里三板斧砍了${s.top3}场。对面ban掉三个英雄，他就只能去找传说中的第四把斧头。` });
     // ----- 蜗牛大神 -----
-    if (t.has("allNighter")) q.push({ quote: "今晚通宵！谁先走谁是狗！", stamp: "跑路",
+    if (t.has("allNighter")) q.push({ quote: "今晚通宵！不通宵不下线！", stamp: "跑路",
       reply: s.n && s.n / Math.max(1, s.sessions) <= 3.5
-        ? `本周平均每晚${(s.n / Math.max(1, s.sessions)).toFixed(1)}把，然后人就没了。本庭不评论谁是狗。`
-        : "喊完这句没多久，DC里只剩一个灰色的头像。本庭不评论谁是狗。" });
+        ? `本周平均每晚${(s.n / Math.max(1, s.sessions)).toFixed(1)}把，然后人就没了。“不下线”的意思，原来是不在线。`
+        : "喊完这句没多久，DC里只剩一个灰色的头像。说好的不下线，结果只有头像留了下来。" });
     if (t.has("loud")) q.push({ quote: "干干干！！！", stamp: "扰民",
       reply: "每局开始前的固定口号。喊得最响，DC里其他人的耳机音量统一调到了10%。" });
     if (t.has("jinMidKiller")) q.push({ quote: "金神的中路？轻轻松松", stamp: "补刀",
