@@ -33,7 +33,7 @@ window.TribunaleDemo = {
       source: "demo",
       fetchedAt: Date.now(),
       profile: {
-        profile: { account_id: Number(id), personaname: "Giocatore Demo", avatarfull: "", last_login: null },
+        profile: { account_id: Number(id), personaname: "演示玩家", avatarfull: "", last_login: null },
         rank_tier: 54,
         leaderboard_rank: null,
       },

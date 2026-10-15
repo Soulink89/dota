@@ -4,21 +4,23 @@
   const R = window.TribunaleRoast;
   const app = document.getElementById("app");
   const DAYS = CFG.days || 7;
+  const LOCALE = "zh-CN";
 
-  const MEDALS = ["", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal"];
-  const GAME_MODES = { 1: "All Pick", 2: "Captains Mode", 3: "Random Draft", 4: "Single Draft", 5: "All Random", 16: "Captains Draft", 18: "Ability Draft", 22: "All Pick", 23: "Turbo" };
+  const MEDALS = ["", "先锋", "卫士", "中军", "统帅", "传奇", "万古流芳", "超凡入圣", "冠绝一世"];
+  const GAME_MODES = { 1: "全英雄选择", 2: "队长模式", 3: "随机征召", 4: "单一征召", 5: "全部随机", 16: "队长征召", 18: "技能征召", 22: "全英雄选择", 23: "加速模式" };
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fmt1 = (n) => (Number.isFinite(n) ? n.toFixed(1) : "–");
   const dur = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   function ago(ts) {
     const d = Date.now() / 1000 - ts;
-    if (d < 3600) return `${Math.max(1, Math.round(d / 60))} min fa`;
-    if (d < 86400) return `${Math.round(d / 3600)} h fa`;
+    if (d < 3600) return `${Math.max(1, Math.round(d / 60))}分钟前`;
+    if (d < 86400) return `${Math.round(d / 3600)}小时前`;
     const g = Math.round(d / 86400);
-    return g === 1 ? "ieri" : `${g} giorni fa`;
+    return g === 1 ? "昨天" : `${g}天前`;
   }
-  const medalName = (t) => (t ? (t >= 80 ? "Immortal" : `${MEDALS[Math.floor(t / 10)]} ${t % 10}`) : "Non calibrato");
+  const medalName = (t) => (t ? (t >= 80 ? "冠绝一世" : `${MEDALS[Math.floor(t / 10)]} ${t % 10}`) : "未定级");
+  const defaultTag = "被告";
 
   // ---------- caricamento ----------
   const cache = new Map();
@@ -28,7 +30,7 @@
       cache.set(id, (async () => {
         const [data, heroes] = await Promise.all([API.loadPlayer(id, DAYS), API.loadHeroes()]);
         const p = data.profile?.profile || {};
-        const name = cfg.alias || p.personaname || `Giocatore ${id}`;
+        const name = cfg.alias || p.personaname || `玩家 ${id}`;
         const stats = R.computeStats(data.matches, DAYS);
         return { id, cfg, data, heroes, name, stats, verdict: R.verdict(stats), roasts: R.buildRoasts(stats, name, heroes) };
       })().catch((e) => { cache.delete(id); throw e; }));
@@ -45,7 +47,7 @@
   }
 
   function medal(tier) {
-    if (!tier) return `<div class="medal medal-none" title="Non calibrato">?</div>`;
+    if (!tier) return `<div class="medal medal-none" title="未定级">?</div>`;
     const star = tier % 10;
     return `<div class="medal" title="${esc(medalName(tier))}">
       <img src="${API.rankIcon(Math.floor(tier / 10))}" alt="" onerror="this.parentNode.classList.add('medal-none');this.remove()">
@@ -55,16 +57,16 @@
 
   function sourceBadge(p) {
     const d = p.data;
-    const when = new Date(d.fetchedAt).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-    if (d.source === "demo") return `<span class="pill pill-warn">DATI DEMO — non reali</span>`;
-    if (d.stale) return `<span class="pill pill-warn" title="OpenDota non risponde, mostro gli ultimi dati salvati">Dati salvati · ${when}</span>`;
-    return `<span class="pill"><span class="dot"></span>Aggiornato · ${when}</span>`;
+    const when = new Date(d.fetchedAt).toLocaleString(LOCALE, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    if (d.source === "demo") return `<span class="pill pill-warn">演示数据——非真实</span>`;
+    if (d.stale) return `<span class="pill pill-warn" title="OpenDota 无响应，显示最近保存的数据">已保存数据 · ${when}</span>`;
+    return `<span class="pill"><span class="dot"></span>已更新 · ${when}</span>`;
   }
 
   function resultStrip(stats) {
-    if (!stats.n) return `<div class="strip strip-empty">Nessuna partita</div>`;
+    if (!stats.n) return `<div class="strip strip-empty">暂无比赛</div>`;
     return `<div class="strip">${[...stats.matches].reverse()
-      .map((m) => `<span class="strip-cell ${m.win ? "w" : "l"}" title="${m.win ? "Vittoria" : "Sconfitta"} · ${m.kills}/${m.deaths}/${m.assists}"></span>`).join("")}</div>`;
+      .map((m) => `<span class="strip-cell ${m.win ? "w" : "l"}" title="${m.win ? "胜利" : "失败"} · ${m.kills}/${m.deaths}/${m.assists}"></span>`).join("")}</div>`;
   }
 
   function memeCard(roast, hero, i) {
@@ -80,19 +82,19 @@
 
   // ---------- HOME ----------
   async function renderHome() {
-    document.title = "Dota Tribunale";
+    document.title = "刀塔法庭";
     app.innerHTML = `
       <section class="hero-intro">
-        <p class="eyebrow">Udienza settimanale · ultimi ${DAYS} giorni</p>
-        <h1>Le statistiche non mentono.<br><span class="grad">Noi sì, ma solo per far ridere.</span></h1>
-        <p class="lead">Ogni settimana il Tribunale esamina le partite dei suoi imputati, assegna un voto e pronuncia la sentenza. Nessun appello possibile.</p>
+        <p class="eyebrow">每周庭审 · 最近${DAYS}天</p>
+        <h1>数据不会说谎。<br><span class="grad">我们会，但只是为了好笑。</span></h1>
+        <p class="lead">本庭每周审查被告们的比赛，打分、出成绩单、当庭宣判。不接受上诉。</p>
       </section>
       <section class="cards" id="cards">
         ${CFG.players.map(() => `<article class="pcard skeleton"><div class="sk sk-av"></div><div class="sk sk-l"></div><div class="sk sk-s"></div></article>`).join("")}
         <article class="pcard pcard-empty">
           <div class="empty-icon">➕</div>
-          <h3>Posto libero in aula</h3>
-          <p>Il prossimo imputato verrà aggiunto presto. Chi sarà?</p>
+          <h3>被告席空缺</h3>
+          <p>下一位被告即将到庭。会是谁呢？</p>
         </article>
       </section>`;
 
@@ -102,9 +104,9 @@
       try {
         const p = await getPlayer(cfg);
         cards[i].outerHTML = playerCard(p);
-        p.roasts.slice(0, 3).forEach((r) => tickerItems.push(`<b>${esc(p.name)}</b> — ${esc(r.text)}`));
+        p.roasts.slice(0, 3).forEach((r) => tickerItems.push(`<b>${esc(p.name)}</b>：${esc(r.text)}`));
       } catch (e) {
-        cards[i].outerHTML = `<article class="pcard pcard-error"><h3>Prove non disponibili</h3><p>OpenDota non risponde. Riprova tra qualche minuto.</p></article>`;
+        cards[i].outerHTML = `<article class="pcard pcard-error"><h3>证据暂缺</h3><p>OpenDota 没有响应，请稍后再试。</p></article>`;
       }
     }));
     setTicker(tickerItems);
@@ -119,61 +121,61 @@
         <div class="pcard-head">
           ${avatar(p, p.name)}
           <div class="pcard-id">
-            <span class="tag">${esc(p.cfg.accusa || "Imputato")}</span>
+            <span class="tag">${esc(p.cfg.accusa || defaultTag)}</span>
             <h3>${esc(p.name)}</h3>
             <span class="muted small">${esc(medalName(p.data.profile?.rank_tier))}</span>
           </div>
           <div class="grade grade-sm ${gradeClass(v.voto)}"><span>${esc(v.label)}</span></div>
         </div>
         <div class="pcard-stats">
-          <div><b>${s.n}</b><span>partite</span></div>
-          <div><b class="${s.wr >= 50 ? "pos" : "neg"}">${s.n ? Math.round(s.wr) + "%" : "–"}</b><span>winrate</span></div>
-          <div><b>${s.n ? fmt1(s.avgKda) : "–"}</b><span>KDA medio</span></div>
+          <div><b>${s.n}</b><span>场次</span></div>
+          <div><b class="${s.wr >= 50 ? "pos" : "neg"}">${s.n ? Math.round(s.wr) + "%" : "–"}</b><span>胜率</span></div>
+          <div><b>${s.n ? fmt1(s.avgKda) : "–"}</b><span>KDA</span></div>
         </div>
         ${resultStrip(s)}
         ${top ? `<p class="pcard-roast"><span>${top.icon}</span> ${esc(top.text)}</p>` : ""}
-        <span class="pcard-cta">Apri il fascicolo →</span>
+        <span class="pcard-cta">查看卷宗 →</span>
       </div>
     </a>`;
   }
 
-  const gradeClass = (v) => (v == null ? "g-nc" : v < 5 ? "g-bad" : v < 6.5 ? "g-mid" : "g-good");
+  const gradeClass = (v) => (v == null ? "g-nc" : v < 60 ? "g-bad" : v < 75 ? "g-mid" : "g-good");
 
   // ---------- PAGINA GIOCATORE ----------
   async function renderPlayer(id) {
     const cfg = CFG.players.find((c) => API.toAccountId(c.steam64) === id);
-    if (!cfg) { app.innerHTML = `<section class="notice"><h2>Imputato non trovato</h2><a href="#/">← Torna all'aula</a></section>`; return; }
+    if (!cfg) { app.innerHTML = `<section class="notice"><h2>查无此人</h2><a href="#/">← 返回法庭</a></section>`; return; }
 
-    app.innerHTML = `<section class="loading"><div class="gavel">⚖</div><p>Il Tribunale sta esaminando le prove…</p></section>`;
+    app.innerHTML = `<section class="loading"><div class="gavel">⚖</div><p>法庭正在审查证据……</p></section>`;
     let p;
     try { p = await getPlayer(cfg); }
     catch (e) {
-      app.innerHTML = `<section class="notice"><h2>Il Tribunale è in pausa caffè</h2>
-        <p>OpenDota non risponde in questo momento (succede quando è sovraccarico). Riprova tra qualche minuto.</p>
-        <p><button class="btn" onclick="location.reload()">Riprova</button> <a class="btn btn-ghost" href="?demo#/p/${id}">Vedi una demo</a></p></section>`;
+      app.innerHTML = `<section class="notice"><h2>法庭休庭中</h2>
+        <p>OpenDota 暂时没有响应（服务器过载时会这样），请过几分钟再试。</p>
+        <p><button class="btn" onclick="location.reload()">重试</button> <a class="btn btn-ghost" href="?demo#/p/${id}">查看演示</a></p></section>`;
       return;
     }
-    document.title = `${p.name} · Dota Tribunale`;
+    document.title = `${p.name} · 刀塔法庭`;
     const s = p.stats, v = p.verdict, prof = p.data.profile || {};
     const fav = s.heroes[0] && p.heroes[s.heroes[0].hero_id];
     const wl = p.data.wl;
-    const life = wl && wl.win + wl.lose ? `${wl.win}V – ${wl.lose}S · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%` : "–";
+    const life = wl && wl.win + wl.lose ? `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%` : "–";
     const memeHeroes = s.heroes.length ? s.heroes.map((h) => p.heroes[h.hero_id]) : [null];
 
     app.innerHTML = `
       <section class="phero">
         <div class="phero-bg" style="${fav ? `background-image:url('${API.heroImg(fav)}')` : ""}"></div>
         <div class="phero-inner">
-          <a href="#/" class="back">← Aula</a>
+          <a href="#/" class="back">← 法庭</a>
           <div class="phero-main">
             ${avatar(p, p.name, "avatar-xl")}
             <div class="phero-id">
-              <span class="tag">${esc(cfg.accusa || "Imputato")}</span>
+              <span class="tag">${esc(cfg.accusa || defaultTag)}</span>
               <h1>${esc(p.name)}</h1>
               <div class="phero-meta">
                 ${medal(prof.rank_tier)}
-                <div><span class="muted small">Medaglia</span><b>${esc(medalName(prof.rank_tier))}${prof.leaderboard_rank ? ` · #${prof.leaderboard_rank}` : ""}</b></div>
-                <div><span class="muted small">Carriera</span><b>${life}</b></div>
+                <div><span class="muted small">段位</span><b>${esc(medalName(prof.rank_tier))}${prof.leaderboard_rank ? ` · #${prof.leaderboard_rank}` : ""}</b></div>
+                <div><span class="muted small">生涯战绩</span><b>${life}</b></div>
               </div>
               <div class="phero-links">
                 ${sourceBadge(p)}
@@ -183,7 +185,7 @@
               </div>
             </div>
             <div class="verdict">
-              <span class="eyebrow">Pagella della settimana</span>
+              <span class="eyebrow">本周成绩单</span>
               <div class="grade ${gradeClass(v.voto)}"><span>${esc(v.label)}</span></div>
               <p>${esc(v.text)}</p>
             </div>
@@ -192,30 +194,30 @@
       </section>
 
       <section class="kpis">
-        ${kpi("Partite", s.n, `${fmt1(s.hours)} ore di vita spese`)}
-        ${kpi("Winrate", s.n ? Math.round(s.wr) + "%" : "–", `${s.wins}V · ${s.losses}S`, s.n ? (s.wr >= 50 ? "pos" : "neg") : "")}
-        ${kpi("KDA medio", s.n ? fmt1(s.avgKda) : "–", `${s.kills} / ${s.deaths} / ${s.assists}`)}
-        ${kpi("Morti", s.deaths, s.n ? `${fmt1(s.avgDeaths)} a partita` : "–", s.avgDeaths >= 8 ? "neg" : "")}
-        ${kpi("GPM medio", s.n ? Math.round(s.avgGpm) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
-        ${kpi("Serie attuale", s.n ? `${s.streak}${s.streakWin ? "V" : "S"}` : "–", s.n ? (s.streakWin ? "in fiamme" : "in caduta libera") : "–", s.n ? (s.streakWin ? "pos" : "neg") : "")}
+        ${kpi("场次", s.n, `浪费了 ${fmt1(s.hours)} 小时人生`)}
+        ${kpi("胜率", s.n ? Math.round(s.wr) + "%" : "–", `${s.wins}胜 · ${s.losses}负`, s.n ? (s.wr >= 50 ? "pos" : "neg") : "")}
+        ${kpi("KDA", s.n ? fmt1(s.avgKda) : "–", `${s.kills} / ${s.deaths} / ${s.assists}`)}
+        ${kpi("死亡", s.deaths, s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", s.avgDeaths >= 8 ? "neg" : "")}
+        ${kpi("平均GPM", s.n ? Math.round(s.avgGpm) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
+        ${kpi("当前连续", s.n ? `${s.streak}${s.streakWin ? "连胜" : "连败"}` : "–", s.n ? (s.streakWin ? "火力全开" : "自由落体") : "–", s.n ? (s.streakWin ? "pos" : "neg") : "")}
       </section>
 
       <section class="block">
-        <div class="block-head"><h2>Andamento</h2><span class="muted small">dalla più vecchia alla più recente</span></div>
+        <div class="block-head"><h2>战绩走势</h2><span class="muted small">从旧到新</span></div>
         ${resultStrip(s)}
       </section>
 
       ${p.roasts.length ? `
       <section class="block">
         <div class="block-head">
-          <h2>Meme della settimana</h2>
-          <button class="btn btn-ghost btn-sm" id="reroll">🎲 Nuove battute</button>
+          <h2>本周表情包</h2>
+          <button class="btn btn-ghost btn-sm" id="reroll">🎲 换一批</button>
         </div>
         <div class="memes" id="memes">${p.roasts.slice(0, 3).map((r, i) => memeCard(r, p.heroes[r.heroId] || memeHeroes[i % memeHeroes.length], i)).join("")}</div>
       </section>
 
       <section class="block">
-        <div class="block-head"><h2>Capi d'accusa</h2><span class="muted small">${p.roasts.length} imputazioni</span></div>
+        <div class="block-head"><h2>罪状</h2><span class="muted small">共 ${p.roasts.length} 项指控</span></div>
         <div class="charges">${p.roasts.map((r, i) => `
           <article class="charge" style="--d:${i * 60}ms">
             <div class="charge-icon">${r.icon}</div>
@@ -225,17 +227,17 @@
 
       ${s.heroes.length ? `
       <section class="block">
-        <div class="block-head"><h2>Eroi della settimana</h2></div>
+        <div class="block-head"><h2>本周英雄</h2></div>
         <div class="heroes">${s.heroes.slice(0, 8).map((h) => heroTile(h, p.heroes[h.hero_id])).join("")}</div>
       </section>` : ""}
 
       <section class="block">
-        <div class="block-head"><h2>Partite recenti</h2><span class="muted small">ultimi ${DAYS} giorni</span></div>
+        <div class="block-head"><h2>最近比赛</h2><span class="muted small">最近${DAYS}天</span></div>
         ${s.n ? `<div class="matches">${s.matches.map((m) => matchRow(m, p.heroes[m.hero_id])).join("")}</div>`
-              : `<p class="muted">Nessuna partita negli ultimi ${DAYS} giorni.</p>`}
+              : `<p class="muted">最近${DAYS}天没有比赛。</p>`}
       </section>`;
 
-    setTicker(p.roasts.map((r) => `<b>${esc(p.name)}</b> — ${esc(r.text)}`));
+    setTicker(p.roasts.map((r) => `<b>${esc(p.name)}</b>：${esc(r.text)}`));
 
     document.getElementById("reroll")?.addEventListener("click", () => {
       const fresh = R.buildRoasts(s, p.name, p.heroes);
@@ -254,31 +256,31 @@
     return `<div class="htile">
       <div class="htile-img" style="${hero ? `background-image:url('${API.heroImg(hero)}')` : ""}"></div>
       <div class="htile-body">
-        <b>${esc(hero?.localized_name || "Eroe #" + h.hero_id)}</b>
-        <span>${h.games} ${h.games === 1 ? "partita" : "partite"} · <em class="${wr >= 50 ? "pos" : "neg"}">${wr}%</em></span>
+        <b>${esc(hero?.localized_name || "英雄 #" + h.hero_id)}</b>
+        <span>${h.games}场 · <em class="${wr >= 50 ? "pos" : "neg"}">${wr}%</em></span>
         <div class="bar"><i style="width:${wr}%"></i></div>
       </div>
     </div>`;
   }
 
   function matchRow(m, hero) {
-    const mode = GAME_MODES[m.game_mode] || "Altro";
-    const ranked = m.lobby_type === 7 ? "Ranked" : "Normale";
+    const mode = GAME_MODES[m.game_mode] || "其他";
+    const ranked = m.lobby_type === 7 ? "天梯" : "普通";
     return `<a class="mrow ${m.win ? "w" : "l"}" href="https://www.opendota.com/matches/${m.match_id}" target="_blank" rel="noopener">
       <div class="mrow-hero" style="${hero ? `background-image:url('${API.heroImg(hero)}')` : ""}"></div>
-      <div class="mrow-name"><b>${esc(hero?.localized_name || "Eroe")}</b><span>${ranked} · ${mode}</span></div>
-      <div class="mrow-res"><b>${m.win ? "Vittoria" : "Sconfitta"}</b><span>${ago(m.start_time)}</span></div>
+      <div class="mrow-name"><b>${esc(hero?.localized_name || "英雄")}</b><span>${ranked} · ${mode}</span></div>
+      <div class="mrow-res"><b>${m.win ? "胜利" : "失败"}</b><span>${ago(m.start_time)}</span></div>
       <div class="mrow-kda"><b>${m.kills}<i>/</i>${m.deaths}<i>/</i>${m.assists}</b><span>KDA ${fmt1(m.kda)}</span></div>
       <div class="mrow-x"><b>${m.gold_per_min ?? "–"}</b><span>GPM</span></div>
-      <div class="mrow-x"><b>${m.last_hits ?? "–"}</b><span>LH</span></div>
-      <div class="mrow-x"><b>${dur(m.duration)}</b><span>durata</span></div>
+      <div class="mrow-x"><b>${m.last_hits ?? "–"}</b><span>补刀</span></div>
+      <div class="mrow-x"><b>${dur(m.duration)}</b><span>时长</span></div>
     </a>`;
   }
 
   // ---------- ticker + nav ----------
   function setTicker(items) {
     const el = document.getElementById("ticker");
-    if (!items.length) { el.textContent = "Nessuna notizia: gli imputati si sono comportati bene. Sospetto."; return; }
+    if (!items.length) { el.textContent = "暂无新闻：被告们本周表现良好。非常可疑。"; return; }
     const html = items.map((t) => `<span class="ticker-item">${t}</span>`).join("");
     el.innerHTML = html + html; // duplicato per lo scorrimento continuo
     el.style.setProperty("--dur", Math.max(30, items.length * 9) + "s");

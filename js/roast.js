@@ -1,4 +1,4 @@
-// Statistiche della settimana + motore delle battute.
+// Statistiche della settimana + motore delle battute (testi in cinese semplificato).
 (function () {
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? ""));
@@ -23,10 +23,10 @@
     }
     const heroes = Object.values(byHero).sort((a, b) => b.games - a.games || b.wins - a.wins);
 
-    // streak attuale (dalla partita più recente)
+    // serie attuale (dalla partita più recente)
     let streak = 0;
     for (const m of ms) { if (m.win === ms[0].win) streak++; else break; }
-    // streak di sconfitte più lunga
+    // serie di sconfitte più lunga
     let worstRun = 0, run = 0;
     for (const m of [...ms].reverse()) { run = m.win ? 0 : run + 1; worstRun = Math.max(worstRun, run); }
 
@@ -56,46 +56,51 @@
     };
   }
 
-  // ---------- Pagella ----------
+  // ---------- Pagella: voto d'esame cinese su 100 (60 = sufficienza) ----------
   function verdict(s) {
-    if (!s.n) return { voto: null, label: "N.C.", text: "Non classificato. Assente ingiustificato: o ha toccato l'erba, o ha cambiato account." };
-    let v = 6 + (s.wr - 50) / 9 + (s.avgKda - 2.6) * 0.7 - Math.max(0, s.avgDeaths - 8) * 0.25;
-    v = Math.max(1, Math.min(10, Math.round(v * 2) / 2));
+    if (!s.n) return { voto: null, label: "缺考", text: "本周缺考。要么出门摸草了，要么换小号了。" };
+    let v = 60 + (s.wr - 50) * 1.1 + (s.avgKda - 2.6) * 7 - Math.max(0, s.avgDeaths - 8) * 2.5;
+    v = Math.max(0, Math.min(100, Math.round(v)));
     const lines =
-      v <= 3 ? ["Gravemente insufficiente. Convocare i genitori.", "Bocciato. Ci vediamo a settembre, forse.", "Prestazione da segnalare all'Interpol."]
-      : v <= 5 ? ["Insufficiente. Si impegna, ma non si applica.", "Rimandato. Ripassare il capitolo 'non morire'.", "Ha del potenziale. Ben nascosto."]
-      : v <= 6.5 ? ["Sufficiente. Il minimo sindacale, come il suo warding.", "Sei politico. Né carne né Roshan.", "Passa, ma solo perché il prof è stanco."]
-      : v <= 8 ? ["Buono. Comincia a sembrare un giocatore vero.", "Bravo. Sospetto aiuti da casa.", "Promosso con merito. Chi gli ha preso l'account?"]
-      : ["Eccellente. Avviata indagine per smurfing.", "Dieci e lode. Torna nel tuo bracket, pro.", "Prestazione illegale in 14 paesi."];
-    return { voto: v, label: String(v).replace(".5", "½"), text: pick(lines) };
+      v === 59 ? ["59分。差一分及格，这一分就是你送的那个人头。"]
+      : v < 40 ? ["严重不及格。请家长来学校一趟。", "建议卸载重装——不是游戏，是你自己。", "这成绩，对面都不好意思举报你。"]
+      : v < 60 ? ["不及格。态度端正，技术感人。", "补考吧，重点复习《如何不死》。", "有潜力，只是藏得比较深。"]
+      : v < 75 ? ["及格。刚好够用，跟他的插眼一样。", "60分万岁，多一分浪费。", "勉强及格，老师批卷时心情不错。"]
+      : v < 90 ? ["良好。开始像个真正的玩家了。", "优秀苗子，怀疑有人代打。", "成绩不错，账号是不是借的？"]
+      : ["满分作文。已启动炸鱼调查。", "建议回到你自己的分段，大佬。", "这表现在14个国家属于违法行为。"];
+    return { voto: v, label: String(v), text: pick(lines) };
   }
 
   // ---------- Battute specifiche per eroe ----------
   const HERO_JOKES = {
-    14: ["Pudge di nuovo. Gli hook che prende sono meno dei pasti saltati.", "Fresh meat? No, carne surgelata dal 2013."],
-    74: ["Invoker: 10 spell disponibili, ne usa 2. Efficienza italiana."],
-    105: ["Techies. Il tribunale si rifiuta di commentare. Si procede d'ufficio."],
-    8: ["Juggernaut: spin to win. Più spesso spin to lose."],
-    44: ["Phantom Assassin: punta tutto sul crit. Come col fantacalcio."],
-    2: ["Axe: Berserker's Call, poi corsa verso la fontana. Nemica."],
-    35: ["Sniper: gioca da lontano per non sentire i flame del team."],
-    106: ["Ember Spirit: tre remnant, zero idee."],
-    129: ["Mars: l'arena serve più a intrappolare i suoi compagni."],
-    86: ["Rubick: ruba le spell, mai la vittoria."],
-    26: ["Lion: Finger of Death. Più spesso Finger nel naso."],
-    1: ["Anti-Mage: farma 40 minuti, entra in fight a 41, il trono è già esploso."],
-    11: ["Shadow Fiend: raze tutte e tre mancate, in fila, con eleganza."],
-    19: ["Tiny: toss del compagno dentro la fontana nemica. Assist strategico."],
-    41: ["Faceless Void: Chronosphere sui suoi compagni. Grande classico."],
-    67: ["Spectre: 'tranquilli che a 50 minuti carico'. Il trono non era d'accordo."],
-    114: ["Monkey King: si nasconde da albero. Unico momento utile della partita."],
-    93: ["Slark: ruba statistiche agli avversari, non ne ha di proprie."],
+    14: ["又是帕吉。钩子命中率比他吃饭的次数还低。", "新鲜的肉？不，是2013年的冻肉。"],
+    74: ["祈求者：十个技能，只会用两个。性价比之王。"],
+    105: ["工程师。本庭拒绝评论，直接判刑。"],
+    8: ["主宰：转起来就能赢？更多时候是转起来就送。"],
+    44: ["幻影刺客：全靠暴击，跟他的人生一样靠运气。"],
+    2: ["斧王：跳进去吼一声，然后直接回泉水——对面的泉水。"],
+    35: ["狙击手：站得那么远，就是为了听不见队友骂人。"],
+    106: ["灰烬之灵：三个残焰，零个想法。"],
+    129: ["玛尔斯：竞技场主要用来关自己的队友。"],
+    86: ["拉比克：技能偷得到，胜利偷不到。"],
+    26: ["莱恩：死亡一指？更像是一指禅送人头。"],
+    1: ["敌法师：发育40分钟，第41分钟出来参团，基地已经炸了。"],
+    11: ["影魔：三个影压全空，空得整整齐齐。"],
+    19: ["小小：把队友扔进对面泉水，这也算助攻吧。"],
+    41: ["虚空假面：大招罩住了自己的四个队友。经典。"],
+    67: ["幽鬼：“放心，五十分钟后我就起飞了。”基地：我等不了。"],
+    114: ["齐天大圣：变成一棵树，全场最有用的时刻。"],
+    93: ["斯拉克：偷对面的属性，因为自己的没法看。"],
+    25: ["莉娜：神灭斩一发入魂——可惜是对面先手的那一发。"],
+    21: ["风行者：强力击打空三次，风之巨人方向全错。"],
+    17: ["风暴之灵：球状闪电飞进对面五个人中间，蓝都没了。"],
+    39: ["痛苦女王：闪烁进场，闪烁出场，中间顺便死了。"],
+    22: ["宙斯：大招放得勤，补刀没几根。"],
   };
 
   // ---------- Regole delle battute ----------
-  // Ogni regola: when(s) -> bool, weight, icon, title, texts[], meme {top,bottom}, heroFrom(s)
   function buildRoasts(s, name, heroes) {
-    const H = (id) => heroes[id]?.localized_name || "eroe misterioso";
+    const H = (id) => heroes[id]?.localized_name || "神秘英雄";
     const fav = s.heroes[0];
     const v = {
       name, n: s.n, wr: Math.round(s.wr), w: s.wins, l: s.losses,
@@ -109,67 +114,67 @@
       bk: s.bestGame ? `${s.bestGame.kills}/${s.bestGame.deaths}/${s.bestGame.assists}` : "",
       bkHero: s.bestGame ? H(s.bestGame.hero_id) : "",
       lowGpm: s.lowestGpm?.gold_per_min, lowGpmHero: s.lowestGpm ? H(s.lowestGpm.hero_id) : "",
-      nightTime: s.lateNight[0] ? new Date(s.lateNight[0].start_time * 1000).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) : "",
+      nightTime: s.lateNight[0] ? new Date(s.lateNight[0].start_time * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "",
     };
 
     const rules = [
-      { id: "absent", when: () => s.n === 0, weight: 100, icon: "🌱", title: "Latitante",
-        texts: ["{name} non gioca da 7 giorni. Le ipotesi: ha toccato l'erba, ha una ragazza, o l'ha disinstallato piangendo."],
-        meme: ["NESSUNA PARTITA IN 7 GIORNI", "SINTOMI DA ASTINENZA IN ARRIVO"] },
-      { id: "nolife", when: () => s.n >= 20, weight: 70, icon: "🛌", title: "Erba toccata: zero",
-        texts: ["{n} partite in una settimana, {hours} ore. È un lavoro part-time, ma senza stipendio.", "{hours} ore di Dota in 7 giorni. Con lo stesso tempo poteva imparare il cinese. Invece ha imparato a morire in cinese."],
-        meme: ["{n} PARTITE IN 7 GIORNI", "IL SOLE? MAI SENTITO"] },
-      { id: "grind", when: () => s.n >= 8 && s.n < 20, weight: 30, icon: "⏳", title: "Dipendenza moderata",
-        texts: ["{n} partite e {hours} ore questa settimana. Lo stretto indispensabile per non avere una vita sociale."],
-        meme: ["SOLO UNA PARTITA", "— {name}, {n} PARTITE FA"] },
-      { id: "feeder", when: () => s.mostDeaths?.deaths >= 12, weight: 90, icon: "💀", title: "Abbonato alla fontana",
-        texts: ["Con {mdHero} è morto {md} volte in una sola partita. Il courier nemico ormai lo saluta per nome.", "{md} morti con {mdHero}. Non era una partita, era una donazione di oro al team avversario."],
-        meme: ["{md} MORTI CON {mdHero}", "NON FEEDO, FACCIO BENEFICENZA"], hero: () => s.mostDeaths.hero_id },
-      { id: "deaths", when: () => s.avgDeaths >= 8, weight: 60, icon: "⚰️", title: "Statistica morti",
-        texts: ["{deaths} morti totali in settimana. Il pulsante 'buyback' ha l'impronta digitale consumata."],
-        meme: ["{deaths} MORTI IN UNA SETTIMANA", "IL RESPAWN TIMER È CASA MIA"] },
-      { id: "losestreak", when: () => s.worstRun >= 4, weight: 85, icon: "📉", title: "Tracollo in borsa",
-        texts: ["{worst} sconfitte di fila. Nemmeno il Monte dei Paschi ha avuto un andamento così.", "Serie di {worst} sconfitte consecutive. A un certo punto bisogna chiedersi se il problema sono davvero i compagni."],
-        meme: ["{worst} SCONFITTE DI FILA", "È COLPA DEL MATCHMAKING"] },
-      { id: "hotstreak", when: () => s.streakWin && s.streak >= 4, weight: 75, icon: "🔥", title: "In fiamme (sospette)",
-        texts: ["{streak} vittorie di fila in corso. Qualcuno controlli se ha comprato l'account o se gioca suo cugino."],
-        meme: ["{streak} WIN DI FILA", "È SICURAMENTE SKILL E NON FORTUNA"] },
-      { id: "lowwr", when: () => s.n >= 4 && s.wr < 40, weight: 80, icon: "🧊", title: "Winrate glaciale",
-        texts: ["{wr}% di winrate questa settimana. Una moneta lanciata in aria avrebbe fatto meglio, e senza flammare.", "{w} vinte e {l} perse. Il matchmaking non lo odia: è solo obiettivo."],
-        meme: ["WINRATE: {wr}%", "DIREI CHE È CALIBRAZIONE"] },
-      { id: "highwr", when: () => s.n >= 4 && s.wr >= 65, weight: 70, icon: "🏆", title: "Winrate sospetto",
-        texts: ["{wr}% di winrate in settimana. Si consiglia antidoping per i suoi tasti Q, W, E e R."],
-        meme: ["{wr}% WINRATE", "TRANQUILLI, FRA POCO SI SCALA"] },
-      { id: "onetrick", when: () => fav && s.n >= 4 && fav.games / s.n >= 0.5, weight: 65, icon: "🔁", title: "Monogamo",
-        texts: ["{favGames} partite su {n} con {favHero}. Ci sono 120+ eroi, lui ha scelto la monogamia.", "Pool di eroi: {favHero}, e poi... {favHero}."],
+      { id: "absent", when: () => s.n === 0, weight: 100, icon: "🌱", title: "在逃人员",
+        texts: ["{name} 已经7天没打刀了。可能性：出门摸草了、谈恋爱了，或者哭着卸载了。"],
+        meme: ["七天零场", "戒断反应即将到来"] },
+      { id: "nolife", when: () => s.n >= 20, weight: 70, icon: "🛌", title: "从不摸草",
+        texts: ["一周{n}场，{hours}小时。这是一份兼职，只是没有工资。", "7天打了{hours}小时刀塔。这些时间够学一门外语了，结果他学会了用各国语言送人头。"],
+        meme: ["一周{n}场", "太阳是什么？没听说过"] },
+      { id: "grind", when: () => s.n >= 8 && s.n < 20, weight: 30, icon: "⏳", title: "中度成瘾",
+        texts: ["本周{n}场，{hours}小时。刚好够让他没有社交生活。"],
+        meme: ["就打最后一把", "——{name}，{n}把之前"] },
+      { id: "feeder", when: () => s.mostDeaths?.deaths >= 12, weight: 90, icon: "💀", title: "泉水VIP会员",
+        texts: ["用{mdHero}一局死了{md}次。对面的信使都已经认识他了。", "{mdHero}死了{md}次。这不是打比赛，这是给对面捐钱。"],
+        meme: ["{mdHero} 死了{md}次", "我不是送，我是在做慈善"], hero: () => s.mostDeaths.hero_id },
+      { id: "deaths", when: () => s.avgDeaths >= 8, weight: 60, icon: "⚰️", title: "死亡统计",
+        texts: ["本周一共死了{deaths}次。买活键上已经磨出他的指纹了。"],
+        meme: ["一周死了{deaths}次", "复活倒计时是我家"] },
+      { id: "losestreak", when: () => s.worstRun >= 4, weight: 85, icon: "📉", title: "股市崩盘",
+        texts: ["{worst}连败。A股看了都直呼内行。", "连输{worst}把。到了某个时候，得问问问题是不是真的出在队友身上。"],
+        meme: ["{worst}连败", "都是匹配机制的错"] },
+      { id: "hotstreak", when: () => s.streakWin && s.streak >= 4, weight: 75, icon: "🔥", title: "火力全开（可疑）",
+        texts: ["目前{streak}连胜中。请查一下他是不是买号了，或者是他表哥在打。"],
+        meme: ["{streak}连胜", "这绝对是实力不是运气"] },
+      { id: "lowwr", when: () => s.n >= 4 && s.wr < 40, weight: 80, icon: "🧊", title: "胜率冰点",
+        texts: ["本周胜率{wr}%。抛硬币都比他强，而且硬币不喷人。", "{w}胜{l}负。匹配系统不是针对他，只是比较客观。"],
+        meme: ["胜率 {wr}%", "我说这是定级赛"] },
+      { id: "highwr", when: () => s.n >= 4 && s.wr >= 65, weight: 70, icon: "🏆", title: "胜率可疑",
+        texts: ["本周胜率{wr}%。建议对他的QWER键进行兴奋剂检测。"],
+        meme: ["胜率 {wr}%", "别急，马上就要上分了"] },
+      { id: "onetrick", when: () => fav && s.n >= 4 && fav.games / s.n >= 0.5, weight: 65, icon: "🔁", title: "专一的男人",
+        texts: ["{n}场里有{favGames}场玩{favHero}。一百多个英雄，他选择了专一。", "英雄池：{favHero}，还有……{favHero}。"],
         meme: ["{favHero}", "{favHero} {favHero} {favHero}"], hero: () => fav.hero_id },
-      { id: "longgame", when: () => s.longest && s.longest.duration >= 3600, weight: 45, icon: "🕰️", title: "Partita infinita",
-        texts: ["Una partita da {long} minuti con {longHero}. Più lunga di un film di Nolan, meno trama."],
-        meme: ["PARTITA DA {long} MINUTI", "IL MEGA CREEPS ERA LÌ DA ME"], hero: () => s.longest.hero_id },
-      { id: "quickloss", when: () => v.sl && v.sl <= 25, weight: 55, icon: "🏳️", title: "GG a velocità luce",
-        texts: ["Persa in {sl} minuti. Ha visto la draft e ha deciso di soffrire il meno possibile.", "Sconfitta in {sl} minuti: il tempo di una pasta al dente."],
-        meme: ["GG IN {sl} MINUTI", "ALMENO HO CENATO PRESTO"], hero: () => s.shortestLoss.hero_id },
-      { id: "night", when: () => s.lateNight.length >= 1, weight: 50, icon: "🌙", title: "Turno di notte",
-        texts: ["Partita iniziata alle {nightTime}. Il sonno è per chi non ha MMR da perdere.", "{night} partite tra l'1 e le 6 di notte. La mattina dopo al lavoro: inutile come in lane."],
-        meme: ["ORE {nightTime}", "SOLO UN'ALTRA, POI DORMO"] },
-      { id: "turbo", when: () => s.turbo >= 3, weight: 40, icon: "⚡", title: "Turbo-dipendente",
-        texts: ["{turbo} partite in Turbo. Perché perdere lentamente è da boomer."],
-        meme: ["{turbo} PARTITE TURBO", "IL RANKED FA PAURA"] },
-      { id: "poor", when: () => s.lowestGpm && s.lowestGpm.gold_per_min < 300 && s.n > 0, weight: 40, icon: "🪙", title: "Soglia di povertà",
-        texts: ["{lowGpm} GPM con {lowGpmHero}. Nel suo inventario c'erano solo tango e speranza."],
-        meme: ["{lowGpm} GPM", "IL REDDITO DI CITTADINANZA DI DOTA"], hero: () => s.lowestGpm.hero_id },
-      { id: "pacifist", when: () => s.zeroKill >= 2, weight: 45, icon: "🕊️", title: "Pacifista convinto",
-        texts: ["{zk} partite chiuse con zero kill. Gandhi approverebbe, il team meno."],
-        meme: ["0 KILL", "SONO UN SUPPORTO NELL'ANIMA"] },
-      { id: "goodkda", when: () => s.n >= 3 && s.avgKda >= 4, weight: 35, icon: "🎯", title: "KDA da curriculum",
-        texts: ["KDA medio {kda}. Lo scriverà sul CV alla voce 'competenze'."],
-        meme: ["KDA MEDIO {kda}", "MA L'HO PERSA LO STESSO"] },
-      { id: "best", when: () => s.bestGame && s.bestGame.kda >= 5, weight: 20, icon: "⭐", title: "Momento di gloria",
-        texts: ["Partita migliore: {bk} con {bkHero}. Incorniciatela, non ricapita."],
-        meme: ["{bk} CON {bkHero}", "SCREENSHOT O NON È SUCCESSO"], hero: () => s.bestGame.hero_id },
-      { id: "mid", when: () => s.n >= 3 && s.wr >= 42 && s.wr <= 58, weight: 5, icon: "📊", title: "Nella media",
-        texts: ["{n} partite, {wr}% winrate, KDA {kda}. Statistiche talmente medie che l'ISTAT lo usa come campione."],
-        meme: ["{wr}% WINRATE", "MEDIOCRITÀ COSTANTE"] },
+      { id: "longgame", when: () => s.longest && s.longest.duration >= 3600, weight: 45, icon: "🕰️", title: "无尽之战",
+        texts: ["用{longHero}打了一局{long}分钟。比电视剧还长，剧情还更少。"],
+        meme: ["一局{long}分钟", "超级兵都是我养大的"], hero: () => s.longest.hero_id },
+      { id: "quickloss", when: () => v.sl && v.sl <= 25, weight: 55, icon: "🏳️", title: "光速GG",
+        texts: ["{sl}分钟就输了。看了一眼阵容，决定少受点罪。", "{sl}分钟结束战斗：泡面都还没泡好。"],
+        meme: ["{sl}分钟GG", "至少能早点吃饭"], hero: () => s.shortestLoss.hero_id },
+      { id: "night", when: () => s.lateNight.length >= 1, weight: 50, icon: "🌙", title: "夜班选手",
+        texts: ["凌晨{nightTime}开了一局。睡觉是给那些没有分可掉的人准备的。", "凌晨1点到6点之间打了{night}局。第二天上班：跟对线一样没用。"],
+        meme: ["凌晨 {nightTime}", "再来一把就睡"] },
+      { id: "turbo", when: () => s.turbo >= 3, weight: 40, icon: "⚡", title: "加速模式成瘾",
+        texts: ["打了{turbo}局加速模式。因为慢慢输太老派了。"],
+        meme: ["{turbo}局加速模式", "天梯？不敢不敢"] },
+      { id: "poor", when: () => s.lowestGpm && s.lowestGpm.gold_per_min < 300 && s.n > 0, weight: 40, icon: "🪙", title: "贫困线以下",
+        texts: ["用{lowGpmHero}打出了{lowGpm} GPM。物品栏里只有树枝和希望。"],
+        meme: ["{lowGpm} GPM", "刀塔低保户"], hero: () => s.lowestGpm.hero_id },
+      { id: "pacifist", when: () => s.zeroKill >= 2, weight: 45, icon: "🕊️", title: "和平主义者",
+        texts: ["有{zk}局零击杀。佛祖会点赞，队友不会。"],
+        meme: ["零击杀", "我本质上是个辅助"] },
+      { id: "goodkda", when: () => s.n >= 3 && s.avgKda >= 4, weight: 35, icon: "🎯", title: "简历级KDA",
+        texts: ["平均KDA {kda}。他会把这个写进简历的“个人技能”一栏。"],
+        meme: ["KDA {kda}", "但我还是输了"] },
+      { id: "best", when: () => s.bestGame && s.bestGame.kda >= 5, weight: 20, icon: "⭐", title: "高光时刻",
+        texts: ["本周最佳：{bkHero} {bk}。裱起来吧，下次不一定有了。"],
+        meme: ["{bkHero} {bk}", "没截图等于没发生"], hero: () => s.bestGame.hero_id },
+      { id: "mid", when: () => s.n >= 3 && s.wr >= 42 && s.wr <= 58, weight: 5, icon: "📊", title: "平平无奇",
+        texts: ["{n}场，胜率{wr}%，KDA {kda}。数据平均到国家统计局拿他当样本。"],
+        meme: ["胜率 {wr}%", "稳定的平庸"] },
     ];
 
     const out = rules
@@ -182,8 +187,8 @@
       }));
 
     if (fav && HERO_JOKES[fav.hero_id]) {
-      out.push({ id: "hero", icon: "🦸", title: `Il caso ${H(fav.hero_id)}`, weight: 58 + Math.random() * 10,
-        text: pick(HERO_JOKES[fav.hero_id]), meme: { top: H(fav.hero_id).toUpperCase(), bottom: "ANCORA. DI NUOVO. SEMPRE." }, heroId: fav.hero_id });
+      out.push({ id: "hero", icon: "🦸", title: `${H(fav.hero_id)}专案`, weight: 58 + Math.random() * 10,
+        text: pick(HERO_JOKES[fav.hero_id]), meme: { top: H(fav.hero_id), bottom: "又是他。还是他。永远是他。" }, heroId: fav.hero_id });
     }
     return out.sort((a, b) => b.weight - a.weight);
   }

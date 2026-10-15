@@ -14,9 +14,10 @@
   --green: #5ed37c;
   --radius: 18px;
   --shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.8);
-  --f-display: "Anton", Impact, "Arial Narrow", sans-serif;
-  --f-data: "Rajdhani", "Inter", sans-serif;
-  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display: "Anton", "ZCOOL QingKe HuangYou", "Noto Sans SC", Impact, sans-serif;
+  --f-meme: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --f-data: "Rajdhani", "Noto Sans SC", "Inter", sans-serif;
+  --f-body: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -212,7 +213,7 @@ a.pcard:hover .pcard-bg { transform: scale(1.06); opacity: 0.45; }
 .meme::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.45), transparent 30%, transparent 65%, rgba(0,0,0,.55)); }
 .meme figcaption { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 14px; text-align: center; }
 .meme-top, .meme-bottom {
-  font: 400 clamp(20px, 2.5vw, 30px)/1.05 var(--f-display); text-transform: uppercase; color: #fff; letter-spacing: .02em;
+  font: 900 clamp(22px, 2.6vw, 32px)/1.15 var(--f-meme); text-transform: uppercase; color: #fff; letter-spacing: .04em;
   -webkit-text-stroke: 1.5px #000; paint-order: stroke fill;
   text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 14px rgba(0,0,0,.6);
   word-break: break-word;

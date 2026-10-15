@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="it">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dota Tribunale</title>
-  <meta name="description" content="Le statistiche settimanali dei nostri giocatori di Dota 2, giudicate senza pietà." />
-  <meta property="og:title" content="Dota Tribunale" />
-  <meta property="og:description" content="Le statistiche non mentono. Noi sì, ma solo per far ridere." />
+  <title>刀塔法庭</title>
+  <meta name="description" content="我们的刀塔2玩家每周战绩，毫不留情地审判。" />
+  <meta property="og:title" content="刀塔法庭" />
+  <meta property="og:description" content="数据不会说谎。我们会，但只是为了好笑。" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -19,24 +19,25 @@
   <header class="topbar">
     <a href="#/" class="brand">
       <span class="brand-mark">⚖</span>
-      <span class="brand-text">DOTA <b>TRIBUNALE</b></span>
+      <span class="brand-text">刀塔<b>法庭</b></span>
     </a>
     <nav class="topnav" id="topnav"></nav>
   </header>
 
-  <div class="ticker" aria-label="Ultim'ora">
-    <span class="ticker-label">ULTIM'ORA</span>
-    <div class="ticker-track"><div class="ticker-inner" id="ticker">Caricamento delle prove in corso…</div></div>
+  <div class="ticker" aria-label="最新消息">
+    <span class="ticker-label">最新消息</span>
+    <div class="ticker-track"><div class="ticker-inner" id="ticker">正在调取证据……</div></div>
   </div>
 
   <main id="app" class="container"></main>
 
   <footer class="footer container">
-    <p>Dati da <a href="https://www.opendota.com" target="_blank" rel="noopener">OpenDota</a> · ultimi 7 giorni · Le battute sono generate automaticamente: nessun giocatore è stato maltrattato (troppo).</p>
-    <p class="muted">Dota 2 è un marchio di Valve Corporation. Sito amatoriale, non affiliato.</p>
+    <p>数据来自 <a href="https://www.opendota.com" target="_blank" rel="noopener">OpenDota</a> · 最近7天 · 所有吐槽均由程序自动生成，没有玩家受到（太多）伤害。</p>
+    <p class="muted">Dota 2 是 Valve Corporation 的商标。本站为业余作品，与 Valve 无关。</p>
   </footer>
 
   <script src="js/config.js"></script>
+  <script src="js/heroes-zh.js"></script>
   <script src="js/demo.js"></script>
   <script src="js/api.js"></script>
   <script src="js/roast.js"></script>

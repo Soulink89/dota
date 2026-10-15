@@ -70,7 +70,11 @@
 
   let heroesPromise;
   function loadHeroes() {
-    heroesPromise ??= getJSON(HEROES_URL, 20000).catch(() => ({}));
+    heroesPromise ??= getJSON(HEROES_URL, 20000).catch(() => ({})).then((heroes) => {
+      // nomi ufficiali in cinese, se disponibili
+      for (const [id, zh] of Object.entries(window.HERO_NAMES_ZH || {})) if (heroes[id]) heroes[id].localized_name = zh;
+      return heroes;
+    });
     return heroesPromise;
   }
 
