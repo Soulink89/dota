@@ -8,7 +8,7 @@
 //  "bio" (opzionale): presentazione (简介) mostrata sotto il nome.
 //  "note" (opzionale): il sospiro del giudice (法官叹气), mostrato sotto l'indice.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
-//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8); assente = voto su 100
+//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
 //    traits:      i suoi vizi, a scelta tra:
@@ -52,7 +52,15 @@
 //      allHeroes  sa giocare qualunque eroe
 //      tooGood    gioca bene: il tribunale fatica a trovare accuse
 //      jinMidKiller ha distrutto 金神 in mid
-//    victim:      alias di un altro giocatore: pannello 克星 (solo dove batte lui)
+//      proSupport supporto di professione
+//      pudgeGod   "屠夫叼霸天", si vanta del suo Pudge
+//      bigBoss    capo milionario
+//      pcOld      PC vecchio di 10 anni
+//      wifeAway   gioca solo quando la moglie non c'è (meter "wifeAway" = ore di "libertà")
+//      omg        ama la custom OMG
+//      lowPrio    finisce in low priority (小黑屋) perché il PC non carica
+//    heatTitle:   titolo personalizzato della tabella oraria
+//    victim:     alias di un altro giocatore: pannello 克星 (solo dove batte lui)
 //    nemesis:   alias di un altro giocatore: confronto 宿敌对比 (solo dove perde lui)
 // ============================================================
 window.TRIBUNALE_CONFIG = {
@@ -118,6 +126,19 @@ window.TRIBUNALE_CONFIG = {
         meter: "allNighter",
         victim: "金神",
         traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
+      },
+    },
+    {
+      steam64: "76561198054177353",
+      alias: "疯子大神",
+      accusa: "职业辅助",
+      bio: "屠夫叼霸天",
+      color: "#fb923c",
+      bounty: "十年不换电脑罪",
+      persona: {
+        meter: "wifeAway",
+        heatTitle: "老婆不在家的时段",
+        traits: ["proSupport", "pudgeGod", "bigBoss", "pcOld", "wifeAway", "omg", "lowPrio"],
       },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },

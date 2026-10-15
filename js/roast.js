@@ -22,7 +22,10 @@
   }
   // minuti di "保姆" stimati: più basso il GPM, più a lungo va protetto
   const babysitMinutes = (s) => Math.max(10, Math.min(60, Math.round((30 * 450) / Math.max(250, s.avgGpm || 250))));
-  const DROW = 6, JAKIRO = 64;
+  const DROW = 6, JAKIRO = 64, PUDGE = 14;
+  const heroRecord = (s, id) => { const l = s.matches.filter((m) => m.hero_id === id); return { n: l.length, wr: l.length ? Math.round((l.filter((m) => m.win).length / l.length) * 100) : 0 }; };
+  const lowPrioN = (s) => s.matches.filter((m) => m.game_mode === 4).length; // Single Draft = modalità del 小黑屋
+  const abandonN = (s) => s.matches.filter((m) => m.leaver_status > 0).length;
   const nightOrder = (m) => { const d = new Date(m.start_time * 1000); const h = d.getHours(); return (h < 6 ? h + 24 : h) * 60 + d.getMinutes(); };
   const lateHour = (m) => nightOrder(m) >= 23 * 60;
   const CURVE_LABELS =["第1局 · 清醒", "第2局 · 微醺", "第3局 · 上头", "第4局+ · 断片"];
@@ -146,6 +149,12 @@
         label: String(clamp(30 + s.lateN * 3 + s.sessions * 4 + Math.max(0, sober - late) / 3)),
         text: pickFor(["本庭建议：开黑前先吹一下酒精测试仪。", "喝到第几局，他自己也数不清了。", "键盘上的威士忌，比他的眼位还多。"], ctx) };
     }
+    if (meter === "wifeAway") {
+      const title = "本周放风时长";
+      if (!s.n) return { title, voto: 0, label: "0h", cls: "g-bad", text: "本周老婆一直在家。刀塔：已读不回。" };
+      return { title, voto: 0, cls: "g-bad", label: Math.round(s.hours) + "h",
+        text: pickFor(["老婆不在家的每一分钟，都献给了刀塔。", "放风时长按老婆出门时间精确计算。", "刀塔时长 = 老婆出差天数 × 24。"], ctx) };
+    }
     if (meter === "allNighter") {
       const title = "通宵兑现率";
       if (!s.n) return { title, voto: 0, label: "0%", cls: "g-bad", text: "本周喊了通宵，一把没打。兑现率：零。" };
@@ -238,6 +247,7 @@
       name, n: s.n, wr: Math.round(s.wr), w: s.wins, l: s.losses,
       avgK: s.n ? (s.kills / s.n).toFixed(1) : 0, gpm: Math.round(s.avgGpm),
       dg: s.matches.filter((m) => m.hero_id === DROW).length,
+      ab: abandonN(s), sup: s.sup,
       lastTime: s.lastStart ? new Date(s.lastStart.start_time * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "",
       perNight: (s.n / Math.max(1, s.sessions)).toFixed(1), nights: s.sessions,
       dwr: (() => { const d = s.matches.filter((m) => m.hero_id === DROW); return d.length ? Math.round((d.filter((m) => m.win).length / d.length) * 100) : 0; })(),
@@ -374,6 +384,21 @@
       { id: "p-xiuxian", when: () => T("xiuxian") && s.lateN > 0, weight: 83, icon: "🧘", title: "修仙中", v: [
         ["本周深夜修仙{late}局，修为已达【{xlevel}】。照这个速度，很快就升天了。", "修仙中，勿扰", "境界：{xlevel}"],
         ["凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。", "深夜修仙", "离升天不远了"]] },
+
+      // ----- 疯子大神 -----
+      { id: "f-load", hero: () => 34, when: () => T("pcOld"), weight: 90, icon: "🖥️", title: "加载中……", v: [
+        ["开机五分钟，进游戏十分钟。等他加载完，对面已经推上高地了。", "加载中……", "对面已上高地"]] },
+      { id: "f-rich", hero: () => 62, when: () => T("bigBoss"), weight: 88, icon: "💰", title: "月入百万的抠门", v: [
+        ["谈几百万的生意眼都不眨，换个硬盘都要货比三家。", "几百万的生意", "换硬盘：货比三家"]] },
+      { id: "f-wife", hero: () => 58, when: () => T("wifeAway"), weight: 92, icon: "🏠", title: "最怕的gank", v: [
+        ["对面的gank他不怕，他最怕的是老婆的gank。门一响，人已经秒退了。", "对面gank：不怕", "老婆gank：秒退"]] },
+      { id: "f-omg", hero: () => 33, when: () => T("omg"), weight: 78, icon: "🎰", title: "OMG爱好者", v: [
+        ["最爱玩OMG：技能随机组合，跟他的电脑一样，谁也不知道下一秒会发生什么。", "OMG", "电脑：我也不知道"]] },
+      { id: "f-support", hero: () => 30, when: () => T("proSupport"), weight: 82, icon: "🛡️", title: "职业辅助", v: s.n
+        ? [["职业辅助，本周辅助{sup}场。眼插得比老板签的合同还多。", "职业辅助", "眼比合同多"]]
+        : [["职业辅助，眼插得比老板签的合同还多。", "职业辅助", "眼比合同多"]] },
+      { id: "f-drop", hero: () => 98, when: () => T("lowPrio") && abandonN(s) > 0, weight: 86, icon: "🔌", title: "已断开连接", v: [
+        ["本周有{ab}局显示“已断开”。对面以为他在绕后gank，其实他在等电脑重启。", "已断开连接", "电脑重启中"]] },
 
       // ----- 蜗牛大神 -----
       { id: "s-run", hero: () => 63, when: () => T("allNighter"), weight: 92, icon: "🏃", title: "通宵跑路王", v: [
@@ -514,6 +539,18 @@
       reply: s.n ? `本周${s.n}场，纯辅助${s.pureSup}场。他的字典里，“辅助”这个词被至宝特效挡住了。` : "他的字典里，“辅助”这个词被至宝特效挡住了。" });
     if (t.has("threeAxes") && s.n) q.push({ quote: "我这三板斧够用了", stamp: "被ban警告", heroId: s.heroes[0]?.hero_id,
       reply: `够用？本周${s.n}场里三板斧砍了${s.top3}场。对面ban掉三个英雄，他就只能去找传说中的第四把斧头。` });
+    // ----- 疯子大神 -----
+    if (t.has("pcOld")) q.push({ quote: "电脑还能用，不用换", stamp: "抠门",
+      reply: "月入百万的老板，电脑却是十年前的。显卡的年纪，比有些队友还大。" });
+    if (t.has("wifeAway")) q.push({ quote: "老婆不在，今晚放开打", stamp: "怕老婆",
+      reply: s.n ? `本周放风${s.hours.toFixed(1)}小时，每一局都是从老婆眼皮底下偷来的。` : "说完这句，老婆提前回家了。本周放风：0小时。" });
+    if (t.has("lowPrio")) q.push({ quote: "我真不是挂机，是电脑卡了", stamp: "卡成PPT",
+      reply: lowPrioN(s) ? `本周${lowPrioN(s)}局在小黑屋（单一征召）里度过。别人进小黑屋是因为挂机，他是因为电脑还没开完机。` : "别人进小黑屋是因为挂机，他是因为电脑还没开完机。小黑屋的管理员都认识他了。" });
+    if (t.has("pudgeGod")) { const pr = heroRecord(s, PUDGE);
+      q.push({ quote: "钩子我闭眼都能中", stamp: "屠夫附体", heroId: PUDGE,
+        reply: !pr.n ? "本周一场帕吉都没拿出来。屠夫叼霸天，霸天在哪？"
+          : pr.wr < 50 ? `本周帕吉${pr.n}场，胜率${pr.wr}%。闭眼是真的闭眼了。`
+          : `本周帕吉${pr.n}场，胜率${pr.wr}%。职业辅助拿屠夫，对面到死都没想明白他是几号位。` }); }
     // ----- 蜗牛大神 -----
     if (t.has("allNighter")) q.push({ quote: "今晚通宵！不通宵不下线！", stamp: "跑路",
       reply: s.n && s.n / Math.max(1, s.sessions) <= 3.5
@@ -546,6 +583,10 @@
     if (traits.has("noSupport")) cards.push({ icon: "🚫", label: "纯辅助场次", value: String(s.pureSup), sub: `本周共${s.n}场` });
     if (traits.has("allNighter") && s.sessions) cards.push({ icon: "🌃", label: "平均每晚在线", value: `${s.nightHours.toFixed(1)} 小时`, sub: "通宵按8小时计算", cls: "neg" });
     if (traits.has("allHeroes")) cards.push({ icon: "🌊", label: "本周用过的英雄", value: `${s.distinctHeroes} 个`, sub: `${s.n}场比赛` });
+    if (traits.has("pcOld")) cards.push({ icon: "🖥️", label: "电脑服役年限", value: "10年", sub: "据群友证词", cls: "neg" });
+    if (traits.has("pudgeGod")) { const pr = heroRecord(s, PUDGE); cards.push({ icon: "🪝", label: "帕吉出场", value: `${pr.n}场`, sub: pr.n ? `胜率 ${pr.wr}%` : "本周没出钩" }); }
+    if (traits.has("proSupport")) cards.push({ icon: "🛡️", label: "辅助场次", value: String(s.sup), sub: `本周共${s.n}场` });
+    if (traits.has("lowPrio") && (lowPrioN(s) || abandonN(s))) cards.push({ icon: "🚪", label: "小黑屋 / 断线", value: `${lowPrioN(s)} / ${abandonN(s)}`, sub: "单一征召局 / 断开连接局", cls: "neg" });
     if (traits.has("cantLastHit") && s.core && s.lh10 < 50) cards.push({ icon: "🗡️", label: "核心局补刀", value: `${Math.round(s.lh10)}/10分钟`, sub: "打核心时的平均值", cls: "neg" });
     return {
       cards,

@@ -301,7 +301,7 @@
             ${kdChart(s.matches, p.heroes)}
           </div>
           <div class="sp-panel">
-            <div class="sp-head"><span>🕯️</span><div><h4>${cfg.persona?.traits?.includes("xiuxian") ? "修仙作息表" : "作息表"}</h4><p class="muted small">什么时候在打刀（颜色越亮局数越多）</p></div></div>
+            <div class="sp-head"><span>🕯️</span><div><h4>${esc(cfg.persona?.heatTitle || (cfg.persona?.traits?.includes("xiuxian") ? "修仙作息表" : "作息表"))}</h4><p class="muted small">什么时候在打刀（颜色越亮局数越多）</p></div></div>
             ${heatmap(s.matches)}
           </div>
         </div>
