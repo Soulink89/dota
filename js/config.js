@@ -4,7 +4,9 @@
 //  con il suo Steam64 ID (quello nell'URL steamcommunity.com/profiles/...).
 //  "alias" e "accusa" sono opzionali: se mancano si usa il nome Steam.
 //
-//  "persona" (opzionale) attiva battute su misura e la sezione 吹牛鉴定:
+//  "color" (opzionale): colore personale della pagina. "bounty": il reato sul manifesto 通缉令.
+//  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
+//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
 //    traits:      i suoi vizi, a scelta tra:
@@ -35,7 +37,10 @@ window.TRIBUNALE_CONFIG = {
       steam64: "76561198073722385",
       alias: "金神",
       accusa: "自封无敌中单",
+      color: "#f2b632",
+      bounty: "吹牛罪",
       persona: {
+        meter: "brag",
         claimedRank: "超凡入圣",
         rival: "呆逼",
         traits: ["brag", "midKing", "kdaBrag", "blameTeam", "rigged", "selfMvp", "targeted", "lastPick", "trashTalk"],
@@ -45,7 +50,10 @@ window.TRIBUNALE_CONFIG = {
       steam64: "76561198110591464",
       alias: "Ping神",
       accusa: "DC首席理论家",
+      color: "#8f7bff",
+      bounty: "醉驾英雄罪",
       persona: {
+        meter: "drunk",
         traits: ["theorist", "allRounder", "cantLastHit", "drunk", "smoker", "mmrAnxiety", "partyFear", "ancientOneDay", "xiuxian"],
       },
     },

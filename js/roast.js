@@ -115,7 +115,30 @@
   }
 
   // ---------- Pagella: voto d'esame cinese su 100 (60 = sufficienza) ----------
-  function verdict(s) {
+  // Ogni giocatore può avere il suo "indice" al posto del voto (persona.meter in config.js)
+  function verdict(s, ctx = {}) {
+    const meter = ctx.persona?.meter;
+    const clamp = (x) => Math.max(1, Math.min(99, Math.round(x)));
+    if (meter === "brag") {
+      const rank = medalName(ctx.rankTier);
+      if (!s.n) return { title: "本周吹牛指数", voto: 99, label: "∞", cls: "g-mid", text: "一把没打，吹得比打得还多。" };
+      if (s.wr >= 50) return { title: "本周吹牛指数", voto: 99, cls: "g-mid",
+        label: String(clamp(55 + s.wr * 0.4 + s.streak * 2 + s.n * 0.3)),
+        text: pick([`赢了${s.wins}把，群里预计要吹${s.wins * 3}遍。建议提前屏蔽。`, "本周吹牛素材充足，库存够用到下个月。", `“我早说了我是超凡实力”——某${rank}玩家`]) };
+      return { title: "本周甩锅指数", voto: 0, cls: "g-bad", label: String(clamp(50 + s.losses * 4)),
+        text: pick([`输了${s.losses}把，${s.losses}口锅已全部分发给队友。`, "系统局、被针对、队友菜——甩锅三件套已备齐。"]) };
+    }
+    if (meter === "drunk") {
+      if (!s.n) return { title: "本周上头指数", voto: 0, label: "0", cls: "g-bad", text: "本周没上线，可能还在醒酒。" };
+      const late = groupWr(s.curve.slice(3)), sober = s.curve[0].wr;
+      return { title: "本周上头指数", voto: 0, cls: "g-bad",
+        label: String(clamp(30 + s.lateN * 3 + s.sessions * 4 + Math.max(0, sober - late) / 3)),
+        text: pick([
+          s.curve[3].n ? `每晚第4局以后胜率${Math.round(late)}%。建议酒驾入刑。` : "一晚一瓶威士忌，喝到第3局就开始送。",
+          `修仙修到【${xiuxian(s.lateHours).level}】，离升天只差一瓶。`,
+          "清醒时理论超凡，喝完后实战先锋。",
+        ]) };
+    }
     if (!s.n) return { voto: null, label: "缺考", text: "本周缺考。要么出门摸草了，要么换小号了。" };
     let v = 60 + (s.wr - 50) * 1.1 + (s.avgKda - 2.6) * 7 - Math.max(0, s.avgDeaths - 8) * 2.5;
     v = Math.max(0, Math.min(100, Math.round(v)));
@@ -259,11 +282,11 @@
       { id: "p-mid-bad", when: () => T("midKing") && s.mid.n >= 2 && s.mid.wr < 60, weight: 90, icon: "👑", title: "“无敌中单”",
         texts: ["自称无敌中单。本周玩中路英雄{midN}场，胜率{midWr}%，场均死{midD}次。无敌的应该是对面中单吧。"],
         meme: ["我是无敌中单", "中路胜率 {midWr}%"] },
-      { id: "p-mid-good", when: () => T("midKing") && s.mid.n >= 2 && s.mid.wr >= 60, weight: 70, icon: "👑", title: "“无敌中单”（本周版）",
-        texts: ["中路英雄{midN}场胜率{midWr}%。好吧，这周确实有点东西——接下来三个月都会拿这个吹。"],
-        meme: ["中路胜率 {midWr}%", "接下来我要吹三个月"] },
+      { id: "p-mid-good", when: () => T("midKing") && s.mid.n >= 2 && s.mid.wr >= 60, weight: 70, icon: "👑", title: "“无敌中单”（又来了）",
+        texts: ["中路胜率{midWr}%，于是这周他在群里把“无敌中单”说了{midN}遍。群友的耳朵比他对面的中单还受罪。", "中路赢了几把，现在已经开始自称“中路之神”了。下周输回来记得别甩锅。"],
+        meme: ["中路赢了两把", "开始自称中路之神"] },
       { id: "p-kda-ok", when: () => T("kdaBrag") && s.n >= 3 && s.avgKda >= 3.5, weight: 66, icon: "📈", title: "KDA信徒",
-        texts: ["KDA {kda}，这周确实还行。但请注意：KDA不能换成分，所以他还是{rank}。"],
+        texts: ["KDA {kda}，又够他吹一个月了。可惜KDA不能换成分，所以他还是{rank}。", "天天把KDA挂嘴边，好像KDA高就能从{rank}直接跳到超凡。"],
         meme: ["我KDA很好的", "所以为什么还是{rank}"] },
       { id: "p-kda-bad", when: () => T("kdaBrag") && s.n >= 3 && s.avgKda < 3.5, weight: 80, icon: "📉", title: "KDA信徒",
         texts: ["天天吹KDA，本周KDA {kda}。建议换个东西吹。"],
@@ -291,10 +314,12 @@
       { id: "p-allround", when: () => T("allRounder") && s.distinctHeroes >= 5, weight: 80, icon: "🎲", title: "全能选手",
         texts: s.wr < 50
           ? ["本周{n}场用了{distinct}个英雄，一号位到五号位全试了一遍。什么位置都会打，什么位置都会输。"]
-          : ["{n}场{distinct}个英雄，核心{core}场、辅助{sup}场。什么位置都会打，这次是真的。"],
-        meme: s.wr < 50 ? ["什么位置都会打", "什么位置都会输"] : ["{distinct}个英雄", "总有一个能赢"] },
+          : ["{n}场{distinct}个英雄，核心{core}场、辅助{sup}场。什么位置都会打，什么位置都打得一般。"],
+        meme: s.wr < 50 ? ["什么位置都会打", "什么位置都会输"] : ["{distinct}个英雄", "没有一个精通"] },
       { id: "p-lasthit", when: () => T("cantLastHit") && s.n > 0, weight: 76, icon: "🗡️", title: "补刀残疾人士",
-        texts: s.core
+        texts: s.core && s.lh10 >= 50
+          ? ["天天说自己不会补刀，好让队友把兵线让给他。理论大师的又一套理论。", "嘴上“我不会补刀”，手上抢兵比谁都快。补刀不会，演技满分。"]
+          : s.core
           ? ["自称不会补刀——这是本庭收到的唯一一句真话：打核心时平均每10分钟补刀{lh10}个。", "说自己不会补刀，本周核心局每10分钟{lh10}刀。兵线：谢谢你放过我们。"]
           : ["自称不会补刀，所以本周干脆全打辅助，平均补刀{avgLh}。聪明的规避。"],
         meme: ["我不会补刀", "终于说了句实话"] },
@@ -347,94 +372,53 @@
     return out.sort((a, b) => b.weight - a.weight);
   }
 
-  // ---------- 吹牛鉴定: le sue frasi contro i dati ----------
-  // verdict: "true" = 属实, "half" = 存疑, "false" = 吹牛
-  function factCheck(s, ctx = {}) {
+  // ---------- 语录: le sue frasi tipiche + la risposta del tribunale ----------
+  // I dati vengono scelti apposta per smontarlo (partita peggiore, più morti, ecc.).
+  function quotes(s, ctx = {}, heroes = {}) {
     const persona = ctx.persona || {};
-    const traits = new Set(persona.traits || []);
-    if (!traits.size || !s.n) return [];
-    const tier = ctx.rankTier || 0;
-    const claimedIdx = MEDALS.indexOf(persona.claimedRank || "");
-    const level = (x, good, ok) => (x >= good ? "true" : x >= ok ? "half" : "false");
-    const checks = [];
+    const t = new Set(persona.traits || []);
+    if (!s.n) return [];
+    const H = (id) => heroes[id]?.localized_name || "某英雄";
+    const kd = (m) => `${m.kills}/${m.deaths}/${m.assists}`;
+    const rank = medalName(ctx.rankTier), mmr = approxMmr(ctx.rankTier) ?? "?";
+    const claimed = persona.claimedRank || "超凡入圣", rival = persona.rival || "队友";
+    const worst = (list, f) => list.reduce((b, m) => (b == null || f(m) > f(b) ? m : b), null);
+    const worstMid = worst(s.matches.filter(isMid), (m) => m.deaths - m.kills);
+    const worstKda = worst(s.matches, (m) => -m.kda);
+    const q = [];
 
-    if (traits.has("brag") && persona.claimedRank) checks.push({
-      claim: `“我是${persona.claimedRank}实力”`,
-      reality: `${medalName(tier)} · 约${approxMmr(tier) ?? "?"}分`,
-      verdict: claimedIdx > 0 && Math.floor(tier / 10) >= claimedIdx ? "true" : "false",
-    });
-    if (traits.has("midKing") && s.mid.n) checks.push({
-      claim: "“我是无敌中单，打爆一切”",
-      reality: `中路英雄 ${s.mid.n}场 · 胜率${Math.round(s.mid.wr)}% · 场均死${s.mid.avgDeaths.toFixed(1)}次`,
-      verdict: s.mid.n >= 3 && s.mid.wr >= 80 && s.mid.avgDeaths < 5 ? "true" : s.mid.wr >= 55 ? "half" : "false",
-    });
-    if (traits.has("kdaBrag")) checks.push({
-      claim: "“我KDA很好的”",
-      reality: `本周KDA ${s.avgKda.toFixed(2)}`,
-      verdict: level(s.avgKda, 4, 2.5),
-    });
-    if (traits.has("blameTeam") && s.losses) checks.push({
-      claim: "“输了都是队友的锅”",
-      reality: `输的局里他场均死${s.inLosses.avgDeaths.toFixed(1)}次`,
-      verdict: s.inLosses.avgDeaths >= 7 ? "false" : s.inLosses.avgDeaths >= 4 ? "half" : "true",
-    });
-    if (traits.has("rigged")) checks.push({
-      claim: "“Steam给我匹配系统局”",
-      reality: `本周胜率${Math.round(s.wr)}%`,
-      verdict: s.wr >= 50 ? "false" : "half",
-    });
-    if (traits.has("selfMvp") && s.wins) checks.push({
-      claim: "“赢了都是我MVP”",
-      reality: `赢的局平均KDA ${s.inWins.kda.toFixed(1)}`,
-      verdict: level(s.inWins.kda, 6, 3.5),
-    });
-    if (traits.has("targeted") && s.mid.losses) checks.push({
-      claim: "“对面故意选英雄针对我”",
-      reality: `对面 ${s.mid.losses} 局都没查过他是谁`,
-      verdict: "false",
-    });
-    if (traits.has("allRounder")) checks.push({
-      claim: "“我什么位置都会打”",
-      reality: `${s.distinctHeroes}个英雄 · 核心${s.core}场 · 辅助${s.sup}场`,
-      verdict: s.core && s.sup && s.distinctHeroes >= 5 ? "true" : "half",
-    });
-    if (traits.has("cantLastHit") && s.core) checks.push({
-      claim: "“我不会补刀”",
-      reality: `核心局每10分钟补刀 ${Math.round(s.lh10)} 个`,
-      verdict: s.lh10 < 50 ? "true" : s.lh10 < 65 ? "half" : "false",
-    });
-    if (traits.has("theorist")) checks.push({
-      claim: "“听我的准没错”",
-      reality: `本周胜率${Math.round(s.wr)}% · KDA ${s.avgKda.toFixed(2)}`,
-      verdict: s.wr >= 60 ? "true" : s.wr >= 50 ? "half" : "false",
-    });
-    if (traits.has("drunk") && s.curve[0].n && groupN(s.curve.slice(2))) checks.push({
-      claim: "“喝了酒我更强”",
-      reality: `清醒局胜率${Math.round(s.curve[0].wr)}% · 上头局${Math.round(groupWr(s.curve.slice(2)))}%`,
-      verdict: groupWr(s.curve.slice(2)) > s.curve[0].wr ? "true" : "false",
-    });
-    if (traits.has("mmrAnxiety")) checks.push({
-      claim: "“我很稳，不会掉分”",
-      reality: `本周天梯分估算 ${s.mmrDelta > 0 ? "+" : ""}${s.mmrDelta}`,
-      verdict: s.mmrDelta > 0 ? "true" : s.mmrDelta === 0 ? "half" : "false",
-    });
-    if (traits.has("ancientOneDay")) checks.push({
-      claim: "“我是万古选手”",
-      reality: medalName(tier),
-      verdict: tier >= 61 ? "true" : "false",
-    });
-    return checks;
+    if (t.has("brag")) q.push({ quote: `我是${claimed}实力`, stamp: "做梦",
+      reply: `系统显示：${rank}（约${mmr}分）。${claimed}只存在于他的嘴里和梦里。` });
+    if (t.has("midKing") && worstMid) q.push({ quote: "我是无敌中单，打爆一切", stamp: "吹牛", heroId: worstMid.hero_id,
+      reply: `本周中路${H(worstMid.hero_id)}打出 ${kd(worstMid)}。被打爆的“一切”里，也包括他自己。` });
+    if (t.has("kdaBrag") && worstKda) q.push({ quote: "我KDA很好的", stamp: "失忆", heroId: worstKda.hero_id,
+      reply: `请看${H(worstKda.hero_id)}这把：${kd(worstKda)}。这一把的KDA，他选择性失忆了。` });
+    if (t.has("blameTeam") && s.losses) q.push({ quote: "输了都是队友的锅", stamp: "甩锅",
+      reply: `${s.losses}场失败，他自己场均死${s.inLosses.avgDeaths.toFixed(1)}次。队友：这锅太沉，背不动。` });
+    if (t.has("rigged")) q.push({ quote: "Steam给我匹配系统局", stamp: "碰瓷",
+      reply: s.wr >= 50 ? `胜率${Math.round(s.wr)}%的系统局？系统：我对你还不够好吗？` : `胜率${Math.round(s.wr)}%。系统：别碰瓷，我也很无辜。` });
+    if (t.has("selfMvp") && s.worstWin) q.push({ quote: "赢了都是我MVP", stamp: "自封", heroId: s.worstWin.hero_id,
+      reply: `${H(s.worstWin.hero_id)} ${kd(s.worstWin)} 也叫MVP？那是队友把他抬过了终点线。` });
+    if (t.has("targeted")) q.push({ quote: "对面故意选英雄针对我", stamp: "想多了",
+      reply: "对面五个人连他的ID都没点开过。被针对？对面只是正常选了个英雄。" });
+    if (t.has("lastPick")) q.push({ quote: "我最后选，免得被克制", stamp: "怂",
+      reply: "每局最后一个选，选完照样被克制。克制他的不是英雄，是他自己。" });
+    if (t.has("trashTalk") && s.mostDeaths) q.push({ quote: `${rival}太菜了`, stamp: "双标", heroId: s.mostDeaths.hero_id,
+      reply: `说这话的人，本周用${H(s.mostDeaths.hero_id)}一局死了${s.mostDeaths.deaths}次。${rival}：谢谢，有被安慰到。` });
+    return q;
   }
 
-  // ---------- 专项调查: pannelli speciali attivati dai traits ----------
+  // ---------- 专项调查: pannelli speciali, solo dati che lo mettono in ridicolo ----------
   function specials(s, ctx = {}) {
     const traits = new Set(ctx.persona?.traits || []);
     if (!s.n) return null;
     const cards = [];
-    if (traits.has("drunk")) cards.push({ icon: "🥃", label: "威士忌（估算）", value: `${s.sessions} 瓶`, sub: `本周开黑${s.sessions}个晚上 · 一晚一瓶` });
+    if (traits.has("drunk")) cards.push({ icon: "🥃", label: "威士忌（估算）", value: `${s.sessions} 瓶`, sub: `本周喝了${s.sessions}个晚上 · 一晚一瓶` });
     if (traits.has("smoker")) cards.push({ icon: "🚬", label: "香烟（估算）", value: `${s.n} 根`, sub: "一局一根，从不落下" });
-    if (traits.has("mmrAnxiety")) cards.push({ icon: "📊", label: "天梯分变化（估算）", value: `${s.mmrDelta > 0 ? "+" : ""}${s.mmrDelta}`, sub: "按每局±25分估算", cls: s.mmrDelta >= 0 ? "pos" : "neg" });
-    if (traits.has("partyFear")) cards.push({ icon: "🙈", label: "组排 / 单排", value: `${s.party.n} / ${s.solo.n}`, sub: s.party.n ? `组排胜率 ${Math.round(s.party.wr)}%` : "从不开黑" });
+    if (traits.has("mmrAnxiety") && s.mmrDelta < 0) cards.push({ icon: "📉", label: "天梯分（估算）", value: String(s.mmrDelta), sub: "最在乎分的人，掉得最多", cls: "neg" });
+    if (traits.has("partyFear") && s.party.n && s.party.wr < 55) cards.push({ icon: "🙈", label: "怕跟主团开黑", value: `${Math.round(s.party.wr)}%`, sub: `结果组排${s.party.n}场，胜率就这样`, cls: "neg" });
+    if (traits.has("theorist")) cards.push({ icon: "🎙️", label: "DC发言 vs 补刀", value: "∞ : " + s.lhTotal, sub: "说的话永远比补的刀多" });
+    if (traits.has("cantLastHit") && s.core && s.lh10 < 50) cards.push({ icon: "🗡️", label: "核心局补刀", value: `${Math.round(s.lh10)}/10分钟`, sub: "兵线：谢谢不杀之恩", cls: "neg" });
     return {
       cards,
       curve: traits.has("drunk") && s.sessions ? s.curve.map((g, i) => ({ label: CURVE_LABELS[i], n: g.n, wr: g.wr })) : null,
@@ -442,5 +426,5 @@
     };
   }
 
-  window.TribunaleRoast = { computeStats, verdict, buildRoasts, factCheck, specials, isWin, medalName, approxMmr };
+  window.TribunaleRoast = { computeStats, verdict, buildRoasts, quotes, specials, isWin, isMid, medalName, approxMmr };
 })();
