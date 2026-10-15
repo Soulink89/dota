@@ -384,8 +384,6 @@
         ["{n}场{distinct}个英雄。英雄池深到Yoki神的三板斧扔进去，都听不到回声。", "{n}场{distinct}个英雄", "三板斧：自愧不如"]] },
       { id: "s-loud", hero: () => 2, when: () => T("loud"), weight: 86, icon: "📢", title: "人形扩音器", v: [
         ["嗓门是全队最大的。对面没开麦，也知道他今晚要“干”。", "对面没开麦", "也听见他在喊干"]] },
-      { id: "s-meta", when: () => T("tooGood"), weight: 80, icon: "🧑‍⚖️", title: "律师团加班", v: [
-        ["本庭律师团加班三天，翻遍他的比赛，最后只能起诉他一条：说话不算数。", "起诉理由", "说话不算数"]] },
 
       // ----- Yoki神 -----
       { id: "y-arcana", hero: () => DROW, when: () => T("drowArcana"), weight: 92, icon: "💎", title: "至宝改变人生", v: [

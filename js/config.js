@@ -6,6 +6,7 @@
 //
 //  "color" (opzionale): colore personale della pagina. "bounty": il reato sul manifesto 通缉令.
 //  "bio" (opzionale): presentazione (简介) mostrata sotto il nome.
+//  "note" (opzionale): il sospiro del giudice (法官叹气), mostrato sotto l'indice.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
 //    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
@@ -110,6 +111,7 @@ window.TRIBUNALE_CONFIG = {
       alias: "蜗牛大神",
       accusa: "喊通宵的男人",
       bio: "随便虐过金神的“无敌中单”",
+      note: "哎，实在没啥好黑的，打得没问题啊。",
       color: "#93c5fd",
       bounty: "通宵诈骗罪",
       persona: {

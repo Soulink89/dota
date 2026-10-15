@@ -254,6 +254,7 @@
               <span class="eyebrow">${esc(v.title || "本周成绩单")}</span>
               <div class="grade ${v.cls || gradeClass(v.voto)}"><span>${esc(v.label)}</span></div>
               <p>${esc(v.text)}</p>
+              ${cfg.note ? `<p class="judge-note">🧑‍⚖️ 法官叹气：${esc(cfg.note)}</p>` : ""}
             </div>
           </div>
         </div>
