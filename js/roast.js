@@ -474,7 +474,8 @@
         ["凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。", "深夜修仙", "离升天不远了"]] },
 
       // ----- Kaiju大神 -----
-      { id: "k-hidden", hero: () => 93, when: () => ctx.hidden && T("slarkBody"), weight: 95, icon: "🐟", title: "暗影之舞", v: [
+      { id: "k-hidden", hero: () => 93, when: () => (ctx.hidden || ctx.friends) && T("slarkBody"), weight: 95, icon: "🐟", title: "暗影之舞", v: ctx.friends ? [
+        ["比赛记录不公开，可惜暗影之舞只能隐身几秒：和群友组排的每一局，本庭都看见了。", "暗影之舞", "只能隐身几秒"]] : [
         ["比赛记录不公开。小鱼人的暗影之舞，原来是用在战绩上的。", "暗影之舞", "用在了战绩上"]] },
       { id: "k-rank", hero: () => 42, when: () => T("lowRank") && ctx.rankTier, weight: 92, icon: "📉", title: "段位海拔", v: [
         ["段位{rank}。小鱼人跳得再远，也跳不出这个分段。", "段位：{rank}", "小鱼人也跳不出去"]] },
@@ -544,7 +545,9 @@
         ["本周{n}场，每一场都在拿资源。队友的经济？那是什么，能吃吗？", "经济分配", "全部归我"]] },
 
       // ----- 大B神 -----
-      { id: "b-hidden", hero: () => 62, when: () => ctx.hidden && T("babysit"), weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
+      { id: "b-hidden", hero: () => 62, when: () => (ctx.hidden || ctx.friends) && T("babysit"), weight: 99, icon: "🙈", title: "比赛记录：机密", v: ctx.friends ? [
+        ["比赛数据设为不公开。可惜群友的比赛都是公开的——本庭照样一局一局扒了出来。", "比赛记录：隐藏", "群友：我们是公开的"],
+        ["藏了半天比赛记录，结果被群友的战绩出卖了。", "藏好了战绩", "被群友出卖"]] : [
         ["比赛数据设为不公开。打得怎么样？本庭查不到，但他自己心里有数。", "比赛记录", "不敢公开"],
         ["连OpenDota都查不到他的比赛。打得怎么样，只有他自己知道。", "OpenDota", "查无此人"]] },
       { id: "b-pos", hero: () => 44, when: () => T("positions"), weight: 86, icon: "1️⃣", title: "只会1号位和3号位", v: [

@@ -814,3 +814,21 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
   .legend-heroes { grid-template-columns: repeat(2, 1fr); }
   .legend-vs { grid-template-columns: 1fr; }
 }
+
+/* ---------- partite ricostruite dagli amici ---------- */
+.friends-note { display: flex; align-items: center; gap: 22px; padding: 18px 24px; margin-bottom: 14px; border-radius: 16px;
+  border: 1px dashed rgba(250,204,21,.5); background: repeating-linear-gradient(-45deg, rgba(250,204,21,.05) 0 14px, transparent 14px 28px), var(--panel); }
+.friends-seal { flex: none; width: 60px; height: 60px; display: grid; place-items: center; font-size: 28px; border-radius: 50%;
+  background: rgba(250,204,21,.14); border: 2px solid rgba(250,204,21,.55); box-shadow: 0 0 20px -6px #facc15; }
+.friends-note h3 { margin: 0 0 6px; font: 400 22px var(--f-display); letter-spacing: .04em; color: #fde68a; }
+.friends-note p { margin: 0; color: #e7e2d6; font-size: 14px; }
+.friends-note b { color: #fde68a; }
+@media (max-width: 680px) { .friends-note { flex-direction: column; text-align: center; } }
+/* numeri "infiniti" del monumento */
+.legend-kpis .kpi-val { line-height: 1; }
+.inf { display: inline-block; font: 400 64px/0.9 var(--f-data); cursor: help;
+  background: linear-gradient(90deg, #fde68a, #fff, #cbd5e1, #fde68a); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 12px rgba(253,230,138,.45)); animation: inf-shine 4s linear infinite, inf-breathe 3s ease-in-out infinite; }
+@keyframes inf-shine { to { background-position: 300% 0; } }
+@keyframes inf-breathe { 50% { transform: scale(1.08); } }

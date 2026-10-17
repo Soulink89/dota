@@ -29,7 +29,7 @@
     const id = API.toAccountId(cfg.steam64);
     if (!cache.has(id)) {
       cache.set(id, (async () => {
-        let [data, heroes] = await Promise.all([API.loadPlayer(id, DAYS), API.loadHeroes()]);
+        let [data, heroes] = await Promise.all([API.loadPlayer(id, DAYS, { friends: cfg.persona?.friendsScan }), API.loadHeroes()]);
         const p = data.profile?.profile || {};
         const name = cfg.alias || p.personaname || `玩家 ${id}`;
         // modalità elogio: si contano solo le partite vinte
@@ -42,7 +42,9 @@
           // posizione tra i giocatori "elogiati": ognuno riceve versioni diverse degli elogi
           praiseIndex: CFG.players.filter((c) => c.persona?.mode === "praise" || c.persona?.alsoPraise).indexOf(cfg),
           // partite nascoste: "Expose Public Match Data" disattivato in Dota 2
-          hidden: !(data.matches || []).length && !(data.wl && data.wl.win + data.wl.lose) && data.source !== "demo" };
+          hidden: !(data.matches || []).length && !(data.wl && data.wl.win + data.wl.lose) && data.source !== "demo",
+          // partite nascoste ma ricostruite dalle partite in gruppo con gli amici
+          friends: data.source === "friends" };
         // monumento: dati di carriera per i "leggendari" che non giocano più
         if (cfg.persona?.mode === "legend") ctx.legend = await API.loadLegend(id);
         // inventario Dota 2 (至宝仓库), solo per chi ha persona.inventory
@@ -137,15 +139,19 @@
     </div>`;
   }
 
+  // ultima partita conosciuta: mostra quanto sono freschi i dati
+  function lastPillOf(d) {
+    const last = (d.matches || []).reduce((t, m) => Math.max(t, m.start_time + (m.duration || 0)), 0);
+    return last ? `<span class="pill" title="已收录的最近一局">最近一局 · ${ago(last)}</span>` : "";
+  }
+
   function sourceBadge(p) {
     const d = p.data;
     const when = new Date(d.fetchedAt).toLocaleString(LOCALE, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
     if (d.source === "demo") return `<span class="pill pill-warn">演示数据——非真实</span>`;
-    // ultima partita conosciuta: mostra quanto sono freschi i dati
-    const last = (d.matches || []).reduce((t, m) => Math.max(t, m.start_time + (m.duration || 0)), 0);
-    const lastPill = last ? `<span class="pill" title="OpenDota 收录的最近一局">最近一局 · ${ago(last)}</span>` : "";
-    if (d.stale) return `<span class="pill pill-warn" title="OpenDota 无响应，显示最近保存的数据">已保存数据 · ${when}</span>${lastPill}`;
-    return `<span class="pill"><span class="dot"></span>实时数据 · ${when}</span>${lastPill}`;
+    if (d.source === "friends") return `<span class="pill pill-gold" title="比赛数据未公开，由群友的比赛还原">👥 群友比赛还原 · ${when}</span>${lastPillOf(d)}`;
+    if (d.stale) return `<span class="pill pill-warn" title="OpenDota 无响应，显示最近保存的数据">已保存数据 · ${when}</span>${lastPillOf(d)}`;
+    return `<span class="pill"><span class="dot"></span>实时数据 · ${when}</span>${lastPillOf(d)}`;
   }
 
   function resultStrip(stats) {
@@ -345,6 +351,12 @@
       <section class="wins-only">
         <div class="wins-only-seal">只收<br>胜场</div>
         <div><h3>本页特别说明</h3><p>根据本庭特别条例，<b>${esc(p.name)}</b>的页面<b>只收录胜利的比赛</b>：统计、图表、比赛列表和海报全部只看胜场，败场一律不予记录。</p></div>
+      </section>` : ""}
+
+      ${p.ctx.friends ? `
+      <section class="friends-note">
+        <div class="friends-seal">👥</div>
+        <div><h3>比赛数据未公开 · 群友比赛还原</h3><p>他在Dota 2里关掉了“公开比赛数据”。以下 <b>${s.n}</b> 局是从<b>和群友一起打的比赛</b>里找出来的，单排的比赛本庭看不到。每小时自动更新。</p></div>
       </section>` : ""}
 
       ${p.ctx.hidden ? `
@@ -692,6 +704,8 @@
     const hours = Math.round((L.seconds || 0) / 3600);
     const last = L.lastMatch ? new Date(L.lastMatch * 1000) : null;
     const fmtN = (n) => Number(n || 0).toLocaleString(LOCALE);
+    // i numeri del leggendario sono "infiniti": ∞ grande, il numero vero al passaggio del mouse
+    const inf = (n) => `<span class="inf" title="${fmtN(n)}">∞</span>`;
     // ogni giorno un ordine diverso per le "frasi da chat"
     const day = Math.floor(Date.now() / 86400000);
     const sayings = LEGEND_SAYINGS.map((s, i) => ({ s, k: (i * 7 + day) % LEGEND_SAYINGS.length })).sort((a, b) => a.k - b.k).slice(0, 4).map((x) => x.s);
@@ -731,10 +745,10 @@
         <section class="block">
           <div class="block-head"><h2>生涯战功</h2><span class="muted small">数据来自 OpenDota</span></div>
           <div class="kpis legend-kpis">
-            ${kpi("总击杀", counter(L.kills || 0), "对面的复活读秒，有一半是他制造的", "pos")}
-            ${kpi("总助攻", counter(L.assists || 0), "团战里从来不缺他")}
-            ${kpi("总补刀", counter(L.lastHits || 0), "兵线见了他都绕道")}
-            ${kpi("游戏时长", counter(hours), "小时 · 一段青春", "")}
+            ${kpi("总击杀", inf(L.kills), `OpenDota只记得 ${fmtN(L.kills)} 次，剩下的都在传说里`, "pos")}
+            ${kpi("总助攻", inf(L.assists), `数据库里只存得下 ${fmtN(L.assists)} 次`)}
+            ${kpi("总补刀", inf(L.lastHits), `兵线记得 ${fmtN(L.lastHits)} 刀，兵线不敢多记`)}
+            ${kpi("游戏时长", inf(hours), `其中 ${fmtN(hours)} 小时被记录在案`)}
           </div>
         </section>
 

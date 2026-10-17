@@ -12,6 +12,7 @@
 //                 "legend" = monumento (纪念碑) per chi non gioca più: carriera, medaglia, 群聊冒泡; rival = chi viene "commentato"
 //    alsoPraise:  true = oltre alle prese in giro, sezione "本庭也得承认" con elogi dalle vittorie
 //    inventory:   true = scansione dell'inventario Dota 2 (至宝仓库); l'inventario Steam deve essere pubblico
+//    friendsScan: true = partite nascoste: lo script le ricostruisce dalle partite in gruppo con gli altri giocatori
 //    meter:      indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风), "fish" (小鱼人浓度); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
@@ -111,6 +112,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "畏战罪",
       persona: {
         meter: "babysit",
+        friendsScan: true, // partite nascoste: ricostruite dalle partite in gruppo con gli amici
         nemesis: "大金神",
         traits: ["babysit", "milkAfk", "scared", "streamer", "russianCommander", "drowCurse", "jinTarget", "positions", "tinyPool", "jakiroOnly", "laneLoser"],
       },
@@ -164,6 +166,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "偷钱罪",
       persona: {
         meter: "fish",
+        friendsScan: true, // partite nascoste: ricostruite dalle partite in gruppo con gli amici
         traits: ["pingBuddy", "lowRank", "allPos1", "slarkBody", "pos4Slark", "jinHates", "teletubby", "lowLevelGood"],
       },
     },

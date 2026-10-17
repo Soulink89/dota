@@ -64,8 +64,17 @@
   // Restituisce { profile, matches, wl, fetchedAt, source: 'live'|'snapshot'|'cache'|'demo' }
   // Prima sempre i dati in diretta da OpenDota (al massimo di 5 minuti fa); la copia salvata dallo
   // script automatico e la cache più vecchia servono solo se OpenDota non risponde.
-  async function loadPlayer(id, days) {
+  async function loadPlayer(id, days, opts = {}) {
     if (new URLSearchParams(location.search).has("demo")) return window.TribunaleDemo.make(id, days);
+    // partite nascoste: usa quelle ricostruite dallo script dalle partite in gruppo con gli amici
+    if (opts.friends) {
+      const [snap, prof] = await Promise.all([fetchSnapshot(id), cachedJSON("profile:" + id, LIVE_TTL, () => getJSON(`${OD}/players/${id}`)).catch(() => null)]);
+      if (snap?.source === "friends") {
+        const profile = prof || snap.profile || {};
+        if (!profile.rank_tier && snap.rankFromMatches) profile.rank_tier = snap.rankFromMatches;
+        return { profile, matches: snap.matches || [], wl: null, fetchedAt: snap.fetchedAt, source: "friends" };
+      }
+    }
     const recent = readCache(id);
     if (recent && Date.now() - recent.fetchedAt < LIVE_TTL) return { ...recent, source: "live" };
     let err;
