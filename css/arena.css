@@ -215,7 +215,6 @@
 .gk-name { position: relative; z-index: 2; display: inline-block; background: rgba(12,14,22,.88); color: #fde047; border: 1px solid #fde047;
   border-radius: 999px; padding: 1px 10px; font-size: 13px; font-weight: 800; margin-bottom: -6px; }
 .goku-svg { display: block; width: 170px; height: 190px; transition: transform .2s; filter: drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
-.goku.swing .goku-svg { transform: rotate(-22deg) scale(1.08); }
 .goku .gk-glow { animation: glow 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes glow { 50% { opacity: .55; transform: scale(1.06); } }
 .goku .wing { transform-box: view-box; transform-origin: 100px 120px; animation: flap .5s ease-in-out infinite alternate; }
@@ -261,3 +260,20 @@
   .f-say { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) { .arena *, .arena *::before, .arena *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
+
+/* martello di 大P神 */
+.goku .gk-hammer { transform-box: view-box; transform-origin: 142.5px 150px; transform: rotate(18deg); transition: transform .35s cubic-bezier(.3,1.4,.6,1); }
+.goku.raise .gk-hammer { transform: rotate(-45deg); transition-duration: .35s; }
+.goku.swing .gk-hammer { transform: rotate(115deg); transition: transform .12s ease-in; }
+.goku.swing .goku-svg { transform: rotate(12deg) scale(1.05); }
+.fighter.bonked .f-pose { animation: bonked .9s ease-out; }
+.fighter.bonked .f-body { animation: none; }
+@keyframes bonked { 0% { transform: none; } 12% { transform: translateY(18px) scale(1.18, .55); } 35% { transform: translateY(10px) scale(1.1, .7); }
+  60% { transform: translateY(-8px) scale(.94, 1.08); } 80% { transform: scale(1.02, .97); } 100% { transform: none; } }
+.bonk-fx { position: absolute; left: 50%; top: 32%; width: 0; height: 0; z-index: 7; pointer-events: none; }
+.bonk-fx i { position: absolute; left: -24px; top: -24px; font-size: 44px; font-style: normal; animation: boom .6s ease-out forwards; }
+.bonk-fx b { position: absolute; left: -9px; top: -9px; font-size: 16px; animation: orbit 1s linear forwards; }
+.bonk-fx b:nth-child(3) { animation-delay: -.33s; }
+.bonk-fx b:nth-child(4) { animation-delay: -.66s; }
+@keyframes boom { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+@keyframes orbit { from { transform: rotate(0) translateX(34px) rotate(0); } to { transform: rotate(360deg) translateX(34px) rotate(-360deg); opacity: .2; } }

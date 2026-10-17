@@ -140,7 +140,11 @@
   const KILL_LINES = ["{a} 一套连招带走了 {t}", "{a} 把 {t} 按在草地上摩擦", "{a} 追了半张地图收下 {t}", "{t} 走位风骚，还是被 {a} 抓了", "{a} 收下 {t} 的人头，顺手嘲讽", "{a} 从树林里杀出，{t} 当场去世", "{a} 绕到背后，{t} 回头只看到灰屏"];
   const DEATH_LINES = ["{v} 倒下了，躺在草地上思考人生", "{v} 阵亡，复活时间够泡一碗面", "{v} 又死了，熟悉的灰屏", "{v} 卒，享年一波团", "{v} 被野怪顺手带走"];
   const ASSIST_LINES = ["{a} 助攻 +1，躲在后面补了个技能", "{a} 默默助攻，功劳全给别人", "{a} 一个控制，助攻到手", "{a} 路过放了个技能，助攻入账"];
-  const SLAP_LINES = ["啪！大P神从天而降，给了大金神一巴掌", "啪！大P神：「吹，接着吹」", "啪！大P神：「这也叫中单？」", "啪！大P神：「上个分再来跟我说话」", "啪！大P神抽完继续在云上吃瓜", "啪！大P神：「段位是吹出来的？」"];
+  const SLAP_LINES = ["咚！大P神从天而降，一锤砸在大金神头上", "咚！大P神：「吹，接着吹」", "咚！大P神：「这也叫中单？」", "咚！大P神：「上个分再来跟我说话」",
+    "咚！大P神锤完继续在云上吃瓜", "咚！大P神：「段位是吹出来的？」", "咚！大P神：「系统局？这锤也是系统给的」", "咚！大金神被锤进土里半截",
+    "咚！大P神：「MVP？Most Victimized Player」", "咚！大P神：「中路单杀？先单杀这把锤子」", "咚！大P神：「下次甩锅之前先看看天上」", "咚！大P神：「被针对？对，就是针对你」"];
+  const BONK = ["又吹？", "咚！", "坐下！", "这波你的", "哈？", "醒醒", "还吹吗", "看锤！", "清醒点", "超凡入圣？"];
+  const JIN_OUCH = ["谁打我？！", "大P神你别太过分", "这锤是系统局", "我被针对了！", "头好痛……", "我要举报", "队友呢？救我！", "这不公平！"];
   const fill = (s, o) => s.replace(/\{(\w)\}/g, (_, k) => o[k]);
 
   // ---------- chiacchiere sul prato: battute dalla "lore" di ognuno, a volte con risposta ----------
@@ -182,6 +186,48 @@
     ["疯子大神", "老婆不在家，通宵！", "蜗牛大神", "这话我熟，我也说过"],
     ["大金神", "我段位比你们都高", "Soul大神", "嗯，嘴上的段位"],
     ["Yoki大神", "嗯嗯", "Ping大神", "我还没说完呢"],
+  ];
+  // altre battute singole
+  const MORE_SAY = {
+    "大金神": ["我一个人能打五个", "这把输了不怪我", "你们跟紧我的节奏", "我当年也是天梯前排", "中路给我，谁都别抢", "这装备不是我的问题", "对面是代练吧"],
+    "Ping大神": ["我跟你们讲一下这个阵容", "打团之前先看小地图", "我这MMR是真的要命", "今晚就打一把，真的", "要不我们复盘一下", "别和我组排，掉分"],
+    "大B神": ["让我先发育30分钟", "我开播了，给点面子", "等等我还没出BKB", "家里娃哭了，暂离一下", "小黑我再练练", "我切个跳刀先"],
+    "Yoki大神": ["嗯", "哦", "行", "我玩小黑", "这个至宝好看吧", "嗯嗯嗯"],
+    "蜗牛大神": ["冲冲冲！别怂！", "今晚谁走谁是狗……啊不说了", "我中路随便打", "再来一把！", "我明天还要上班……再来一把"],
+    "疯子大神": ["这钩子我闭眼都能中", "我买眼了，你们放心", "电脑开机要五分钟", "这把我出个大根", "老婆在家，我小声点"],
+    "Kaiju大神*": ["这野区归我了", "辅助的钱也是钱", "我跳了！谁跟？", "低分局才是真实的刀塔", "Ping，带我上分"],
+    "Soul大神": ["胜利只是习惯", "稳一点，别浪", "我来开团", "这把轻松", "看我操作"],
+  };
+  for (const [k, v] of Object.entries(MORE_SAY)) SAY[k] = [...(SAY[k] || []), ...v];
+  DIALOGS.push(
+    ["大金神", "我一个人能打五个", "Soul大神", "那你先打赢一个"],
+    ["大金神", "这装备不是我的问题", "蜗牛大神", "那是谁的？装备自己买的？"],
+    ["大金神", "对面是代练吧", "疯子大神", "对面是你上把的队友"],
+    ["大金神", "中路给我，谁都别抢", "Kaiju大神*", "放心，没人跟你抢送"],
+    ["Ping大神", "我跟你们讲一下这个阵容", "大B神", "讲完游戏都结束了"],
+    ["Ping大神", "今晚就打一把，真的", "Kaiju大神*", "上次你也这么说，打到天亮"],
+    ["Ping大神", "要不我们复盘一下", "大金神", "复盘你补刀吗？"],
+    ["大B神", "让我先发育30分钟", "大金神", "30分钟你能补20个兵吗"],
+    ["大B神", "家里娃哭了，暂离一下", "Ping大神", "娃哭是因为看你玩PA"],
+    ["大B神", "我切个跳刀先", "Soul大神", "你跳进去还是跳出来？"],
+    ["Yoki大神", "我玩小黑", "大B神", "我也玩小黑，我们不一样"],
+    ["Yoki大神", "这个至宝好看吧", "Kaiju大神*", "好看，可惜你不玩辅助"],
+    ["蜗牛大神", "再来一把！", "疯子大神", "你说再来一把的时候已经准备下线了"],
+    ["蜗牛大神", "我中路随便打", "大金神", "那是我状态不好！"],
+    ["疯子大神", "我买眼了，你们放心", "Ping大神", "你眼插在泉水里"],
+    ["疯子大神", "电脑开机要五分钟", "Soul大神", "换台电脑吧老板"],
+    ["Kaiju大神*", "这野区归我了", "Yoki大神", "嗯嗯"],
+    ["Kaiju大神*", "Ping，带我上分", "Ping大神", "我自己都在掉分"],
+    ["Soul大神", "我来开团", "大金神", "等我！……我先回个家"],
+    ["Soul大神", "这把轻松", "大B神", "你轻松，我被追了三条路"],
+  );
+  // terzetti: tre giocatori di fila
+  const TRIOS = [
+    ["大金神", "这把我MVP", "Ping大神", "你0/8的MVP？", "Yoki大神", "嗯嗯"],
+    ["大B神", "谁来保护我", "Kaiju大神*", "我在打野", "疯子大神", "我在买眼……可能"],
+    ["Ping大神", "这把理论上必赢", "蜗牛大神", "干干干！", "大金神", "等我最后选个英雄"],
+    ["大金神", "被针对了！", "Soul大神", "没人针对你", "大B神", "我针对你，因为你骂我呆逼"],
+    ["疯子大神", "老婆回来了", "蜗牛大神", "那我们也撤了", "Ping大神", "那我再抽根烟"],
   ];
   // dopo un'uccisione: il vincitore sfotte, a volte la vittima risponde
   const KILL_TAUNTS = [
@@ -243,6 +289,16 @@
     <path d="M86 73 L97 75 L95 80 L87 79 Z M114 73 L103 75 L105 80 L113 79 Z" fill="#fff"/>
     <circle cx="93" cy="77" r="2.2" fill="#111"/><circle cx="107" cy="77" r="2.2" fill="#111"/>
     <path d="M93 90 Q101 94 109 87" stroke="#7c2d12" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- il martello: appoggiato sulla spalla, si alza e cala su 大金神 -->
+    <g class="gk-hammer">
+      <rect x="138.5" y="60" width="8" height="92" rx="3.5" fill="#8b5a2b" stroke="#5b3a1a" stroke-width="1.5"/>
+      <path d="M140 72 h5 M140 84 h5 M140 96 h5" stroke="#5b3a1a" stroke-width="1.5"/>
+      <rect x="116" y="30" width="54" height="34" rx="6" fill="#9ca3af" stroke="#334155" stroke-width="2.5"/>
+      <rect x="116" y="38" width="54" height="7" fill="#e5e7eb"/>
+      <rect x="112" y="28" width="8" height="38" rx="3" fill="#64748b" stroke="#334155" stroke-width="2"/>
+      <rect x="166" y="28" width="8" height="38" rx="3" fill="#64748b" stroke="#334155" stroke-width="2"/>
+      <circle cx="142.5" cy="150" r="8" fill="url(#gk-skin)" stroke="#d99a6c"/>
+    </g>
   </svg>`;
 
   // ora del giorno (vera): alba, giorno, tramonto, notte → tinta della scena
@@ -268,6 +324,10 @@
   // 💪 spinte: contatore condiviso da tutti i visitatori (abacus, gratuito, senza account)
   const PUSH_URL = (op, id) => `https://abacus.jasoncameron.dev/${op}/soulink89-dota-arena/push-${id}`;
   const PUSH_XP = PUSH_XP_;
+  const PUSH_MINE = 10, PUSH_DAY = 100; // al giorno, per personaggio: per ogni visitatore / per tutti insieme
+  const myKey = (id) => `tribunale:push:${id}:${dayIdx(Date.now())}`;
+  const myPushes = (id) => { try { return Number(localStorage.getItem(myKey(id))) || 0; } catch { return 0; } };
+  const setMyPushes = (id, v) => { try { localStorage.setItem(myKey(id), v); } catch {} };
   const getPushes = (id) => fetch(PUSH_URL("get", id)).then((r) => (r.ok ? r.json() : { value: 0 })).then((j) => j.value || 0).catch(() => 0);
 
   // ---------- montaggio ----------
@@ -281,12 +341,13 @@
     FIELD.y1 = mobile ? 86 : 94; // su telefono la chat sta in basso
     const [ids, hist] = await Promise.all([loadItemIds(), loadHistory()]);
     const F = buildFighters(players, ids, hist);
-    const pushes = await Promise.all(F.map((f) => getPushes(f.id)));
+    const today = dayIdx(Date.now());
+    const [pushes, pushDays] = await Promise.all([Promise.all(F.map((f) => getPushes(f.id))), Promise.all(F.map((f) => getPushes(`${f.id}-d${today}`)))]);
     const jin = F.find((f) => f.name === "大金神");
     F.forEach((f, i) => {
       f.x = FIELD.x0 + ((i + 0.5) / F.length) * (FIELD.x1 - FIELD.x0);
       f.y = FIELD.y0 + (((i * 37) % 100) / 100) * (FIELD.y1 - FIELD.y0);
-      f.busy = 0; f.lock = 0; f.hp = 100; f.pushes = pushes[i];
+      f.busy = 0; f.lock = 0; f.hp = 100; f.pushes = pushes[i]; f.pushDay = pushDays[i];
     });
     const legend = players.find((p) => p.legend);
     const tier = legend?.data.profile?.rank_tier;
@@ -313,8 +374,8 @@
           <li>击杀 +${XP.kill} 经验，助攻 +${XP.assist} 经验，每次被推一把 +${PUSH_XP} 经验；升到 N 级需要 ${LV_K.toLocaleString()}×(N−1)² 经验，<b>没有等级上限</b>。</li>
           <li><b>从 2026年10月17日 开打，永不清零</b>：每天的战绩都累计下去，谁天天打谁就越来越强。</li>
           <li>Soul大神在这里用的是<b>全部真实比赛</b>，输赢都算。</li>
-          <li>大P神在云上观战，每分钟给大金神一巴掌，风雨无阻。天色跟着真实时间变。</li>
-          <li><b>点选手 = 推他一把 💪</b>：所有访客的推力都记在网站上，大家一起累计，推得越多经验越多。</li>
+          <li>大P神扛着锤子在云上观战，<b>每分钟随机下来锤大金神3次</b>，风雨无阻。天色跟着真实时间变。</li>
+          <li><b>点选手 = 推他一把 💪</b>：每推一次 +${PUSH_XP} 经验，记在网站上，所有访客一起累计。每个选手每天你最多推 ${PUSH_MINE} 次，全体访客合计最多 ${PUSH_DAY} 次。</li>
         </ul>
       </details>`;
 
@@ -351,8 +412,17 @@
       const t = Date.now();
       if (!f || t - lastPush < 1200) return;
       lastPush = t;
-      f.pushes++;
+      // limite giornaliero per personaggio: PUSH_MINE spinte a testa, PUSH_DAY in tutto (tutti i visitatori)
+      const mine = myPushes(f.id);
+      if (mine >= PUSH_MINE || f.pushDay >= PUSH_DAY) {
+        say(n, mine >= PUSH_MINE ? "今天推够了，明天再来" : "今天大家推太多了，累了");
+        pop(n, `今日已达上限`, "jabpop");
+        return;
+      }
+      setMyPushes(f.id, mine + 1);
+      f.pushes++; f.pushDay++;
       fetch(PUSH_URL("hit", f.id)).then((r) => r.json()).then((j) => { if (j.value) f.pushes = j.value; }).catch(() => {});
+      fetch(PUSH_URL("hit", `${f.id}-d${dayIdx(t)}`)).then((r) => r.json()).then((j) => { if (j.value) f.pushDay = j.value; }).catch(() => {});
       // spinta: scivola via dal punto in cui hai cliccato
       const r = n.getBoundingClientRect(), dir = ev.clientX < r.left + r.width / 2 ? 1 : -1;
       n.classList.remove("pushed"); void n.offsetWidth; n.classList.add("pushed");
@@ -471,13 +541,17 @@
         }
         prev[f.id] = c;
       });
-      // schiaffo di 大P神: una volta al minuto, al secondo 30
+      // martellate di 大P神: 3 al minuto, in secondi "casuali" ma uguali per tutti (derivati dal minuto)
       const minOfDay = Math.floor((t - dayStartMs(dayIdx(t))) / 60000);
-      if (jin && new Date(t).getSeconds() >= 30 && lastSlapMin !== minOfDay) {
-        lastSlapMin = minOfDay;
-        slap(root, nodes[jin.id], jin, minOfDay);
-        push(`👋 ${SLAP_LINES[minOfDay % SLAP_LINES.length]}（今日第${minOfDay + 1}掌）`, "slap");
-        if (minOfDay % 3 === 0) setTimeout(() => talk(jin, ["谁打我？！", "大P神你别太过分", "这巴掌是系统局"][(minOfDay / 3) % 3 | 0]), 1500);
+      const sec = new Date(t).getSeconds();
+      const hits = bonkSeconds(minOfDay);
+      const k = hits.filter((s) => sec >= s).length - 1;
+      const key = minOfDay * 3 + k;
+      if (jin && k >= 0 && sec - hits[k] < 3 && lastSlapMin !== key) {
+        lastSlapMin = key;
+        slap(root, nodes[jin.id], jin, key);
+        push(`🔨 ${SLAP_LINES[key % SLAP_LINES.length]}（今日第${key + 1}锤）`, "slap");
+        if (key % 2 === 0) setTimeout(() => talk(jin, JIN_OUCH[(key / 2 | 0) % JIN_OUCH.length]), 1600);
       }
     };
 
@@ -487,6 +561,15 @@
     let ci = Math.floor(Date.now() / 5000);
     const chat = () => {
       ci++;
+      const trios = TRIOS.filter((x) => byName[x[0]] && byName[x[2]] && byName[x[4]]);
+      if (trios.length && ci % 5 === 0) {
+        const [a, l1, b, l2, c, l3] = trios[(ci / 5 | 0) % trios.length];
+        if (isDead(byName[a])) return;
+        talk(byName[a], l1);
+        setTimeout(() => talk(byName[b], l2), 1800);
+        setTimeout(() => talk(byName[c], l3), 3600);
+        return;
+      }
       if (dialogs.length && ci % 2 === 0) {
         const [a, l1, b, l2] = dialogs[(ci / 2 | 0) % dialogs.length];
         if (isDead(byName[a])) return;
@@ -689,29 +772,40 @@
     }, DEAD_MS);
   }
 
+  // 3 secondi per minuto, uno per ogni terzo del minuto, pseudo-casuali dal numero del minuto
+  function bonkSeconds(m) {
+    const r = (s) => { const x = Math.sin(m * 12.9898 + s * 78.233) * 43758.5453; return x - Math.floor(x); };
+    return [1 + Math.floor(r(1) * 16), 21 + Math.floor(r(2) * 16), 41 + Math.floor(r(3) * 16)];
+  }
+
+  // 大P神 vola giù, alza il martello e lo cala in testa a 大金神 (che si schiaccia), poi torna in cielo
   function slap(root, jn, jin, n) {
     const g = root.querySelector(".goku");
     const bub = root.querySelector(".goku-bubble");
-    if (!g || !jn || jn.classList.contains("dead")) return;
-    jin.busy = Date.now() + 3000; // 大金神 si ferma a prendere lo schiaffo
-    bub.textContent = ["又吹？", "啪！", "坐下！", "这波你的", "哈？", "醒醒"][n % 6];
+    if (!g || !jn || jn.classList.contains("dead") || g.classList.contains("diving")) return;
+    jin.busy = Date.now() + 3200; // 大金神 si ferma a prendersi la martellata
+    bub.textContent = BONK[n % BONK.length];
     const a = root.getBoundingClientRect(), b = jn.getBoundingClientRect(), gb = g.getBoundingClientRect();
-    const dx = b.left + b.width / 2 - (gb.left + gb.width / 2) + (jin.x > 50 ? 70 : -70);
-    const dy = b.top + b.height * 0.3 - (gb.top + gb.height * 0.7);
+    const sc = window.innerWidth < 700 ? 0.8 : 0.7;
+    const dx = b.left + b.width / 2 - (gb.left + gb.width / 2) - gb.width * sc * 0.5; // si mette a sinistra: il martello cala da destra
+    const dy = b.top + b.height * 0.2 - (gb.top + gb.height * 0.62);
     g.classList.add("talk", "diving");
-    g.style.transform = `translate(${dx}px, ${Math.min(dy, a.height)}px) scale(.75)`;
+    g.style.transform = `translate(${dx}px, ${Math.min(dy, a.height)}px) scale(${sc})`;
+    setTimeout(() => g.classList.add("raise"), 650);
     setTimeout(() => {
+      g.classList.remove("raise");
       g.classList.add("swing");
-      replay(jn, "slapped", 700);
-      jin.hp = Math.max(6, jin.hp - 10);
-      pop(jn, "啪!", "slappop");
+      replay(jn, "bonked", 900);
+      jin.hp = Math.max(6, jin.hp - 12);
+      pop(jn, "咚!", "slappop");
       const fx = document.createElement("span");
-      fx.className = "slap-fx";
-      fx.textContent = "✋";
+      fx.className = "bonk-fx";
+      fx.innerHTML = "<i>💥</i><b>⭐</b><b>⭐</b><b>⭐</b>";
       jn.appendChild(fx);
-      setTimeout(() => { g.classList.remove("swing"); fx.remove(); }, 700);
-    }, 950);
-    setTimeout(() => { g.style.transform = ""; }, 1900);
+      replay(root, "quake", 300);
+      setTimeout(() => { g.classList.remove("swing"); fx.remove(); }, 1000);
+    }, 1050);
+    setTimeout(() => { g.style.transform = ""; }, 2000);
     setTimeout(() => g.classList.remove("talk", "diving"), 3000);
   }
 
