@@ -221,7 +221,7 @@
 @keyframes flap { to { transform: rotate(14deg) scaleY(.82); } }
 @keyframes flapR { to { transform: rotate(-14deg) scaleY(.82); } }
 @keyframes hover { 50% { translate: 0 10px; } }
-.goku-bubble { position: absolute; right: 100%; top: 110px; margin-right: -14px; background: #fff; color: #111; font-weight: 800; padding: 4px 11px;
+.goku-bubble { position: absolute; right: 100%; top: 110px; margin-right: -14px; max-width: 220px; background: #fff; color: #111; font-weight: 800; padding: 4px 11px;
   border-radius: 14px; white-space: nowrap; font-size: 14px; opacity: 0; transition: opacity .2s; border: 2px solid #fde047; }
 .goku.talk .goku-bubble { opacity: 1; }
 
@@ -328,3 +328,23 @@
 .al-info { width: min(420px, 78%); display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #cbd5e1; }
 .al-pct { font: 700 14px var(--f-data, sans-serif); color: #fde68a; }
 @media (max-width: 700px) { .al-title { font-size: 32px; } .al-info { font-size: 11.5px; } }
+
+/* il bambino di 大B神 */
+.baby { position: absolute; transform: translate(-50%, -100%); transition-property: left, top; transition-timing-function: linear; pointer-events: none; text-align: center; }
+.baby-body { display: inline-block; font-size: 30px; line-height: 1; transform: scale(var(--sc, 1)); transform-origin: bottom center;
+  filter: drop-shadow(0 3px 2px rgba(0,0,0,.5)); animation: crawl .45s ease-in-out infinite; }
+.baby.flip .baby-body { scale: -1 1; }
+@keyframes crawl { 0%, 100% { translate: 0 0; rotate: -6deg; } 50% { translate: 0 -3px; rotate: 6deg; } }
+.baby.drinking .baby-body { animation: suckle .5s ease-in-out infinite; }
+@keyframes suckle { 50% { translate: 0 -1px; scale: 1.05 .95; } }
+.baby-fx { position: absolute; left: 50%; top: -6px; width: 0; height: 0; }
+.baby.drinking .baby-fx::before, .baby.drinking .baby-fx::after { content: "💕"; position: absolute; left: -8px; font-size: 14px; animation: hearts 1.6s ease-out infinite; }
+.baby.drinking .baby-fx::after { content: "🍼"; left: 2px; font-size: 11px; animation-delay: .8s; }
+@keyframes hearts { from { transform: translate(0, 0) scale(.6); opacity: 0; } 25% { opacity: 1; } to { transform: translate(8px, -36px) scale(1.2); opacity: 0; } }
+.baby.full .baby-fx::before { content: "😋"; position: absolute; left: -8px; top: -14px; font-size: 14px; }
+/* 大B神 porge il biberon in avanti, verso il bambino */
+.fighter.feeding .pr-hand-l { transform: translate(30px, 30px) rotate(78deg); transition: transform .5s; }
+.fighter.feeding .f-pose { animation: feedbend 5.5s ease-in-out; }
+@keyframes feedbend { 10%, 90% { transform: rotate(calc(var(--dir) * 8deg)) translateY(4px); } }
+.arena.lite .baby-body { animation-duration: .7s; }
+.baby.cry .baby-fx::before { content: "😭"; position: absolute; left: -8px; top: -16px; font-size: 15px; }

@@ -140,10 +140,11 @@
   const KILL_LINES = ["{a} 一套连招带走了 {t}", "{a} 把 {t} 按在草地上摩擦", "{a} 追了半张地图收下 {t}", "{t} 走位风骚，还是被 {a} 抓了", "{a} 收下 {t} 的人头，顺手嘲讽", "{a} 从树林里杀出，{t} 当场去世", "{a} 绕到背后，{t} 回头只看到灰屏"];
   const DEATH_LINES = ["{v} 倒下了，躺在草地上思考人生", "{v} 阵亡，复活时间够泡一碗面", "{v} 又死了，熟悉的灰屏", "{v} 卒，享年一波团", "{v} 被野怪顺手带走"];
   const ASSIST_LINES = ["{a} 助攻 +1，躲在后面补了个技能", "{a} 默默助攻，功劳全给别人", "{a} 一个控制，助攻到手", "{a} 路过放了个技能，助攻入账"];
-  const SLAP_LINES = ["咚！大P神从天而降，一锤砸在大金神头上", "咚！大P神：「吹，接着吹」", "咚！大P神：「这也叫中单？」", "咚！大P神：「上个分再来跟我说话」",
-    "咚！大P神锤完继续在云上吃瓜", "咚！大P神：「段位是吹出来的？」", "咚！大P神：「系统局？这锤也是系统给的」", "咚！大金神被锤进土里半截",
-    "咚！大P神：「MVP？Most Victimized Player」", "咚！大P神：「中路单杀？先单杀这把锤子」", "咚！大P神：「下次甩锅之前先看看天上」", "咚！大P神：「被针对？对，就是针对你」"];
-  const BONK = ["又吹？", "咚！", "坐下！", "这波你的", "哈？", "醒醒", "还吹吗", "看锤！", "清醒点", "超凡入圣？"];
+  // 大P神 chiama 大金神 "小金金"
+  const SLAP_LINES = ["咚！大P神：「小金金，接锤！」", "咚！大P神：「小金金，吹，接着吹」", "咚！大P神：「小金金，这也叫中单？」", "咚！大P神：「小金金，上个分再来跟我说话」",
+    "咚！大P神：「小金金乖，回去补兵」", "咚！大P神：「小金金，段位是吹出来的？」", "咚！大P神：「系统局？小金金，这锤也是系统给的」", "咚！大P神：「小金金，进土里冷静一下」",
+    "咚！大P神：「小金金，MVP？Most Victimized Player」", "咚！大P神：「中路单杀？小金金先单杀这把锤子」", "咚！大P神：「小金金，下次甩锅之前先看看天上」", "咚！大P神：「被针对？对，小金金，就是针对你」"];
+  const BONK = ["小金金，又吹？", "小金金，咚！", "小金金，坐下！", "小金金，这波你的", "小金金？哈？", "醒醒，小金金", "小金金还吹吗", "小金金，看锤！", "清醒点，小金金", "小金金，超凡入圣？"];
   const JIN_OUCH = ["谁打我？！", "大P神你别太过分", "这锤是系统局", "我被针对了！", "头好痛……", "我要举报", "队友呢？救我！", "这不公平！"];
   const fill = (s, o) => s.replace(/\{(\w)\}/g, (_, k) => o[k]);
 
@@ -355,10 +356,10 @@
 
   // ---------- montaggio ----------
   const FIELD = { x0: 6, x1: 90, y0: 64, y1: 94 };
-  let timer = null, walker = null, chatter = null, spawner = null, sipper = null, io = null, active = true, onVis = null;
+  let timer = null, walker = null, chatter = null, spawner = null, sipper = null, feeder = null, io = null, active = true, onVis = null;
   async function mount(el, players) {
     if (!el) return;
-    [timer, walker, chatter, spawner, sipper].forEach(clearInterval); io?.disconnect();
+    [timer, walker, chatter, spawner, sipper, feeder].forEach(clearInterval); io?.disconnect();
     const mobile = window.innerWidth < 700;
     FIELD.y0 = mobile ? 60 : 64;
     FIELD.y1 = mobile ? 86 : 94; // su telefono la chat sta in basso
@@ -403,6 +404,7 @@
           <li><b>从 2026年10月17日 开打，永不清零</b>：每天的战绩都累计下去，谁天天打谁就越来越强。</li>
           <li>Soul大神在这里用的是<b>全部真实比赛</b>，输赢都算。</li>
           <li>大P神扛着锤子在云上观战，<b>每分钟随机下来锤大金神3次</b>，风雨无阻。天色跟着真实时间变。</li>
+          <li>每30秒会爬进来一个婴儿，大B神必须停下来给他喂奶 🍼；Ping大神边喝威士忌边抽烟。</li>
           <li><b>点选手 = 推他一把 💪</b>：每推一次 +${PUSH_XP} 经验，记在网站上，所有访客一起累计。每个选手每天你最多推 ${PUSH_MINE} 次，全体访客合计最多 ${PUSH_DAY} 次。</li>
         </ul>
       </details>`;
@@ -588,9 +590,10 @@
       const key = minOfDay * 3 + k;
       if (jin && k >= 0 && sec - hits[k] < 3 && lastSlapMin !== key) {
         lastSlapMin = key;
-        slap(root, nodes[jin.id], jin, key);
+        if (slap(root, nodes[jin.id], jin, key)) {
         push(`🔨 ${SLAP_LINES[key % SLAP_LINES.length]}（今日第${key + 1}锤）`, "slap");
         if (key % 2 === 0) setTimeout(() => talk(jin, JIN_OUCH[(key / 2 | 0) % JIN_OUCH.length]), 1600);
+        }
       }
     };
 
@@ -641,13 +644,55 @@
     // ogni tanto Ping beve un sorso e 大B神 si attacca al biberon
     let si = 0;
     const sip = () => {
-      const who = F.filter((f) => PROPS[f.name] && !isDead(f) && f.lock < Date.now());
+      const who = F.filter((f) => PROPS[f.name]?.act === "sip" && !isDead(f) && f.lock < Date.now());
       if (!who.length) return;
       const f = who[si++ % who.length], n = nodes[f.id];
       replay(n, "sipping", 1800);
       if (si % 2 === 0) setTimeout(() => talk(f, PROPS[f.name].lines[(si / 2 | 0) % PROPS[f.name].lines.length]), 900);
     };
     sipper = setInterval(alive(sip, () => sipper), 7000);
+    // ogni 30 secondi arriva gattonando un bambino: 大B神 si ferma e gli dà il biberon, poi il bambino se ne va
+    const dad = F.find((f) => PROPS[f.name]?.act === "feed");
+    let fi = 0;
+    const feed = () => {
+      if (!dad || isDead(dad)) return;
+      const dn = nodes[dad.id], t = Date.now();
+      const side = dad.x < 50 ? 1 : -1; // il bambino si mette dal lato più libero
+      const from = side > 0 ? 100 : 0;
+      const baby = { x: from, y: clamp(dad.y + 0.5, FIELD.y0, FIELD.y1) };
+      const b = document.createElement("div");
+      b.className = "baby";
+      b.innerHTML = `<span class="baby-body">👶</span><span class="baby-fx"></span>`;
+      field.appendChild(b);
+      const put = (ms) => placeCreep({ el: b, x: baby.x, y: baby.y }, ms);
+      put(0);
+      const stop = clamp(dad.x + side * 6, FIELD.x0, FIELD.x1);
+      const crawl = Math.abs(from - stop) * 110;
+      b.classList.toggle("flip", side > 0);
+      dad.busy = t + crawl + 7500; dad.lock = dad.busy;
+      requestAnimationFrame(() => { baby.x = stop; put(crawl); });
+      dn.classList.toggle("flip", side < 0);
+      setTimeout(() => {
+        if (!b.isConnected) return;
+        if (isDead(dad)) { b.classList.add("cry"); baby.x = from; put(crawl * 0.7); setTimeout(() => b.remove(), crawl * 0.7 + 100); return; } // papà morto: piange e se ne va
+        b.classList.add("drinking");
+        dn.classList.toggle("flip", side < 0);
+        dn.classList.add("feeding");
+        talk(dad, PROPS[dad.name].lines[fi++ % PROPS[dad.name].lines.length]);
+        pop(dn, "咕噜咕噜", "goldpop");
+      }, crawl);
+      setTimeout(() => {
+        dn.classList.remove("feeding");
+        if (!b.isConnected || b.classList.contains("cry")) return;
+        b.classList.remove("drinking");
+        b.classList.add("full");
+        baby.x = from; put(crawl * 0.8);
+        b.classList.toggle("flip", side < 0);
+        setTimeout(() => b.remove(), crawl * 0.8 + 100);
+      }, crawl + 5500);
+    };
+    feeder = setInterval(alive(feed, () => feeder), 30000);
+    setTimeout(() => active && document.contains(el) && feed(), 4000);
     spawner = setInterval(alive(spawnWave, () => spawner), 30000);
   }
 
@@ -730,8 +775,8 @@
   const PROPS = {
     "Ping大神": { html: `<span class="prop pr-hand-l">${GLASS}</span><span class="prop pr-mouth">${CIG}</span>`, act: "sip",
       lines: ["再来一口", "威士忌加冰，理论上更清醒", "抽完这根就打团", "咳咳……没事，烟呛的", "喝一口，分就回来了"] },
-    "大B神": { html: `<span class="prop pr-hand-l">${BOTTLE}</span>`, act: "sip",
-      lines: ["喝口奶压压惊", "咕噜咕噜……", "奶瓶在手，天下我有", "别抢我奶瓶！", "喝完再打团"] },
+    "大B神": { html: `<span class="prop pr-hand-l">${BOTTLE}</span>`, act: "feed", // il biberon è per il bambino che arriva ogni 30 secondi
+      lines: ["宝宝乖，喝奶", "等我喂完奶再打团", "暂离一下，喂奶中", "别吵，娃在喝奶", "慢点喝，别呛着", "喂完这瓶我就上线"] },
   };
   const propsHTML = (f) => (PROPS[f.name] ? `<div class="f-props">${PROPS[f.name].html}</div>` : "");
 
@@ -904,6 +949,7 @@
     }, 1050);
     setTimeout(() => { g.style.transform = ""; }, 2000);
     setTimeout(() => g.classList.remove("talk", "diving"), 3000);
+    return true;
   }
 
   window.TribunaleArena = { mount, loader, progress };
