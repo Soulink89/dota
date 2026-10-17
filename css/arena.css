@@ -420,3 +420,5 @@
   background: linear-gradient(90deg, #fde047, #fef3c7 50%, #e9d5ff); border: 1.5px solid #fff;
   box-shadow: 0 0 10px rgba(216,180,254,.95), 0 2px 4px rgba(0,0,0,.6); }
 @media (max-width: 700px) { .fighter.has-arcana .f-plate::before { font-size: 11px; padding: 1px 7px; } }
+.sc-cap { align-self: flex-end; padding: 0 4px 2px 0; font-size: 9.5px; line-height: 1.25; color: #a3e635; text-align: right; white-space: nowrap; }
+@media (max-width: 700px) { .sc-cap { font-size: 8.5px; flex: none; } }

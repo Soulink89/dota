@@ -559,7 +559,7 @@
         ${loaderHTML(Math.max(startP, 0.62))}
         <div class="arena-bg"></div><div class="arena-tint"></div><div class="arena-ground"></div>
         <div class="arena-fx">${LITE ? "" : SPARKS}</div>
-        <div class="arena-top">${F.map(scoreCell).join("")}</div>
+        <div class="arena-top"><div class="sc-cap">昨日<br>K/D/A</div>${F.map(scoreCell).join("")}</div>
         <div class="arena-badge"><b>刀塔乱斗</b><span id="arena-clock"></span></div>
         <div class="goku">${medal}<div class="gk-name">大P神${medalName ? ` · ${esc(medalName)}` : ""}</div>${GOKU}<span class="goku-bubble"></span></div>
         <div class="arena-field">${F.map((f, i) => fighterHTML(f, i)).join("")}</div>
@@ -1061,9 +1061,9 @@
   }
 
   function scoreCell(f) {
-    return `<div class="sc" data-sid="${f.id}" style="--pc:${f.color}" title="${esc(f.name)} · ${esc(f.heroName)}">
+    return `<div class="sc" data-sid="${f.id}" style="--pc:${f.color}" title="${esc(f.name)} · ${esc(f.heroName)} · 昨天${f.yd ? `${f.yd.n}局 ${f.yd.k}杀/${f.yd.d}死/${f.yd.a}助攻` : "没打"}">
       <div class="sc-img" style="background-image:url('${esc(f.portrait || f.avatar)}')"><span class="sc-lv">1</span><span class="sc-rs"></span></div>
-      <div class="sc-name">${esc(f.name)}</div><div class="sc-kda">0/0/0</div></div>`;
+      <div class="sc-name">${esc(f.name)}</div><div class="sc-kda">${f.yd ? `${f.yd.k}/${f.yd.d}/${f.yd.a}` : "—"}</div></div>`;
   }
 
   function fighterHTML(f, i) {
@@ -1102,7 +1102,6 @@
     if (f.pushes) { pb.hidden = false; pb.textContent = `💪${big(f.pushes)}`; }
     if (cell) {
       cell.querySelector(".sc-lv").textContent = lv;
-      cell.querySelector(".sc-kda").textContent = `${big(c.k)}/${big(c.d)}/${big(c.a)}`;
       cell.querySelector(".sc-rs").textContent = rs;
       cell.classList.toggle("dead", !!rs);
     }
