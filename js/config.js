@@ -67,7 +67,7 @@
 //      slarkBody  "小鱼人本体": Slark, più 骷髅王 e 死灵法师
 //      pos4Slark  anche in pos 4 prende Slark e ruba il farm
 //      jinHates   金神 non lo sopporta
-//      teletubby  Soul lo chiama "天线宝宝"
+//      teletubby  conosciuto come "天线宝宝": giocarci insieme abbassa la media MMR della squadra
 //      lowLevelGood nelle partite di basso livello se la cava
 //    heatTitle:   titolo personalizzato della tabella oraria
 //    victim:     alias di un altro giocatore: pannello 克星 (solo dove batte lui)
