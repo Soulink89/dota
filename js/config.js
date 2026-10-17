@@ -72,6 +72,7 @@
 //      jinHates   大金神 non lo sopporta
 //      teletubby  conosciuto come "天线宝宝": giocarci insieme abbassa la media MMR della squadra
 //      lowLevelGood nelle partite di basso livello se la cava
+//    arenaFarm:   true = nel 刀塔乱斗 è lui che farma i creep (gli altri li ignorano)
 //    arenaHero:   id dell'eroe con cui appare nel 刀塔乱斗 (altrimenti il più giocato della settimana)
 //    heatTitle:   titolo personalizzato della tabella oraria
 //    victim:     alias di un altro giocatore: pannello 克星 (solo dove batte lui)
@@ -170,6 +171,7 @@ window.TRIBUNALE_CONFIG = {
       persona: {
         meter: "fish",
         arenaHero: 93, // 刀塔乱斗: 小鱼人
+        arenaFarm: true, // 刀塔乱斗: l'unico che va a picchiare i creep
         friendsScan: true, // partite nascoste: ricostruite dalle partite in gruppo con gli amici
         traits: ["pingBuddy", "lowRank", "allPos1", "slarkBody", "pos4Slark", "jinHates", "teletubby", "lowLevelGood"],
       },

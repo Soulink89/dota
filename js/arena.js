@@ -109,7 +109,7 @@
         arcana: arc ? { img: API.itemImg(arc.icon), name: arc.name } : null,
         today, rates, base, now: rates[today],
         // quanto farma:补刀 al minuto della settimana → quota di tempo passata a picchiare i creep
-        farm: farmShare(matches),
+        farm: p.cfg.persona?.arenaFarm ? { ...farmShare(matches), share: Math.max(0.6, farmShare(matches).share) } : { lpm: 0, share: 0 },
       });
     }
     // bersagli: chi nel giorno di riferimento è morto più di me (se nessuno, il più "morto" della compagnia)
@@ -146,6 +146,27 @@
     "咚！大P神：「小金金，MVP？Most Victimized Player」", "咚！大P神：「中路单杀？小金金先单杀这把锤子」", "咚！大P神：「小金金，下次甩锅之前先看看天上」", "咚！大P神：「被针对？对，小金金，就是针对你」"];
   const BONK = ["小金金，又吹？", "小金金，咚！", "小金金，坐下！", "小金金，这波你的", "小金金？哈？", "醒醒，小金金", "小金金还吹吗", "小金金，看锤！", "清醒点，小金金", "小金金，超凡入圣？"];
   const JIN_OUCH = ["谁打我？！", "大P神你别太过分", "这锤是系统局", "我被针对了！", "头好痛……", "我要举报", "队友呢？救我！", "这不公平！"];
+  // altre frasi di 大P神 per 小金金 (scelte "a caso" ma uguali per tutti, senza ripetere le ultime)
+  SLAP_LINES.push(
+    "咚！大P神：「小金金，你的段位和你的嘴一样，只在梦里超凡」", "咚！大P神：「小金金，这锤叫‘系统局’」", "咚！大P神：「小金金，中单？你是中路的路标」",
+    "咚！大P神：「小金金，最后选英雄？那你最后挨锤」", "咚！大P神：「小金金，KDA是Kill Death Again？」", "咚！大P神：「小金金，甩锅之前先接住这一锤」",
+    "咚！大P神：「小金金，我退役三年，锤你还是一锤一个」", "咚！大P神：「小金金，呆逼至少不吹」", "咚！大P神：「小金金，你的MMR是靠吹气球吹上去的吧」",
+    "咚！大P神：「小金金，你的中路被蜗牛虐成什么样了还记得吗」", "咚！大P神：「小金金，这一锤送你上传奇」", "咚！大P神：「小金金，我的锤子都比你会打团」",
+    "咚！大P神：「小金金，你知道冠绝一世怎么写吗？反正不是你的名字」", "咚！大P神：「小金金，又在群里吹了是吧」", "咚！大P神：「小金金，复活吧，我还没锤够」",
+    "咚！大P神：「小金金，你这身段位，是租来的吧」", "咚！大P神：「小金金，被针对？锤子只针对吹牛的人」", "咚！大P神：「小金金，下把选个辅助，给队友留条活路」");
+  BONK.push("小金金，吹啊", "小金金又上头了", "小金金，KDA呢？", "小金金，接着甩锅", "小金金，系统局？", "小金金，跪下", "小金金，MVP在哪",
+    "小金金，看天上", "哈哈小金金", "小金金，叫爸爸", "小金金，蜗牛在看你", "小金金，冷静", "这锤叫超凡入圣", "小金金，别躲了");
+  JIN_OUCH.push("我是超凡入圣！", "队友害的！", "大P神你退役了别管", "这锤不算，网卡了", "你等着，我上分了再说", "又是我？为什么总是我", "我投诉你了", "我的头！我的MMR！");
+  // 大P神 dal cielo, tra una martellata e l'altra
+  const GOKU_IDLE = ["小金金今天又吹了几次？", "我在云上都听到小金金吹牛了", "小金金，排位赛要不要我教你", "小金金那个KDA，我都不好意思看",
+    "小金金，下来挨锤还是上去挨锤？", "今天的锤子特别想小金金", "小金金，别躲在别人后面", "小金金的段位，风一吹就掉", "看着小金金打团，像看纪录片",
+    "当年我打天梯的时候，小金金还在补兵", "小金金，你的系统局又来了", "小金金，你那叫中单？", "锤子已经磨好了，小金金", "小金金，吹牛也要交税的",
+    "我退役了，小金金也该退役了", "小金金再吹一句试试", "群里谁最会吹？小金金", "小金金，今天第几次被针对了？"];
+  // pseudo-casuale ma uguale per tutti: un indice "mescolato" dal numero dell'evento
+  // ordine mescolato (fisso per tutti, cambia ogni giorno): si scorre tutto il repertorio prima di ripetere
+  const shuffled = (n, seed) => { const d = dayIdx(Date.now()); const fr = (i) => { const x = Math.sin((i + 1) * 12.9898 * seed + d * 4.1414) * 43758.5453; return x - Math.floor(x); };
+    return [...Array(n).keys()].sort((a, b) => fr(a) - fr(b)); };
+  const pick = (arr, n) => arr[Math.floor(Math.abs(Math.sin(n * 91.345 + 7.7) * 10000)) % arr.length];
   const fill = (s, o) => s.replace(/\{(\w)\}/g, (_, k) => o[k]);
 
   // ---------- chiacchiere sul prato: battute dalla "lore" di ognuno, a volte con risposta ----------
@@ -230,6 +251,51 @@
     ["大金神", "被针对了！", "Soul大神", "没人针对你", "大B神", "我针对你，因为你骂我呆逼"],
     ["疯子大神", "老婆回来了", "蜗牛大神", "那我们也撤了", "Ping大神", "那我再抽根烟"],
   ];
+  // altro materiale per le chiacchiere
+  DIALOGS.push(
+    ["大金神", "这把输了，系统针对我", "Yoki大神", "嗯嗯"],
+    ["大金神", "我昨天又上分了", "Ping大神", "上了几分？掉了几分？"],
+    ["大金神", "蜗牛那把是我让他的", "蜗牛大神", "那你下次别让了，干干干"],
+    ["大金神", "你们谁敢中路solo", "Soul大神", "我怕你哭"],
+    ["大金神", "我是群里最高分", "疯子大神", "大P神还没说话呢"],
+    ["Ping大神", "等我喝完这杯再说", "大B神", "你那杯一晚上都没喝完"],
+    ["Ping大神", "今天状态不太对", "蜗牛大神", "你哪天对过"],
+    ["Ping大神", "这局我理论上能carry", "Kaiju大神*", "理论上我也是一号位"],
+    ["大B神", "宝宝饿了，等我一下", "大金神", "你一局要喂几次奶？"],
+    ["大B神", "我PA一刀暴击", "Soul大神", "暴击了空气"],
+    ["大B神", "我直播间人气爆了", "Ping大神", "都是来看你被追的"],
+    ["Yoki大神", "我小黑无敌", "大金神", "那你别打三板斧了"],
+    ["Yoki大神", "嗯嗯嗯嗯", "蜗牛大神", "他今天说话了！"],
+    ["蜗牛大神", "今晚通宵，谁不来谁菜", "疯子大神", "老婆在家，我菜"],
+    ["蜗牛大神", "我玩什么英雄都行", "大B神", "那你教我小黑"],
+    ["疯子大神", "钩子出了！", "大金神", "钩到我了？不算！"],
+    ["疯子大神", "我电脑又蓝屏了", "Kaiju大神*", "老板，换台电脑吧"],
+    ["疯子大神", "我在小黑屋里", "Ping大神", "低优先级VIP会员"],
+    ["Kaiju大神*", "小鱼人是最强英雄", "Yoki大神", "嗯，小黑更强"],
+    ["Kaiju大神*", "兵线我来吃", "大B神", "那我吃什么？"],
+    ["Kaiju大神*", "这把我四号位", "Ping大神", "四号位小鱼人，理论上也是一号位"],
+    ["Soul大神", "这把赢了", "大金神", "是我carry的"],
+    ["Soul大神", "看我操作", "大B神", "我在直播你的操作"],
+    ["Soul大神", "跟我推高地", "Kaiju大神*", "等我吃完这波兵"],
+  );
+  TRIOS.push(
+    ["大金神", "我一个人能打赢", "Ping大神", "理论上可以", "蜗牛大神", "实际上不行"],
+    ["Kaiju大神*", "钱都给我", "大B神", "我也要发育", "Soul大神", "你们俩都去插眼"],
+    ["疯子大神", "我要钩人了", "大金神", "别钩我", "疯子大神", "钩的就是你"],
+    ["Yoki大神", "嗯嗯", "Ping大神", "你听懂了吗", "Yoki大神", "嗯嗯"],
+    ["大B神", "宝宝又哭了", "蜗牛大神", "暂离？", "大金神", "又是4打5"],
+  );
+  Object.entries({
+    "大金神": ["我的KDA你们看不懂", "这把我让一让你们", "等我状态来了", "我一出手就是超凡"],
+    "Ping大神": ["这杯敬MMR", "烟没了，打不了了", "我先复盘一下上一局", "头有点晕……"],
+    "大B神": ["奶粉又涨价了", "等我切个屏", "宝宝睡了，我回来了", "谁看到我的奶瓶了"],
+    "Yoki大神": ["……", "嗯？", "小黑走起"],
+    "蜗牛大神": ["干就完了", "谁来中路", "今晚不睡了！"],
+    "疯子大神": ["这把我请大家喝奶茶", "电脑风扇好响", "我老婆说我该睡了"],
+    "Kaiju大神*": ["这兵线真香", "四号位就要有四号位的钱", "我又抢了一波野"],
+    "Soul大神": ["节奏在我", "下一把", "冷静点打"],
+  }).forEach(([k, v]) => (SAY[k] = [...(SAY[k] || []), ...v]));
+
   // dopo un'uccisione: il vincitore sfotte, a volte la vittima risponde
   const KILL_TAUNTS = [
     ["回泉水歇会吧", "刚才卡了"], ["就这？", "我网不好"], ["下次带个保姆", "保姆被你杀了"], ["站那么前干嘛", "我在吸引火力"],
@@ -356,10 +422,10 @@
 
   // ---------- montaggio ----------
   const FIELD = { x0: 6, x1: 90, y0: 64, y1: 94 };
-  let timer = null, walker = null, chatter = null, spawner = null, sipper = null, feeder = null, io = null, active = true, onVis = null;
+  let timer = null, walker = null, chatter = null, spawner = null, sipper = null, feeder = null, puker = null, gokuTalker = null, io = null, active = true, onVis = null;
   async function mount(el, players) {
     if (!el) return;
-    [timer, walker, chatter, spawner, sipper, feeder].forEach(clearInterval); io?.disconnect();
+    [timer, walker, chatter, spawner, sipper, feeder, puker, gokuTalker].forEach(clearInterval); io?.disconnect();
     const mobile = window.innerWidth < 700;
     FIELD.y0 = mobile ? 60 : 64;
     FIELD.y1 = mobile ? 86 : 94; // su telefono la chat sta in basso
@@ -393,14 +459,14 @@
         <div class="arena-field">${F.map((f, i) => fighterHTML(f, i)).join("")}</div>
         <ol class="arena-chat" id="arena-log"></ol>
       </section>
-      ${LITE ? `<div class="arena-lite-note">📱 手机端已自动切换为<b>简化画质</b>（静态英雄、精简特效），以免手机发烫、卡顿。想看完整的动态英雄和特效，请用<b>电脑</b>打开。</div>` : ""}
+      ${LITE ? `<div class="arena-lite-note">📱 手机端画面为简化版</div>` : ""}
       <details class="arena-rules">
         <summary>📜 乱斗规则（点我）</summary>
         <ul>
           <li>每位选手化身<b>最近7天最常玩的英雄</b>（疯子大神固定屠夫，Kaiju大神*固定小鱼人，大B神固定幻影刺客），头顶是这个英雄最常出的装备；有至宝又玩了这个英雄的，直接穿上至宝。</li>
           <li>节奏全看<b>前一天（北京时间早6点到早6点）的真实战绩</b>：每10次击杀 = 每分钟出手1次，每10次死亡 = 每分钟阵亡1次，每10次助攻 = 每分钟助攻1次。前一天没打的，沿用最近一天打过的战绩（最多7天前）。</li>
           <li>出手只打<b>那天死得比自己多的人</b>；死得最多的那位，就是全场的沙包。<b>击杀</b> = 蓄力冲上去重砍，对手被打倒在地；<b>助攻</b> = 补一下轻击，对手只是跪下，马上爬起来。自己的<b>阵亡</b>（按死亡数）才会灵魂出窍、等复活。</li>
-          <li>两边每30秒出一波小兵。<b>补刀越多的人（按这周每分钟补刀数）越爱去打兵</b>，比如小鱼人。</li>
+          <li>两边每30秒出一波小兵。<b>只有Kaiju大神*会去打兵</b>：四号位也要抢钱，小鱼人本体。</li>
           <li>击杀 +${XP.kill} 经验，助攻 +${XP.assist} 经验，每次被推一把 +${PUSH_XP} 经验；升到 N 级需要 ${LV_K.toLocaleString()}×(N−1)² 经验，<b>没有等级上限</b>。</li>
           <li><b>从 2026年10月17日 开打，永不清零</b>：每天的战绩都累计下去，谁天天打谁就越来越强。</li>
           <li>Soul大神在这里用的是<b>全部真实比赛</b>，输赢都算。</li>
@@ -487,7 +553,8 @@
         field.appendChild(e);
         c.el = e;
         placeCreep(c, 0);
-        requestAnimationFrame(() => { c.x = side < 0 ? 18 + Math.random() * 22 : 60 + Math.random() * 22; placeCreep(c, 9000 + k * 900); });
+        e.getBoundingClientRect();
+        setTimeout(() => { c.x = side < 0 ? 18 + Math.random() * 22 : 60 + Math.random() * 22; placeCreep(c, 9000 + k * 900); }, 30);
         creeps.push(c);
       }
     };
@@ -512,32 +579,35 @@
       const c = free.sort((a, b) => Math.abs(a.x - f.x) + Math.abs(a.y - f.y) - (Math.abs(b.x - f.x) + Math.abs(b.y - f.y)))[0];
       c.claimed = f.id;
       const side = f.x < c.x ? -1 : 1;
-      const ms = walk(nodes[f.id], f, clamp(c.x + side * 5, FIELD.x0, FIELD.x1), c.y + 0.3, 10);
+      const ms = walk(nodes[f.id], f, clamp(c.x + side * 5, FIELD.x0, FIELD.x1), c.y + 0.3, 7);
       nodes[f.id].classList.toggle("flip", side > 0);
       f.busy = Date.now() + ms + 2600;
       setTimeout(() => hitCreep(f, c), ms);
       return true;
     };
 
-    // passeggiata: chi farma tanto va dai creep, gli altri girano senza finire addosso agli altri
+    // passeggiata: chi è in mezzo alla folla va verso lo spazio libero; gli altri fanno due passi senza finire addosso a nessuno
+    const gap = (f, x, y) => Math.min(...F.filter((o) => o !== f).map((o) => Math.hypot(o.x - x, (o.y - y) * 2)), 99);
     const wander = () => {
       const t = Date.now();
       for (const f of F) {
         if (f.busy > t || isDead(f)) continue;
         if (Math.random() < f.farm.share && goFarm(f)) continue;
-        if (Math.random() < 0.45) continue;
-        let nx = f.x, ny = f.y;
-        for (let k = 0; k < 8; k++) {
-          const cx = clamp(f.x + (Math.random() - 0.5) * 26, FIELD.x0, FIELD.x1);
-          const cy = clamp(f.y + (Math.random() - 0.5) * 14, FIELD.y0, FIELD.y1);
-          if (F.every((o) => o === f || Math.abs(o.x - cx) > 9 || Math.abs(o.y - cy) > 9)) { nx = cx; ny = cy; break; }
+        const crowded = gap(f, f.x, f.y) < 12;
+        if (!crowded && Math.random() < 0.65) continue; // passeggiate più rare e lente
+        let nx = f.x, ny = f.y, best = crowded ? -1 : 9;
+        for (let k = 0; k < 10; k++) {
+          const cx = crowded ? FIELD.x0 + Math.random() * (FIELD.x1 - FIELD.x0) : clamp(f.x + (Math.random() - 0.5) * 26, FIELD.x0, FIELD.x1);
+          const cy = crowded ? FIELD.y0 + Math.random() * (FIELD.y1 - FIELD.y0) : clamp(f.y + (Math.random() - 0.5) * 14, FIELD.y0, FIELD.y1);
+          const g = gap(f, cx, cy) - (crowded ? Math.hypot(cx - f.x, cy - f.y) * 0.15 : 0); // spazio libero, ma senza attraversare tutta la mappa
+          if (g > best) { best = g; nx = cx; ny = cy; }
         }
-        if (nx !== f.x || ny !== f.y) f.busy = t + walk(nodes[f.id], f, nx, ny, 6) + 600;
+        if (nx !== f.x || ny !== f.y) f.busy = t + walk(nodes[f.id], f, nx, ny, crowded ? 6 : 4) + 1500;
       }
     };
 
     const prev = {};
-    let lastSlapMin = null, tauntI = 0;
+    let lastSlapMin = null, tauntI = 0, calmUntil = 0;
     const tick = () => {
       const t = Date.now();
       if (F.length && dayIdx(t) !== F[0].today) { mount(el, players); return; } // nuova giornata: nuovi ritmi, conteggi che continuano
@@ -552,9 +622,11 @@
         updateHud(n, cells[f.id], f, c, t);
         if (!p) { prev[f.id] = c; return; }
         // uccisione: corre e colpisce
-        if (c.k > p.k && f.targets.length && f.lock < t && !isDead(f)) {
+        // per non fare confusione: un solo scontro animato alla volta (i conteggi restano esatti)
+        if (c.k > p.k && f.targets.length && f.lock < t && !isDead(f) && t > calmUntil) {
           const tgt = f.targets.find((x, j) => j >= c.k % f.targets.length && !isDead(x)) || f.targets.find((x) => !isDead(x));
           if (tgt) {
+            calmUntil = t + 2200;
             attack(root, n, nodes[tgt.id], f, tgt);
             push(`⚔️ ${fill(KILL_LINES[(c.k + i) % KILL_LINES.length], { a: tag(f), t: tag(tgt) })}`, "sys");
             if ((c.k + i) % 3 === 0) {
@@ -567,13 +639,13 @@
         // morte: cade a terra, l'anima sale, poi rinasce
         if (c.d > p.d && !isDead(f)) {
           die(n, f, t);
-          if (c.d % 2 === 0) push(`💀 ${fill(DEATH_LINES[(c.d + i) % DEATH_LINES.length], { v: tag(f) })}`, "sys");
+          if (c.d % 3 === 0) push(`💀 ${fill(DEATH_LINES[(c.d + i) % DEATH_LINES.length], { v: tag(f) })}`, "sys");
         }
         // assist: da lontano, un incantesimo che stordisce
-        if (c.a > p.a && !isDead(f)) {
+        if (c.a > p.a && !isDead(f) && t > calmUntil) {
           const tgt = f.targets.find((x) => !isDead(x)) || F.find((x) => x !== f && !isDead(x));
-          if (tgt) assist(field, n, nodes[tgt.id], f, tgt);
-          if (c.a % 4 === 0) push(`🤝 ${fill(ASSIST_LINES[(c.a + i) % ASSIST_LINES.length], { a: tag(f) })}`, "sys");
+          if (tgt) { calmUntil = t + 1300; assist(field, n, nodes[tgt.id], f, tgt); }
+          if (c.a % 6 === 0) push(`🤝 ${fill(ASSIST_LINES[(c.a + i) % ASSIST_LINES.length], { a: tag(f) })}`, "sys");
         }
         const lv = levelOf(xpOf(c));
         if (lv > levelOf(xpOf(p))) {
@@ -592,8 +664,8 @@
       if (jin && k >= 0 && sec - hits[k] < 3 && lastSlapMin !== key) {
         lastSlapMin = key;
         if (slap(root, nodes[jin.id], jin, key)) {
-        push(`🔨 ${SLAP_LINES[key % SLAP_LINES.length]}（今日第${key + 1}锤）`, "slap");
-        if (key % 2 === 0) setTimeout(() => talk(jin, JIN_OUCH[(key / 2 | 0) % JIN_OUCH.length]), 1600);
+        push(`🔨 ${SLAP_LINES[shuffled(SLAP_LINES.length, 17)[key % SLAP_LINES.length]]}（今日第${key + 1}锤）`, "slap");
+        if (key % 2 === 0) setTimeout(() => talk(jin, pick(JIN_OUCH, key + 3)), 1600);
         }
       }
     };
@@ -606,7 +678,7 @@
       ci++;
       const trios = TRIOS.filter((x) => byName[x[0]] && byName[x[2]] && byName[x[4]]);
       if (trios.length && ci % 5 === 0) {
-        const [a, l1, b, l2, c, l3] = trios[(ci / 5 | 0) % trios.length];
+        const [a, l1, b, l2, c, l3] = trios[shuffled(trios.length, 3)[(ci / 5 | 0) % trios.length]];
         if (isDead(byName[a])) return;
         talk(byName[a], l1);
         setTimeout(() => talk(byName[b], l2), 1800);
@@ -614,14 +686,14 @@
         return;
       }
       if (dialogs.length && ci % 2 === 0) {
-        const [a, l1, b, l2] = dialogs[(ci / 2 | 0) % dialogs.length];
+        const [a, l1, b, l2] = dialogs[shuffled(dialogs.length, 5)[(ci / 2 | 0) % dialogs.length]];
         if (isDead(byName[a])) return;
         talk(byName[a], l1);
         setTimeout(() => talk(byName[b], l2), 1900);
         return;
       }
       const f = F[ci % F.length], lines = SAY[f.name];
-      if (lines && !isDead(f)) talk(f, lines[Math.floor(ci / F.length) % lines.length]);
+      if (lines && !isDead(f)) talk(f, lines[shuffled(lines.length, 7 + f.id % 13)[Math.floor(ci / F.length) % lines.length]]);
     };
 
     const now = Date.now();
@@ -640,8 +712,8 @@
     tick();
     const alive = (fn, h) => () => (!document.contains(el) ? clearInterval(h()) : active && fn());
     timer = setInterval(alive(tick, () => timer), LITE ? 1000 : 500);
-    walker = setInterval(alive(wander, () => walker), 1200);
-    chatter = setInterval(alive(chat, () => chatter), 5000);
+    walker = setInterval(alive(wander, () => walker), 2500);
+    chatter = setInterval(alive(chat, () => chatter), 8000);
     // ogni tanto Ping beve un sorso e 大B神 si attacca al biberon
     let si = 0;
     const sip = () => {
@@ -651,7 +723,7 @@
       replay(n, "sipping", 1800);
       if (si % 2 === 0) setTimeout(() => talk(f, PROPS[f.name].lines[(si / 2 | 0) % PROPS[f.name].lines.length]), 900);
     };
-    sipper = setInterval(alive(sip, () => sipper), 7000);
+    sipper = setInterval(alive(sip, () => sipper), 12000);
     // ogni 30 secondi arriva gattonando un bambino: 大B神 si ferma e gli dà il biberon, poi il bambino se ne va
     const dad = F.find((f) => PROPS[f.name]?.act === "feed");
     let fi = 0;
@@ -663,7 +735,7 @@
       const baby = { x: from, y: clamp(dad.y + 0.5, FIELD.y0, FIELD.y1) };
       const b = document.createElement("div");
       b.className = "baby";
-      b.innerHTML = `<span class="baby-body">👶</span><span class="baby-fx"></span>`;
+      b.innerHTML = `<span class="baby-body">${BABY}</span><span class="baby-fx"></span>`;
       field.appendChild(b);
       const put = (ms) => placeCreep({ el: b, x: baby.x, y: baby.y }, ms);
       put(0);
@@ -671,7 +743,8 @@
       const crawl = Math.abs(from - stop) * 110;
       b.classList.toggle("flip", side > 0);
       dad.busy = t + crawl + 7500; dad.lock = dad.busy;
-      requestAnimationFrame(() => { baby.x = stop; put(crawl); });
+      b.getBoundingClientRect(); // forza il calcolo della posizione iniziale, altrimenti il browser salta la transizione
+      setTimeout(() => { baby.x = stop; put(crawl); }, 30);
       dn.classList.toggle("flip", side < 0);
       setTimeout(() => {
         if (!b.isConnected) return;
@@ -693,8 +766,43 @@
       }, crawl + 5500);
     };
     feeder = setInterval(alive(feed, () => feeder), 30000);
+    // Ping大神 ha sempre la testa che gira, e ogni tanto si ferma a vomitare (con pozza verde a terra)
+    const drunk = F.find((f) => PROPS[f.name]?.pukes);
+    const PUKE_LINES = ["呕……", "这杯有点上头", "没事，理论上还能打", "谁在我杯里加了料", "呕……我先暂离一下", "最后一杯，真的"];
+    let pi = 0;
+    const puke = () => {
+      if (!drunk || isDead(drunk) || drunk.lock > Date.now()) return;
+      const dn = nodes[drunk.id], t = Date.now();
+      drunk.busy = drunk.lock = t + 4200;
+      replay(dn, "vomiting", 3600);
+      setTimeout(() => talk(drunk, PUKE_LINES[pi++ % PUKE_LINES.length]), 400);
+      setTimeout(() => {
+        const pool = document.createElement("div");
+        pool.className = "puddle";
+        const ahead = dn.classList.contains("flip") ? -3.2 : 3.2;
+        placeCreep({ el: pool, x: clamp(drunk.x + ahead, FIELD.x0, FIELD.x1), y: drunk.y + 0.4 }, 0);
+        pool.style.zIndex = 9;
+        field.appendChild(pool);
+        setTimeout(() => pool.classList.add("dry"), 9000);
+        setTimeout(() => pool.remove(), 11000);
+      }, 1500);
+    };
+    puker = setInterval(alive(puke, () => puker), 40000);
+    // 大P神 commenta dal cielo (sempre su 小金金), tra una martellata e l'altra
+    let gi = Math.floor(Date.now() / 17000);
+    const gokuTalk = () => {
+      const g = root.querySelector(".goku");
+      if (!g || g.classList.contains("diving") || !jin) return;
+      const line = GOKU_IDLE[shuffled(GOKU_IDLE.length, 11)[gi++ % GOKU_IDLE.length]];
+      g.querySelector(".goku-bubble").textContent = line;
+      g.classList.add("talk");
+      setTimeout(() => { if (!g.classList.contains("diving")) g.classList.remove("talk"); }, 3800);
+      push(`<span class="ch">[全部]</span> <b style="color:#fde047">大P神</b>: ${esc(line)}`, "talk");
+    };
+    gokuTalker = setInterval(alive(gokuTalk, () => gokuTalker), 17000);
+    setTimeout(() => active && document.contains(el) && puke(), 15000);
     setTimeout(() => active && document.contains(el) && feed(), 4000);
-    spawner = setInterval(alive(spawnWave, () => spawner), 30000);
+    spawner = setInterval(alive(spawnWave, () => spawner), 45000);
   }
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -773,8 +881,28 @@
     <rect x="3" y="13" width="16" height="29" rx="5" fill="rgba(255,255,255,.55)" stroke="#e2e8f0" stroke-width="1.5"/>
     <rect x="4.5" y="22" width="13" height="18.5" rx="3.5" fill="#fefce8"/><path d="M6 18 h4 M6 24 h4 M6 30 h4 M6 36 h4" stroke="#93c5fd" stroke-width="1.2"/>
     <circle cx="14" cy="31" r="2.6" fill="#fda4af"/></svg>`;
+  // il bambino: piccolo personaggio che gattona (guarda a destra; "flip" lo gira)
+  const BABY = `<svg viewBox="0 0 70 48" class="baby-svg" aria-hidden="true">
+    <ellipse cx="34" cy="45" rx="24" ry="3" fill="rgba(0,0,0,.35)"/>
+    <g class="bb-leg bb-l2"><path d="M18 30 q-4 8 -12 10 q-3 1 -2 3 h10 q4 -4 8 -9 Z" fill="#f2c9a8"/></g>
+    <g class="bb-arm bb-a2"><rect x="40" y="28" width="7" height="15" rx="3.5" fill="#f2c9a8"/></g>
+    <ellipse cx="30" cy="27" rx="16" ry="10" fill="#93c5fd"/>
+    <path d="M16 24 q-2 10 6 12 q8 1 9 -8 q-6 -6 -15 -4 Z" fill="#fff" stroke="#cbd5e1"/>
+    <path d="M38 19 q6 2 8 8" stroke="#60a5fa" stroke-width="2" fill="none"/>
+    <g class="bb-leg bb-l1"><path d="M22 31 q-2 8 -10 11 q-3 1 -2 3 h10 q4 -4 7 -10 Z" fill="#fcd9bd"/></g>
+    <g class="bb-arm bb-a1"><rect x="44" y="27" width="7" height="16" rx="3.5" fill="#fcd9bd"/></g>
+    <g class="bb-head">
+      <circle cx="53" cy="17" r="12" fill="#fcd9bd"/>
+      <circle cx="42" cy="16" r="3" fill="#f2c9a8"/>
+      <path d="M50 5 q3 -5 6 -1 q-3 0 -2 4" stroke="#8b5a2b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M53 15 q2 -2 4 0 M59 15 q2 -2 4 0" stroke="#3f2d20" stroke-width="1.6" fill="none" stroke-linecap="round" class="bb-eyes"/>
+      <circle cx="56" cy="21" r="2.2" fill="#fda4af" opacity=".7"/>
+      <circle cx="62" cy="21" r="1.8" fill="#fda4af" opacity=".7"/>
+      <path d="M58 24 q2 1.5 4 0" stroke="#be123c" stroke-width="1.4" fill="none" stroke-linecap="round" class="bb-mouth"/>
+    </g>
+  </svg>`;
   const PROPS = {
-    "Ping大神": { html: `<span class="prop pr-hand-l">${GLASS}</span><span class="prop pr-mouth">${CIG}</span>`, act: "sip",
+    "Ping大神": { html: `<span class="dizzy"><i><b>★</b><b>★</b><b>★</b></i></span><span class="prop pr-hand-l">${GLASS}</span><span class="prop pr-mouth">${CIG}</span><span class="puke"><s></s><s></s><s></s><s></s><s></s></span>`, act: "sip", pukes: true,
       lines: ["再来一口", "威士忌加冰，理论上更清醒", "抽完这根就打团", "咳咳……没事，烟呛的", "喝一口，分就回来了"] },
     "大B神": { html: `<span class="prop pr-hand-l">${BOTTLE}</span>`, act: "feed", // il biberon è per il bambino che arriva ogni 30 secondi
       lines: ["宝宝乖，喝奶", "等我喂完奶再打团", "暂离一下，喂奶中", "别吵，娃在喝奶", "慢点喝，别呛着", "喂完这瓶我就上线"] },
@@ -859,7 +987,7 @@
     replay(an, "windup", 260);
     f.lock = t + 2400; f.busy = t + 2600; tgt.busy = Math.max(tgt.busy, t + 3400);
     setTimeout(() => {
-      const ms = walk(an, f, clamp(tgt.x + side * 7, FIELD.x0, FIELD.x1), clamp(tgt.y + 0.3, FIELD.y0, FIELD.y1), 34, true);
+      const ms = walk(an, f, clamp(tgt.x + side * 7, FIELD.x0, FIELD.x1), clamp(tgt.y + 0.3, FIELD.y0, FIELD.y1), 26, true);
       an.classList.add("dashing");
       setTimeout(() => {
         an.classList.remove("dashing");
@@ -886,7 +1014,7 @@
     const side = f.x < tgt.x ? -1 : 1;
     an.classList.toggle("flip", side > 0);
     f.lock = t + 1800; f.busy = t + 2000; tgt.busy = Math.max(tgt.busy, t + 1600);
-    const ms = walk(an, f, clamp(tgt.x + side * 7, FIELD.x0, FIELD.x1), clamp(tgt.y + 0.3, FIELD.y0, FIELD.y1), 22, true);
+    const ms = walk(an, f, clamp(tgt.x + side * 7, FIELD.x0, FIELD.x1), clamp(tgt.y + 0.3, FIELD.y0, FIELD.y1), 16, true);
     setTimeout(() => {
       replay(an, "jab", 320);
       const fx = document.createElement("span");
@@ -927,7 +1055,7 @@
     const bub = root.querySelector(".goku-bubble");
     if (!g || !jn || jn.classList.contains("dead") || g.classList.contains("diving")) return;
     jin.busy = Date.now() + 3200; // 大金神 si ferma a prendersi la martellata
-    bub.textContent = BONK[n % BONK.length];
+    bub.textContent = BONK[shuffled(BONK.length, 19)[n % BONK.length]];
     const a = root.getBoundingClientRect(), b = jn.getBoundingClientRect(), gb = g.getBoundingClientRect();
     const sc = window.innerWidth < 700 ? 0.8 : 0.7;
     const dx = b.left + b.width / 2 - (gb.left + gb.width / 2) - gb.width * sc * 0.5; // si mette a sinistra: il martello cala da destra
