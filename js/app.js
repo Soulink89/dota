@@ -135,8 +135,11 @@
     const d = p.data;
     const when = new Date(d.fetchedAt).toLocaleString(LOCALE, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
     if (d.source === "demo") return `<span class="pill pill-warn">演示数据——非真实</span>`;
-    if (d.stale) return `<span class="pill pill-warn" title="OpenDota 无响应，显示最近保存的数据">已保存数据 · ${when}</span>`;
-    return `<span class="pill"><span class="dot"></span>已更新 · ${when}</span>`;
+    // ultima partita conosciuta: mostra quanto sono freschi i dati
+    const last = (d.matches || []).reduce((t, m) => Math.max(t, m.start_time + (m.duration || 0)), 0);
+    const lastPill = last ? `<span class="pill" title="OpenDota 收录的最近一局">最近一局 · ${ago(last)}</span>` : "";
+    if (d.stale) return `<span class="pill pill-warn" title="OpenDota 无响应，显示最近保存的数据">已保存数据 · ${when}</span>${lastPill}`;
+    return `<span class="pill"><span class="dot"></span>实时数据 · ${when}</span>${lastPill}`;
   }
 
   function resultStrip(stats) {
@@ -815,6 +818,29 @@
     m ? renderPlayer(m[1]) : renderHome();
   }
 
+
+  // Aggiornamento automatico: ogni 15 minuti (e quando si torna sulla scheda dopo una pausa)
+  // riscarica i dati in sottofondo e ridisegna la pagina senza perdere la posizione.
+  const REFRESH_MS = 15 * 60 * 1000;
+  let lastLoad = Date.now(), refreshing = false;
+  async function softRefresh() {
+    if (refreshing || document.hidden || Date.now() - lastLoad < REFRESH_MS) return;
+    refreshing = true;
+    try {
+      cache.clear();
+      dailyPromise = null;
+      await Promise.allSettled(CFG.players.map(getPlayer));
+      const y = window.scrollY;
+      const m = location.hash.match(/^#\/p\/(\d+)/);
+      await (m ? renderPlayer(m[1]) : renderHome());
+      window.scrollTo({ top: y });
+      lastLoad = Date.now();
+    } finally {
+      refreshing = false;
+    }
+  }
+  setInterval(softRefresh, 60 * 1000);
+  document.addEventListener("visibilitychange", softRefresh);
   window.addEventListener("hashchange", route);
   renderNav();
   route();

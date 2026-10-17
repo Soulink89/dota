@@ -26,6 +26,20 @@ async function getJSON(url, tries = 3) {
 }
 
 await mkdir(new URL("../data/", import.meta.url), { recursive: true });
+
+// Chiede a OpenDota di ri-scaricare da Steam le partite recenti di ogni giocatore, così il sito
+// (che legge OpenDota in diretta) vede subito le partite nuove. Dal browser non è permesso, da qui sì.
+for (const p of cfg.players) {
+  const id = String(BigInt(p.steam64) - 76561197960265728n);
+  try {
+    const r = await fetch(`${OD}/players/${id}/refresh`, { method: "POST", signal: AbortSignal.timeout(20000) });
+    console.log(`↻ refresh ${p.alias ?? id}: HTTP ${r.status}`);
+  } catch (e) {
+    console.error(`↻ refresh ${p.alias ?? id}: ${e.message}`);
+  }
+}
+// lascia a OpenDota il tempo di elaborare le richieste prima di leggere i dati
+await new Promise((res) => setTimeout(res, 60000));
 let failures = 0;
 for (const p of cfg.players) {
   const id = String(BigInt(p.steam64) - 76561197960265728n);

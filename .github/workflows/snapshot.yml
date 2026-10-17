@@ -2,7 +2,7 @@ name: Aggiorna statistiche
 
 on:
   schedule:
-    - cron: "17 */2 * * *" # ogni 2 ore
+    - cron: "17 * * * *" # ogni ora (GitHub a volte ritarda o salta qualche esecuzione)
   workflow_dispatch: {}     # pulsante "Run workflow" manuale
 
 permissions:
