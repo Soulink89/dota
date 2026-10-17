@@ -165,6 +165,7 @@
         <div class="hero-gavel" aria-hidden="true">⚖</div>
       </section>
       <section class="court-stats" id="court-stats"></section>
+      <div id="fortune-home"></div>
       <div id="daily-home"></div>
       <div class="block-head"><h2>通缉榜</h2><span class="muted small">点击海报查看卷宗</span></div>
       <section class="wanted-grid" id="cards">
@@ -175,7 +176,10 @@
           <h3>虚位以待</h3>
           <p>下一位被告即将到庭。会是谁呢？</p>
         </article>
-      </section>`;
+      </section>
+      <div id="awards-home"></div>
+      <div id="board-home"></div>
+      <div id="group-heat"></div>`;
 
     const cards = document.querySelectorAll("#cards .wanted.skeleton");
     const loaded = [];
@@ -197,6 +201,7 @@
       <div class="cs"><span>🧑‍⚖️</span><b>${counter(accused.length)}</b><em>在押被告</em></div>`;
     animateCounters(document.getElementById("court-stats"));
     renderDailyHome();
+    renderHomeExtras(loaded.sort((a, b) => a.ctx.index - b.ctx.index));
     allHeadlines().then(setTicker);
   }
 
@@ -468,6 +473,22 @@
 
   const dailyDate = (d) => d.toLocaleDateString(LOCALE, { month: "long", day: "numeric", weekday: "short" });
 
+  // conto alla rovescia fino alle 6:00 (quando i meme di ieri si rigenerano)
+  let countdownTimer;
+  function startCountdown() {
+    clearInterval(countdownTimer);
+    const tick = () => {
+      const el = document.getElementById("dcount");
+      if (!el) return clearInterval(countdownTimer);
+      const now = new Date(), next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      const t = Math.floor((next - now) / 1000), pad = (n) => String(n).padStart(2, "0");
+      el.textContent = `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
+    };
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
   async function renderDailyHome() {
     const el = document.getElementById("daily-home");
     if (!el) return;
@@ -475,10 +496,11 @@
     const top = [...d.memes.values()].map((l) => l[0]).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 6);
     el.innerHTML = `
       <section class="block daily-block">
-        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)}晚 · 每天早上6点自动更新</span></div>
+        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)}晚 · 下次更新 <b class="countdown" id="dcount"></b></span></div>
         ${top.length ? `<div class="memes daily-grid">${top.map((m, i) => dailyCard(m, d.byId.get(m.playerId).heroes, i, true)).join("")}</div>`
                      : `<p class="muted daily-empty">昨天全员休战，本庭今日无料可黑。</p>`}
       </section>`;
+    startCountdown();
   }
 
   async function renderDailyPlayer(p) {
@@ -491,6 +513,83 @@
       <section class="block daily-block">
         <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)}晚 · 根据昨晚的比赛自动生成</span></div>
         <div class="memes daily-grid">${list.map((m, i) => dailyCard(m, p.heroes, i, false)).join("")}</div>
+      </section>`;
+  }
+
+  // ---------- Home: 今日黄历, 颁奖典礼, 耻辱排行榜, 全员作息表 (tutto automatico) ----------
+  function renderHomeExtras(players) {
+    const X = window.TribunaleHome;
+    const heroes = players[0]?.heroes || {};
+    // premi e classifiche: solo "imputati" con partite visibili
+    const accused = players.filter((p) => !p.praise && !p.ctx.hidden && p.stats.n > 0);
+
+    // 今日黄历
+    const today = new Date();
+    const fEl = document.getElementById("fortune-home");
+    if (fEl) fEl.innerHTML = `
+      <section class="block">
+        <div class="block-head"><h2>今日黄历</h2><span class="muted small">${today.toLocaleDateString(LOCALE, { month: "long", day: "numeric", weekday: "long" })} · 每天自动更新</span></div>
+        <div class="almanac">${X.fortunes(players, heroes).map((f, i) => {
+          const h = heroes[f.hero];
+          return `<a class="alm ${f.p.praise ? "alm-gold" : ""}" href="#/p/${f.p.id}" style="--d:${i * 60}ms">
+            <div class="alm-head"><b>${esc(f.p.name)}</b><span class="alm-stars">${f.starsText}</span></div>
+            <div class="alm-row yi"><i>宜</i><span>${esc(f.yi)}</span></div>
+            <div class="alm-row ji"><i>忌</i><span>${esc(f.ji)}</span></div>
+            <div class="alm-hero">${h ? `<img src="${API.heroIcon(h)}" alt="" loading="lazy">` : ""}<span>幸运英雄：${esc(h?.localized_name || "随缘")}</span></div>
+          </a>`; }).join("")}</div>
+      </section>`;
+
+    // 本周颁奖典礼
+    const aEl = document.getElementById("awards-home");
+    const aw = X.awards(accused);
+    if (aEl && aw.length) aEl.innerHTML = `
+      <section class="block">
+        <div class="block-head"><h2>本周颁奖典礼</h2><span class="muted small">没有人想要的奖项 · 每周自动评选</span></div>
+        <div class="awards">${aw.map((a, i) => `
+          <a class="award" href="#/p/${a.p.id}" style="--d:${i * 80}ms;${colorStyle(a.p.cfg)}">
+            <div class="award-trophy">${a.icon}</div>
+            <div class="award-title">${esc(a.title)}</div>
+            ${avatar(a.p, a.p.name, "award-av")}
+            <b class="award-name">${esc(a.p.name)}</b>
+            <span class="award-value">${esc(a.value)}</span>
+            <p>${esc(a.caption)}</p>
+          </a>`).join("")}</div>
+      </section>`;
+
+    // 耻辱排行榜
+    const bEl = document.getElementById("board-home");
+    if (bEl && accused.length >= 2) {
+      const draw = (id) => {
+        const { b, rows } = X.board(accused, id);
+        bEl.querySelector(".board-rows").innerHTML = rows.map((r, i) => `
+          <a class="brow" href="#/p/${r.p.id}" style="--d:${i * 60}ms;${colorStyle(r.p.cfg)}">
+            <span class="brank">${i === 0 ? "👑" : i + 1}</span>
+            ${avatar(r.p, r.p.name, "brow-av")}
+            <span class="bname">${esc(r.p.name)}</span>
+            <div class="bbar"><i style="width:${r.pct}%"></i></div>
+            <b class="bval">${esc(r.text)}</b>
+          </a>`).join("");
+        bEl.querySelectorAll(".btab").forEach((t) => t.classList.toggle("on", t.dataset.id === b.id));
+      };
+      bEl.innerHTML = `
+        <section class="block">
+          <div class="block-head"><h2>耻辱排行榜</h2><span class="muted small">第一名不是什么好事</span></div>
+          <div class="sp-panel board">
+            <div class="btabs">${X.BOARDS.map((b) => `<button class="btab" data-id="${b.id}">${b.label}</button>`).join("")}</div>
+            <div class="board-rows"></div>
+          </div>
+        </section>`;
+      bEl.querySelectorAll(".btab").forEach((t) => t.addEventListener("click", () => draw(t.dataset.id)));
+      draw("deaths");
+    }
+
+    // 全员作息表
+    const gEl = document.getElementById("group-heat");
+    const all = players.filter((p) => !p.ctx.hidden).flatMap((p) => p.stats.matches);
+    if (gEl && all.length) gEl.innerHTML = `
+      <section class="block">
+        <div class="block-head"><h2>全员作息表</h2><span class="muted small">这群人到底什么时候睡觉 · 本周${all.length}局</span></div>
+        <div class="sp-panel">${heatmap(all)}</div>
       </section>`;
   }
   // ---------- grafici ----------
