@@ -112,6 +112,8 @@
         // quanto farma:补刀 al minuto della settimana → quota di tempo passata a picchiare i creep
         farm: p.cfg.persona?.arenaFarm ? { ...farmShare(matches), share: Math.max(0.6, farmShare(matches).share) } : { lpm: 0, share: 0 },
         yd: yesterday(matches, p.heroes), // partite del giorno prima, per i dialoghi del giorno
+        // K/D/A reale accumulato dal 16/10/2026 (il giorno prima del lancio) a oggi: non si azzera mai
+        total: Object.entries(days).filter(([D]) => Number(D) >= EPOCH - 1 && Number(D) <= today).reduce((t, [, s]) => ({ k: t.k + s.k, d: t.d + s.d, a: t.a + s.a, n: t.n + s.n }), { k: 0, d: 0, a: 0, n: 0 }),
       });
     }
     // bersagli: chi nel giorno di riferimento è morto più di me (se nessuno, il più "morto" della compagnia)
@@ -559,7 +561,7 @@
         ${loaderHTML(Math.max(startP, 0.62))}
         <div class="arena-bg"></div><div class="arena-tint"></div><div class="arena-ground"></div>
         <div class="arena-fx">${LITE ? "" : SPARKS}</div>
-        <div class="arena-top"><div class="sc-cap">昨日<br>K/D/A</div>${F.map(scoreCell).join("")}</div>
+        <div class="arena-top"><div class="sc-cap" title="从2026年10月16日起累计的真实战绩，每天累加，不清零">累计<br>K/D/A</div>${F.map(scoreCell).join("")}</div>
         <div class="arena-badge"><b>刀塔乱斗</b><span id="arena-clock"></span></div>
         <div class="goku">${medal}<div class="gk-name">大P神${medalName ? ` · ${esc(medalName)}` : ""}</div>${GOKU}<span class="goku-bubble"></span></div>
         <div class="arena-field">${F.map((f, i) => fighterHTML(f, i)).join("")}</div>
@@ -1061,9 +1063,9 @@
   }
 
   function scoreCell(f) {
-    return `<div class="sc" data-sid="${f.id}" style="--pc:${f.color}" title="${esc(f.name)} · ${esc(f.heroName)} · 昨天${f.yd ? `${f.yd.n}局 ${f.yd.k}杀/${f.yd.d}死/${f.yd.a}助攻` : "没打"}">
+    return `<div class="sc" data-sid="${f.id}" style="--pc:${f.color}" title="${esc(f.name)} · ${esc(f.heroName)} · 10月16日起累计 ${f.total.n}局 ${f.total.k}杀/${f.total.d}死/${f.total.a}助攻">
       <div class="sc-img" style="background-image:url('${esc(f.portrait || f.avatar)}')"><span class="sc-lv">1</span><span class="sc-rs"></span></div>
-      <div class="sc-name">${esc(f.name)}</div><div class="sc-kda">${f.yd ? `${f.yd.k}/${f.yd.d}/${f.yd.a}` : "—"}</div></div>`;
+      <div class="sc-name">${esc(f.name)}</div><div class="sc-kda">${f.total.n ? `${f.total.k}/${f.total.d}/${f.total.a}` : "—"}</div></div>`;
   }
 
   function fighterHTML(f, i) {
