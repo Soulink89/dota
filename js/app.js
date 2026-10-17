@@ -187,6 +187,7 @@
       <section class="court-stats" id="court-stats"></section>
       <div id="fortune-home"></div>
       <div id="daily-home"></div>
+      <div id="arcana-home"></div>
       <div class="block-head"><h2>通缉榜</h2><span class="muted small">点击海报查看卷宗</span></div>
       <section class="wanted-grid" id="cards">
         ${CFG.players.map(() => `<article class="wanted skeleton"><div class="sk sk-av"></div><div class="sk sk-l"></div><div class="sk sk-s"></div></article>`).join("")}
@@ -605,6 +606,36 @@
       draw("deaths");
     }
 
+
+    // 至宝追踪器: per chi ha l'inventario attivo, quanto gioca gli eroi di cui ha l'arcana
+    const tEl = document.getElementById("arcana-home");
+    const trackers = players.filter((p) => p.ctx.inventory && p.stats.n);
+    if (tEl && trackers.length) {
+      const wk = Math.floor((Date.now() / 86400000 + 3) / 7);
+      const CAPS = ["至宝不上场，等于白抽。", "钱花在哪里，英雄就选在哪里。", "每一局至宝出场，都是在给抽奖的钱一个交代。"];
+      tEl.innerHTML = trackers.map((p) => {
+        const inv = p.ctx.inventory;
+        const ids = new Set(inv.arcanaHeroes);
+        const games = p.stats.matches.filter((m) => ids.has(m.hero_id)).length;
+        const pct = Math.round((games / p.stats.n) * 100);
+        const fav = [...inv.arcana].sort((a, b) => b.week - a.week)[0];
+        return `
+      <section class="block">
+        <div class="block-head"><h2>${esc(p.name)} · 至宝追踪</h2><span class="muted small">本周${p.stats.n}局 · 根据Steam库存与比赛自动统计</span></div>
+        <a class="sp-panel tracker" href="#/p/${p.id}" style="${colorStyle(p.cfg)}">
+          <div class="tracker-ring" style="--p:${pct}"><div><b>${pct}%</b><span>至宝出场率</span></div></div>
+          <div class="tracker-main">
+            <p class="tracker-line">本周<b>${games}</b>局用了有至宝的英雄${fav && fav.week ? `，出场最多的是<b>${esc(fav.hero)}</b>（${fav.week}局）` : ""}。<em>${CAPS[wk % CAPS.length]}</em></p>
+            <div class="tracker-items">${inv.arcana.map((a, i) => `
+              <div class="titem ${a.week ? "on" : ""}" style="--d:${i * 70}ms" title="${esc(a.name)} · 本周${a.week}局">
+                <img src="${API.itemImg(a.icon)}" alt="" loading="lazy">
+                <span>${esc(a.hero || "")}</span>
+                <b>${a.week ? `×${a.week}` : "吃灰中"}</b>
+              </div>`).join("")}</div>
+          </div>
+        </a>
+      </section>`; }).join("");
+    }
     // 全员作息表
     const gEl = document.getElementById("group-heat");
     const all = players.filter((p) => !p.ctx.hidden).flatMap((p) => p.stats.matches);
