@@ -29,9 +29,12 @@
     const id = API.toAccountId(cfg.steam64);
     if (!cache.has(id)) {
       cache.set(id, (async () => {
-        const [data, heroes] = await Promise.all([API.loadPlayer(id, DAYS), API.loadHeroes()]);
+        let [data, heroes] = await Promise.all([API.loadPlayer(id, DAYS), API.loadHeroes()]);
         const p = data.profile?.profile || {};
         const name = cfg.alias || p.personaname || `玩家 ${id}`;
+        // modalità elogio: si contano solo le partite vinte
+        const praise = cfg.persona?.mode === "praise";
+        if (praise) data = { ...data, matches: (data.matches || []).filter((m) => (m.player_slot < 128) === m.radiant_win) };
         const stats = R.computeStats(data.matches, DAYS);
         // index: ogni giocatore riceve varianti diverse delle battute; week: ruotano ogni settimana
         const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier,
@@ -41,7 +44,7 @@
         const quotes = R.quotes(stats, ctx, heroes);
         ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
         const roasts = R.buildRoasts(stats, name, heroes, ctx);
-        return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx,
+        return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx, praise,
           verdict: R.verdict(stats, ctx), roasts, quotes, special: R.specials(stats, ctx),
           split: splitRoasts(roasts) };
       })().catch((e) => { cache.delete(id); throw e; }));
@@ -62,6 +65,11 @@
   function headlines(p) {
     const s = p.stats, n = esc(p.name), H = (id) => esc(p.heroes[id]?.localized_name || "");
     if (p.ctx.hidden) return [`<b>${n}</b>：比赛数据未公开，本庭无法统计`];
+    if (p.praise) {
+      if (!s.n) return [`<b>${n}</b>：本周休养生息`];
+      const b = s.bestGame;
+      return [`<b>${n}</b>：本周拿下${s.n}场胜利`, ...(b ? [`<b>${n}</b>：最佳一局 ${H(b.hero_id)} ${b.kills}/${b.deaths}/${b.assists}`] : [])];
+    }
     if (!s.n) return [`<b>${n}</b>：本周一局未打`];
     const out = [`<b>${n}</b>：本周${s.n}场 · ${s.wins}胜${s.losses}负`];
     if (s.mostDeaths) out.push(`<b>${n}</b>：最惨一局 ${H(s.mostDeaths.hero_id)} ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}`);
@@ -145,6 +153,7 @@
         <div class="hero-gavel" aria-hidden="true">⚖</div>
       </section>
       <section class="court-stats" id="court-stats"></section>
+      <div id="daily-home"></div>
       <div class="block-head"><h2>通缉榜</h2><span class="muted small">点击海报查看卷宗</span></div>
       <section class="wanted-grid" id="cards">
         ${CFG.players.map(() => `<article class="wanted skeleton"><div class="sk sk-av"></div><div class="sk sk-l"></div><div class="sk sk-s"></div></article>`).join("")}
@@ -167,13 +176,15 @@
         cards[i].outerHTML = `<article class="wanted wanted-empty"><h3>证据暂缺</h3><p>OpenDota 没有响应，请稍后再试。</p></article>`;
       }
     }));
-    const sum = (f) => loaded.reduce((t, p) => t + f(p.stats), 0);
+    const accused = loaded.filter((p) => !p.praise); // i giocatori in modalità elogio non sono "imputati"
+    const sum = (f) => accused.reduce((t, p) => t + f(p.stats), 0);
     document.getElementById("court-stats").innerHTML = `
       <div class="cs"><span>💀</span><b>${counter(sum((s) => s.deaths))}</b><em>本周被告合计送头</em></div>
       <div class="cs"><span>⏳</span><b>${counter(sum((s) => s.hours), "", 1)}</b><em>合计浪费小时</em></div>
       <div class="cs"><span>📉</span><b>${counter(sum((s) => s.losses))}</b><em>合计输掉场次</em></div>
-      <div class="cs"><span>🧑‍⚖️</span><b>${counter(loaded.length)}</b><em>在押被告</em></div>`;
+      <div class="cs"><span>🧑‍⚖️</span><b>${counter(accused.length)}</b><em>在押被告</em></div>`;
     animateCounters(document.getElementById("court-stats"));
+    renderDailyHome();
     allHeadlines().then(setTicker);
   }
 
@@ -183,16 +194,16 @@
     const tilt = [-2.2, 1.8, -1.2, 2.4][i % 4];
     return `<a class="wanted" href="#/p/${p.id}" style="--tilt:${tilt}deg;${colorStyle(p.cfg)}">
       <span class="pin" aria-hidden="true"></span>
-      <div class="wanted-top"><span>通缉令</span><small>WANTED · 死活不论</small></div>
+      <div class="wanted-top">${p.praise ? "<span>表彰令</span><small>HALL OF FAME · 本庭特别嘉奖</small>" : "<span>通缉令</span><small>WANTED · 死活不论</small>"}</div>
       <div class="wanted-photo">${avatar(p, p.name, "avatar-wanted")}<div class="wanted-meter"><small>${esc(v.title || "成绩")}</small><b>${esc(v.label)}</b></div></div>
       <h3>${esc(p.name)}</h3>
-      <p class="wanted-crime">罪名：${esc(p.cfg.bounty || p.cfg.accusa || "打刀塔")}</p>
+      <p class="wanted-crime">${p.praise ? "荣誉" : "罪名"}：${esc(p.cfg.bounty || p.cfg.accusa || "打刀塔")}</p>
       ${p.cfg.bio ? `<p class="wanted-bio">简介：${esc(p.cfg.bio)}</p>` : ""}
-      <div class="wanted-bounty"><span>悬赏</span><b>🪙 ${p.ctx.hidden ? "机密" : bounty.toLocaleString(LOCALE)}</b><span>金</span></div>
+      <div class="wanted-bounty"><span>${p.praise ? "奖金" : "悬赏"}</span><b>🪙 ${p.ctx.hidden ? "机密" : (p.praise ? Math.max(1, s.kills) * 300 : bounty).toLocaleString(LOCALE)}</b><span>金</span></div>
       <div class="wanted-stats">
         <div><b>${p.ctx.hidden ? "?" : s.n}</b><span>场</span></div>
         <div><b>${p.ctx.hidden ? "?" : s.n ? Math.round(s.wr) + "%" : "–"}</b><span>胜率</span></div>
-        <div><b>${p.ctx.hidden ? "?" : s.deaths}</b><span>送头</span></div>
+        ${p.praise ? `<div><b>${s.kills}</b><span>击杀</span></div>` : `<div><b>${p.ctx.hidden ? "?" : s.deaths}</b><span>送头</span></div>`}
       </div>
       ${resultStrip(s)}
       ${top ? `<p class="wanted-quote">${top.icon} ${esc(top.text)}</p>` : ""}
@@ -220,7 +231,7 @@
     const s = p.stats, v = p.verdict, prof = p.data.profile || {};
     const fav = s.heroes[0] && p.heroes[s.heroes[0].hero_id];
     const wl = p.data.wl;
-    const life = wl && wl.win + wl.lose ? `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%` : "–";
+    const life = !wl || !(wl.win + wl.lose) ? "–" : p.praise ? `${wl.win}场胜利` : `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%`;
     const memeHeroes = s.heroes.length ? s.heroes.map((h) => p.heroes[h.hero_id]) : [null];
     const collage = s.heroes.slice(0, 5).map((h) => p.heroes[h.hero_id]).filter(Boolean);
 
@@ -269,9 +280,9 @@
         ${kpi("场次", s.n ? counter(s.n) : "0", `浪费了 ${fmt1(s.hours)} 小时人生`)}
         ${kpi("胜率", s.n ? counter(Math.round(s.wr), "%") : "–", `${s.wins}胜 · ${s.losses}负`)}
         ${kpi("KDA", s.n ? counter(s.avgKda, "", 1) : "–", `${s.kills} / ${s.deaths} / ${s.assists}`)}
-        ${kpi("送头", s.n ? counter(s.deaths) : "0", s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", "neg")}
+        ${p.praise ? kpi("击杀", s.n ? counter(s.kills) : "0", s.n ? `每局 ${fmt1(s.kills / s.n)} 个` : "–", "pos") : kpi("送头", s.n ? counter(s.deaths) : "0", s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", "neg")}
         ${kpi("平均GPM", s.n ? counter(Math.round(s.avgGpm)) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
-        ${kpi("最惨一局", s.mostDeaths ? `${s.mostDeaths.deaths}死` : "–", s.mostDeaths ? `${esc(p.heroes[s.mostDeaths.hero_id]?.localized_name || "")} · ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}` : "–", "neg")}
+        ${p.praise ? kpi("最佳一局", s.bestGame ? `${s.bestGame.kills}/${s.bestGame.deaths}/${s.bestGame.assists}` : "–", s.bestGame ? esc(p.heroes[s.bestGame.hero_id]?.localized_name || "") : "–", "pos") : kpi("最惨一局", s.mostDeaths ? `${s.mostDeaths.deaths}死` : "–", s.mostDeaths ? `${esc(p.heroes[s.mostDeaths.hero_id]?.localized_name || "")} · ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}` : "–", "neg")}
       </section>`}
 
       ${p.quotes.length ? `
@@ -294,10 +305,10 @@
 
       ${s.n ? `
       <section class="block">
-        <div class="block-head"><h2>数据图鉴</h2><span class="muted small">只挑丢人的看</span></div>
+        <div class="block-head"><h2>数据图鉴</h2><span class="muted small">${p.praise ? "只看胜场" : "只挑丢人的看"}</span></div>
         <div class="viz-grid">
           <div class="sp-panel">
-            <div class="sp-head"><span>💀</span><div><h4>人头 vs 送头</h4><p class="muted small">每局击杀（上）和死亡（下），从旧到新</p></div></div>
+            <div class="sp-head"><span>💀</span><div><h4>${p.praise ? "每局表现" : "人头 vs 送头"}</h4><p class="muted small">每局击杀（上）和死亡（下），从旧到新</p></div></div>
             ${kdChart(s.matches, p.heroes)}
           </div>
           <div class="sp-panel">
@@ -308,23 +319,25 @@
         <div class="strip-wrap"><span class="muted small">胜负走势</span>${resultStrip(s)}</div>
       </section>` : ""}
 
+      <div id="daily-p"></div>
+
       ${p.roasts.length ? `
       <section class="block">
         <div class="block-head">
-          <h2>本周表情包</h2>
+          <h2>${p.praise ? "荣耀海报" : "本周表情包"}</h2>
           <button class="btn btn-ghost btn-sm" id="reroll">🎲 换一批</button>
         </div>
         <div class="memes" id="memes"></div>
       </section>
 
       <section class="block">
-        <div class="block-head"><h2>罪状</h2><span class="muted small" id="charges-count"></span></div>
+        <div class="block-head"><h2>${p.praise ? "功绩" : "罪状"}</h2><span class="muted small" id="charges-count"></span></div>
         <div class="charges" id="charges"></div>
       </section>` : ""}
 
       ${s.heroes.length ? `
       <section class="block">
-        <div class="block-head"><h2>本周受害英雄</h2><span class="muted small">被他玩过的英雄</span></div>
+        <div class="block-head"><h2>${p.praise ? "本周招牌英雄" : "本周受害英雄"}</h2><span class="muted small">${p.praise ? "带来胜利的英雄" : "被他玩过的英雄"}</span></div>
         <div class="heroes">${s.heroes.slice(0, 8).map((h) => heroTile(h, p.heroes[h.hero_id])).join("")}</div>
       </section>` : ""}
 
@@ -348,9 +361,10 @@
             <div class="charge-icon">${r.icon}</div>
             <div><h4>${esc(r.title)}</h4><p>${esc(r.text)}</p></div>
           </article>`).join("");
-      document.getElementById("charges-count").textContent = `共 ${split.charges.length} 项指控`;
+      document.getElementById("charges-count").textContent = p.praise ? `共 ${split.charges.length} 项功绩` : `共 ${split.charges.length} 项指控`;
     };
     renderJokes(p.split);
+    renderDailyPlayer(p);
     if (cfg.persona?.nemesis) renderNemesis(p, cfg.persona.nemesis);
     else if (cfg.persona?.victim) renderNemesis(p, cfg.persona.victim, "better");
     document.getElementById("reroll")?.addEventListener("click", () => renderJokes(splitRoasts(p.roasts, true)));
@@ -391,6 +405,61 @@
               <span class="nem-val win">${m.fmt(m.bv)}</span></div>`; }).join("")}
           <p class="muted small">${better ? `本周${metrics.length}项数据，${esc(q.name)}全部落后。` : `连被${esc(q.name)}说菜都没法反驳：以上${metrics.length}项全部输给了他。`}</p>
         </div>
+      </section>`;
+  }
+
+  // ---------- 昨日表情包 (generati ogni giorno dalle partite di ieri) ----------
+  let dailyPromise;
+  function loadDaily() {
+    dailyPromise ??= Promise.allSettled(CFG.players.map(getPlayer)).then((res) => {
+      const players = res.filter((r) => r.status === "fulfilled").map((r) => r.value).map((p) => ({
+        id: p.id, index: p.ctx.index, name: p.name, heroes: p.heroes, data: p.data, hidden: p.ctx.hidden, praise: p.praise,
+        // le partite già usate nelle battute settimanali non vengono ripetute
+        exclude: new Set([...(p.quotes.usedMatches || []), ...p.roasts.map((r) => r.matchId).filter(Boolean)]),
+      }));
+      return { ...window.TribunaleDaily.generate(players), byId: new Map(players.map((x) => [x.id, x])) };
+    });
+    return dailyPromise;
+  }
+
+  function dailyCard(m, heroes, i, withName) {
+    const hero = m.heroId && heroes[m.heroId];
+    return `<figure class="meme daily" style="--d:${i * 80}ms">
+      <div class="meme-img" style="${hero ? `background-image:url('${API.heroImg(hero)}')` : ""}"></div>
+      <figcaption>
+        <span class="meme-top">${esc(m.top)}</span>
+        <span class="meme-bottom">${esc(m.bottom)}</span>
+      </figcaption>
+
+      <span class="daily-info">${withName ? `<a class="daily-name" href="#/p/${m.playerId}">${esc(m.name)}</a> · ` : ""}${esc(m.info)}</span>
+    </figure>`;
+  }
+
+  const dailyDate = (d) => d.toLocaleDateString(LOCALE, { month: "long", day: "numeric", weekday: "short" });
+
+  async function renderDailyHome() {
+    const el = document.getElementById("daily-home");
+    if (!el) return;
+    const d = await loadDaily();
+    const top = [...d.memes.values()].map((l) => l[0]).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 6);
+    el.innerHTML = `
+      <section class="block daily-block">
+        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)} · 每天零点自动更新</span></div>
+        ${top.length ? `<div class="memes daily-grid">${top.map((m, i) => dailyCard(m, d.byId.get(m.playerId).heroes, i, true)).join("")}</div>`
+                     : `<p class="muted daily-empty">昨天全员休战，本庭今日无料可黑。</p>`}
+      </section>`;
+  }
+
+  async function renderDailyPlayer(p) {
+    const el = document.getElementById("daily-p");
+    if (!el || p.ctx.hidden) return;
+    const d = await loadDaily();
+    const list = d.memes.get(p.id) || [];
+    if (!list.length || location.hash.indexOf(p.id) < 0) return;
+    el.innerHTML = `
+      <section class="block daily-block">
+        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)} · 根据昨天的比赛自动生成</span></div>
+        <div class="memes daily-grid">${list.map((m, i) => dailyCard(m, p.heroes, i, false)).join("")}</div>
       </section>`;
   }
   // ---------- grafici ----------

@@ -149,6 +149,18 @@
         label: String(clamp(30 + s.lateN * 3 + s.sessions * 4 + Math.max(0, sober - late) / 3)),
         text: pickFor(["本庭建议：开黑前先吹一下酒精测试仪。", "喝到第几局，他自己也数不清了。", "键盘上的威士忌，比他的眼位还多。"], ctx) };
     }
+    if (meter === "praise") {
+      const title = "本周荣耀指数";
+      if (!s.n) return { title, voto: 0, label: "—", cls: "g-good", text: "大神本周在休养，养精蓄锐。" };
+      return { title, voto: 0, cls: "g-good", label: "MVP",
+        text: pickFor(["每一场胜利都是教科书。", "这就是传说中的大神。", "稳定、冷静、致命。"], ctx) };
+    }
+    if (meter === "fish") {
+      const title = "小鱼人浓度";
+      if (!s.n) return { title, voto: 0, label: "100%", cls: "g-mid", text: "据群友证词：浓度100%，剩下的是海水。" };
+      return { title, voto: 0, cls: "g-mid", label: heroRecord(s, 93).n ? Math.round((heroRecord(s, 93).n / s.n) * 100) + "%" : "0%",
+        text: pickFor(["小鱼人含量超标，建议回归大海。", "这个浓度，小鱼人本鱼都自愧不如。"], ctx) };
+    }
     if (meter === "wifeAway") {
       const title = "本周放风时长";
       if (!s.n) return { title, voto: 0, label: "0h", cls: "g-bad", text: "本周老婆一直在家。刀塔：已读不回。" };
@@ -230,7 +242,27 @@
   // ---------- Regole delle battute ----------
   // v: varianti [testo, meme sopra, meme sotto]. generic: vale per tutti i giocatori.
   // match: la partita citata (se già usata nei 语录 la battuta viene saltata).
+  // ---------- Modalità elogio (persona.mode = "praise"): solo vittorie, solo complimenti ----------
+  function praiseList(s, heroes) {
+    if (!s.n) return [];
+    const H = (id) => heroes[id]?.localized_name || "英雄";
+    const by = (f) => s.matches.reduce((b, m) => (b == null || f(m) > f(b) ? m : b), null);
+    const best = by((m) => m.kda), ass = by((m) => m.assists), gpm = by((m) => m.gold_per_min ?? 0), kil = by((m) => m.kills);
+    const kd = (m) => `${m.kills}/${m.deaths}/${m.assists}`;
+    const out = [];
+    const add = (id, weight, icon, title, text, top, bottom, m) => out.push({ id, weight, icon, title, text, meme: { top, bottom }, heroId: m?.hero_id ?? null, matchId: m?.match_id ?? null });
+    add("g-best", 95, "🏆", "神级操作", `${H(best.hero_id)} ${kd(best)}，教科书级别的一局。`, `${H(best.hero_id)} ${kd(best)}`, "这就是大神", best);
+    add("g-wins", 90, "👑", "胜利收割机", `本周拿下${s.n}场胜利，场场都是硬仗。`, `本周${s.n}胜`, "实力说明一切", null);
+    add("g-kda", 85, "🛡️", "稳如泰山", `胜场平均KDA ${s.avgKda.toFixed(2)}，节奏稳、失误少。`, `KDA ${s.avgKda.toFixed(2)}`, "稳如泰山", null);
+    if (ass && ass !== best) add("g-assist", 80, "🤝", "团战发动机", `${H(ass.hero_id)}一局${ass.assists}次助攻，哪里需要哪里就有他。`, `${ass.assists}次助攻`, "团战发动机", ass);
+    if (gpm && gpm.gold_per_min && gpm !== best && gpm !== ass) add("g-gpm", 75, "💰", "经济碾压", `${H(gpm.hero_id)} ${gpm.gold_per_min} GPM，发育一骑绝尘。`, `${gpm.gold_per_min} GPM`, "经济碾压", gpm);
+    if (kil && kil !== best && kil !== ass && kil !== gpm && kil.kills >= 8) add("g-kills", 70, "⚔️", "收割全场", `${H(kil.hero_id)}一局${kil.kills}个人头，对面看到他就绕路。`, `${kil.kills}杀`, "对面绕路走", kil);
+    if (s.distinctHeroes >= 4) add("g-pool", 65, "🌟", "全能大神", `本周${s.distinctHeroes}个不同的英雄都拿下了胜利，什么位置都能扛。`, `${s.distinctHeroes}个英雄`, "全部拿下", s.matches.find((m) => m.hero_id === s.heroes[0]?.hero_id));
+    return out.sort((a, b) => b.weight - a.weight);
+  }
+
   function buildRoasts(s, name, heroes, ctx = {}) {
+    if (ctx.persona?.mode === "praise") return praiseList(s, heroes);
     const H = (id) => heroes[id]?.localized_name || "神秘英雄";
     const fav = s.heroes[0];
     const persona = ctx.persona || {};
@@ -385,6 +417,16 @@
         ["本周深夜修仙{late}局，修为已达【{xlevel}】。照这个速度，很快就升天了。", "修仙中，勿扰", "境界：{xlevel}"],
         ["凌晨的刀塔最养人：修仙{late}局，境界【{xlevel}】。再修下去就不是飞升，是升天了。", "深夜修仙", "离升天不远了"]] },
 
+      // ----- Kaiju大神 -----
+      { id: "k-hidden", hero: () => 93, when: () => ctx.hidden && T("slarkBody"), weight: 95, icon: "🐟", title: "暗影之舞", v: [
+        ["比赛记录不公开。小鱼人的暗影之舞，原来是用在战绩上的。", "暗影之舞", "用在了战绩上"]] },
+      { id: "k-rank", hero: () => 42, when: () => T("lowRank") && ctx.rankTier, weight: 92, icon: "📉", title: "段位海拔", v: [
+        ["段位{rank}。小鱼人跳得再远，也跳不出这个分段。", "段位：{rank}", "小鱼人也跳不出去"]] },
+      { id: "k-ping", hero: () => 36, when: () => T("pingBuddy"), weight: 88, icon: "👬", title: "Ping神的基友", v: [
+        ["Ping神的铁杆基友。一个负责在DC讲理论，一个负责在游戏里提供反例。", "Ping神讲理论", "Kaiju负责反例"]] },
+      { id: "k-jin", hero: () => 25, when: () => T("jinHates"), weight: 84, icon: "😤", title: "金神黑名单", v: [
+        ["金神看他不顺眼。能让一个天天吹牛的人都嫌弃，这也是一种实力。", "金神：嫌弃", "Kaiju：这是实力"]] },
+
       // ----- 疯子大神 -----
       { id: "f-load", hero: () => 34, when: () => T("pcOld"), weight: 90, icon: "🖥️", title: "加载中……", v: [
         ["开机五分钟，进游戏十分钟。等他加载完，对面已经推上高地了。", "加载中……", "对面已上高地"]] },
@@ -425,7 +467,7 @@
         ["本周{n}场，每一场都在拿资源。队友的经济？那是什么，能吃吗？", "经济分配", "全部归我"]] },
 
       // ----- B神 -----
-      { id: "b-hidden", hero: () => 62, when: () => ctx.hidden, weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
+      { id: "b-hidden", hero: () => 62, when: () => ctx.hidden && T("babysit"), weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
         ["比赛数据设为不公开。打得怎么样？本庭查不到，但他自己心里有数。", "比赛记录", "不敢公开"],
         ["连OpenDota都查不到他的比赛。打得怎么样，只有他自己知道。", "OpenDota", "查无此人"]] },
       { id: "b-pos", hero: () => 44, when: () => T("positions"), weight: 86, icon: "1️⃣", title: "只会1号位和3号位", v: [
@@ -465,7 +507,7 @@
       if (!pick3) continue;
       out.push({ id: r.id, icon: r.icon, title: r.titles?.[r.v.indexOf(pick3)] || r.title, weight: r.weight,
         text: fill(pick3[0], v), meme: { top: fill(pick3[1], v), bottom: fill(pick3[2], v) },
-        heroId: r.hero ? r.hero() : null });
+        heroId: r.hero ? r.hero() : null, matchId: m?.match_id ?? null });
     }
 
     const hj = fav && pickFor(HERO_JOKES[fav.hero_id], ctx, true);
@@ -539,6 +581,15 @@
       reply: s.n ? `本周${s.n}场，纯辅助${s.pureSup}场。他的字典里，“辅助”这个词被至宝特效挡住了。` : "他的字典里，“辅助”这个词被至宝特效挡住了。" });
     if (t.has("threeAxes") && s.n) q.push({ quote: "我这三板斧够用了", stamp: "被ban警告", heroId: s.heroes[0]?.hero_id,
       reply: `够用？本周${s.n}场里三板斧砍了${s.top3}场。对面ban掉三个英雄，他就只能去找传说中的第四把斧头。` });
+    // ----- Kaiju大神 -----
+    if (t.has("pos4Slark")) q.push({ quote: "四号位？没问题，我小鱼人", stamp: "抢钱", heroId: 93,
+      reply: "四号位的位置，一号位的思路：眼一个没插，野区清得干干净净。真正的一号位：我的钱呢？" });
+    if (t.has("slarkBody")) q.push({ quote: "除了小鱼人，我还会骷髅王和死灵法师", stamp: "本体", heroId: 42,
+      reply: "小鱼人本体，外加两个备胎。骷髅王会复活，死灵法师会回血，小鱼人会跑——三种不死的方法，都救不回战绩。" });
+    if (t.has("teletubby")) q.push({ quote: "别叫我天线宝宝！", stamp: "天线宝宝",
+      reply: "Soul坚持叫他天线宝宝。天线宝宝最爱说“再来一次”——他输完每一局也这么说。" });
+    if (t.has("lowLevelGood")) q.push({ quote: "低分局我可是神", stamp: "鱼塘之王",
+      reply: ctx.rankTier ? `段位${rank}。在这个分段确实是神——鱼塘里的神，也是神。` : "鱼塘里的神，也是神。" });
     // ----- 疯子大神 -----
     if (t.has("pcOld")) q.push({ quote: "电脑还能用，不用换", stamp: "抠门",
       reply: "月入百万的老板，电脑却是十年前的。显卡的年纪，比有些队友还大。" });

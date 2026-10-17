@@ -8,7 +8,8 @@
 //  "bio" (opzionale): presentazione (简介) mostrata sotto il nome.
 //  "note" (opzionale): il sospiro del giudice (法官叹气), mostrato sotto l'indice.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
-//    meter:       indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风); assente = voto su 100
+//    mode:        "praise" = modalità elogio: solo partite vinte, solo complimenti, manifesto 表彰令
+//    meter:      indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风), "fish" (小鱼人浓度); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
 //    traits:      i suoi vizi, a scelta tra:
@@ -59,6 +60,14 @@
 //      wifeAway   gioca solo quando la moglie non c'è (meter "wifeAway" = ore di "libertà")
 //      omg        ama la custom OMG
 //      lowPrio    finisce in low priority (小黑屋) perché il PC non carica
+//      pingBuddy  基友 inseparabile di Ping神
+//      lowRank    rango bassissimo
+//      allPos1    gioca ogni eroe da pos 1
+//      slarkBody  "小鱼人本体": Slark, più 骷髅王 e 死灵法师
+//      pos4Slark  anche in pos 4 prende Slark e ruba il farm
+//      jinHates   金神 non lo sopporta
+//      teletubby  Soul lo chiama "天线宝宝"
+//      lowLevelGood nelle partite di basso livello se la cava
 //    heatTitle:   titolo personalizzato della tabella oraria
 //    victim:     alias di un altro giocatore: pannello 克星 (solo dove batte lui)
 //    nemesis:   alias di un altro giocatore: confronto 宿敌对比 (solo dove perde lui)
@@ -140,6 +149,26 @@ window.TRIBUNALE_CONFIG = {
         heatTitle: "老婆不在家的时段",
         traits: ["proSupport", "pudgeGod", "bigBoss", "pcOld", "wifeAway", "omg", "lowPrio"],
       },
+    },
+    {
+      steam64: "76561198079480070",
+      alias: "Kaiju大神",
+      accusa: "四号位小鱼人",
+      color: "#38bdf8",
+      bounty: "偷钱罪",
+      persona: {
+        meter: "fish",
+        traits: ["pingBuddy", "lowRank", "allPos1", "slarkBody", "pos4Slark", "jinHates", "teletubby", "lowLevelGood"],
+      },
+    },
+    {
+      steam64: "76561198046980947",
+      alias: "Soul大神",
+      accusa: "本庭荣誉嘉宾",
+      color: "#facc15",
+      bounty: "刀塔传奇",
+      // modalità elogio: solo partite vinte, nessuna presa in giro
+      persona: { mode: "praise", meter: "praise" },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },
   ],
