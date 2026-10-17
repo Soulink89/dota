@@ -49,8 +49,11 @@
     const exclude = p.exclude || new Set();
     const free = ms.filter((m) => !exclude.has(m.match_id));
     const out = [];
-    const add = (type, score, vars, m) => out.push({ type, score, vars, heroId: m?.hero_id ?? null, matchId: m?.match_id ?? null,
-      info: m ? `${hhmm(m.start_time)} · ${H(m.hero_id)} ${m.kills}/${m.deaths}/${m.assists} · ${m.win ? "胜" : "负"}` : `昨天${ms.length}局 · ${ms.filter((x) => x.win).length}胜${ms.filter((x) => !x.win).length}负` });
+    // m = partita citata; per i momenti "di serata" (agg) m serve solo per l'immagine dell'eroe
+    const add = (type, score, vars, m, agg = false) => out.push({ type, score, vars, heroId: m?.hero_id ?? null, matchId: agg ? null : m?.match_id ?? null,
+      info: m && !agg ? `${hhmm(m.start_time)} · ${H(m.hero_id)} ${m.kills}/${m.deaths}/${m.assists} · ${m.win ? "胜" : "负"}` : `昨晚${ms.length}局 · ${ms.filter((x) => x.win).length}胜${ms.filter((x) => !x.win).length}负` });
+    const lastLoss = [...ms].reverse().find((x) => !x.win);
+    const topHero = (() => { const c = {}; for (const x of ms) c[x.hero_id] = (c[x.hero_id] || 0) + 1; const id = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; return ms.find((x) => String(x.hero_id) === id); })();
     const by = (list, f) => list.reduce((b, m) => (b == null || f(m) > f(b) ? m : b), null);
     const mv = (m) => ({ hero: H(m.hero_id), k: m.kills, d: m.deaths, a: m.assists, kda: m.kda.toFixed(1), gpm: m.gold_per_min, dur: Math.round(m.duration / 60), time: hhmm(m.start_time) });
 
@@ -59,11 +62,11 @@
     if (md) add("deaths", md.deaths * 3 + (md.win ? 0 : 10), mv(md), md);
     const wk = by(free.filter((m) => m !== md && !m.win), (m) => -m.kda);
     if (wk && wk.kda < 1.5) add("kda", (1.5 - wk.kda) * 25 + 10, mv(wk), wk);
-    let run = 0, best = 0;
-    for (const m of ms) { run = m.win ? 0 : run + 1; best = Math.max(best, run); }
-    if (best >= 2) add("streak", best * 10, { n: best });
+    let run = 0, best = 0, streakEnd = null;
+    for (const m of ms) { run = m.win ? 0 : run + 1; if (run > best) { best = run; streakEnd = m; } }
+    if (best >= 2) add("streak", best * 10, { n: best }, streakEnd, true);
     const w = ms.filter((m) => m.win).length, l = ms.length - w;
-    if (l > w && l >= 2) add("netloss", (l - w) * 8 + 5, { w, l });
+    if (l > w && l >= 2) add("netloss", (l - w) * 8 + 5, { w, l }, lastLoss, true);
     const poor = by(free.filter((m) => m.gold_per_min != null && !m.win), (m) => -m.gold_per_min);
     if (poor && poor.gold_per_min < 350) add("poor", (350 - poor.gold_per_min) / 6, mv(poor), poor);
     const longL = by(free.filter((m) => !m.win), (m) => m.duration);
@@ -72,14 +75,14 @@
     if (quickL && quickL.duration <= 27 * 60) add("quickloss", 22, mv(quickL), quickL);
     const late = by(free, (m) => { const h = new Date(m.start_time * 1000).getHours(); return h < 6 ? h + 24 : h; });
     if (late) { const h = new Date(late.start_time * 1000).getHours(); if (h >= 1 && h < 6) add("late", 14 + h, mv(late), late); }
-    if (ms.length >= 6) add("binge", ms.length * 2, { n: ms.length });
+    if (ms.length >= 6) add("binge", ms.length * 2, { n: ms.length }, topHero, true);
     const zk = free.find((m) => m.kills === 0 && !m.win);
     if (zk) add("zerokill", 16, mv(zk), zk);
     const losses = {};
     for (const m of ms) if (!m.win) losses[m.hero_id] = (losses[m.hero_id] || 0) + 1;
     const [hid, hn] = Object.entries(losses).sort((a, b) => b[1] - a[1])[0] || [];
     if (hn >= 2) add("heroloss", hn * 9, { hero: H(hid), n: hn }, { ...ms.find((m) => String(m.hero_id) === hid), hideInfo: true });
-    if (!out.length && w) add("good", 3, { w, l });
+    if (!out.length && w) add("good", 3, { w, l }, by(ms.filter((x) => x.win), (x) => x.kda), true);
 
     // un solo momento per tipo, dal più grave
     const seen = new Set();
