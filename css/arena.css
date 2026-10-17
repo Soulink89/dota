@@ -1,83 +1,161 @@
 /* ===================== 刀塔乱斗 (idle arena) ===================== */
-.arena { position: relative; height: 580px; border-radius: 18px; overflow: hidden; margin: 8px 0 14px;
-  background: linear-gradient(#5aa7e0 0%, #9fd2f0 36%, #cfe9c4 46%, #5f9a3d 47%, #4d8a33 70%, #3b6f27 100%);
-  box-shadow: 0 20px 50px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08); user-select: none; }
-.arena-sky { position: absolute; inset: 0 0 55% 0; }
-.arena .sun { position: absolute; right: 44%; top: 9%; width: 54px; height: 54px; border-radius: 50%;
-  background: radial-gradient(#fff7c2, #fcd34d 60%, transparent 72%); filter: drop-shadow(0 0 22px #fde68a); }
-.arena .cloud { position: absolute; width: 120px; height: 34px; border-radius: 40px; background: rgba(255,255,255,.85);
-  animation: cloud 60s linear infinite; }
+.arena { position: relative; height: 600px; border-radius: 18px; overflow: hidden; margin: 8px 0 14px; user-select: none;
+  --sky1: #4f9fe0; --sky2: #a9d8f2; --mount: #6b8fae; --snow: #f1f5f9; --pine1: #1f5a32; --pine2: #2a6b3a; --pine3: #17442a;
+  --grass1: #6aa843; --grass2: #3f7a2b; --shade: 0;
+  background: linear-gradient(var(--sky1), var(--sky2) 45%);
+  box-shadow: 0 20px 50px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08); transition: background 2s; }
+.arena.sky-dawn { --sky1: #f59e8b; --sky2: #fde3b4; --mount: #a78b9e; --pine1: #2c5534; --pine2: #355f3c; --grass1: #7aa14a; --grass2: #4b7a32; }
+.arena.sky-dusk { --sky1: #6d3b8f; --sky2: #f59e5b; --mount: #6d4a6e; --pine1: #1d3d2a; --pine2: #24492f; --pine3: #112b1d; --grass1: #557f37; --grass2: #2f5a22; }
+.arena.sky-night { --sky1: #0b1230; --sky2: #23305e; --mount: #27325a; --snow: #9aa7c7; --pine1: #102a1e; --pine2: #143322; --pine3: #0a1f15;
+  --grass1: #2f5a2a; --grass2: #1b3a1b; --shade: 1; }
+
+/* cielo */
+.arena-sky { position: absolute; inset: 0 0 50% 0; }
+.arena .sun, .arena .moon { position: absolute; right: 30%; top: 8%; width: 58px; height: 58px; border-radius: 50%; transition: opacity 2s; }
+.arena .sun { background: radial-gradient(#fff7c2, #fcd34d 60%, transparent 72%); filter: drop-shadow(0 0 26px #fde68a); }
+.arena .moon { opacity: 0; background: radial-gradient(circle at 35% 35%, #f8fafc, #cbd5e1 70%); box-shadow: 0 0 30px rgba(226,232,240,.6); }
+.arena.sky-night .sun { opacity: 0; } .arena.sky-night .moon { opacity: 1; }
+.arena.sky-dusk .sun, .arena.sky-dawn .sun { top: 26%; background: radial-gradient(#fff1c2, #fb923c 60%, transparent 72%); }
+.arena .stars { position: absolute; inset: 0; opacity: 0; transition: opacity 2s;
+  background-image: radial-gradient(1.5px 1.5px at 10% 20%, #fff, transparent), radial-gradient(1px 1px at 30% 60%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 55% 15%, #fff, transparent), radial-gradient(1px 1px at 70% 45%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 85% 25%, #fff, transparent), radial-gradient(1px 1px at 20% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 45% 35%, #fff, transparent), radial-gradient(1.5px 1.5px at 92% 70%, #fff, transparent);
+  animation: twinkle 3s ease-in-out infinite alternate; }
+.arena.sky-night .stars { opacity: 1; }
+@keyframes twinkle { to { filter: brightness(.5); } }
+.arena .cloud { position: absolute; width: 120px; height: 34px; border-radius: 40px; background: rgba(255,255,255,.85); animation: cloud 70s linear infinite; }
+.arena.sky-night .cloud { background: rgba(148,163,184,.35); }
 .arena .cloud::before, .arena .cloud::after { content: ""; position: absolute; background: inherit; border-radius: 50%; }
 .arena .cloud::before { width: 50px; height: 50px; left: 18px; top: -24px; }
 .arena .cloud::after { width: 64px; height: 60px; left: 50px; top: -32px; }
-.arena .c1 { top: 16%; left: -20%; }
-.arena .c2 { top: 30%; left: -40%; animation-duration: 90s; transform: scale(.7); opacity: .8; }
-.arena .c3 { top: 8%; left: -60%; animation-duration: 120s; transform: scale(.55); opacity: .7; }
+.arena .c1 { top: 22%; left: -20%; }
+.arena .c2 { top: 40%; left: -40%; animation-duration: 100s; transform: scale(.7); opacity: .8; }
+.arena .c3 { top: 12%; left: -60%; animation-duration: 130s; transform: scale(.55); opacity: .7; }
 @keyframes cloud { to { left: 120%; } }
-.arena-trees { position: absolute; left: 0; right: 0; top: 24%; height: 22%; }
-.tree { position: absolute; bottom: 0; width: 0; height: 0; transform: scale(var(--s)); transform-origin: bottom center; }
-.tree::before { content: ""; position: absolute; left: -7px; bottom: 0; width: 14px; height: 30px; background: #5b3a1e; border-radius: 3px; }
-.tree::after { content: ""; position: absolute; left: -44px; bottom: 22px; width: 88px; height: 96px; border-radius: 50% 50% 46% 46%;
-  background: radial-gradient(circle at 35% 30%, hsl(calc(110deg + var(--h) * 1deg) 45% 42%), hsl(calc(115deg + var(--h) * 1deg) 50% 22%));
-  box-shadow: -26px 18px 0 -10px hsl(120 45% 26%), 26px 22px 0 -12px hsl(118 45% 28%); }
-.arena-river { position: absolute; left: -5%; right: -5%; top: 88%; height: 30px; transform: rotate(-2deg);
-  background: linear-gradient(90deg, #2c8fbf, #53b8e0, #2c8fbf); opacity: .55; filter: blur(1px); }
+.arena .bird { position: absolute; color: #1e293b; font-size: 14px; animation: bird 26s linear infinite; }
+.arena .b1 { top: 30%; left: -5%; } .arena .b2 { top: 34%; left: -9%; animation-delay: -2s; font-size: 11px; }
+.arena.sky-night .bird { display: none; }
+@keyframes bird { to { left: 110%; transform: translateY(-30px); } }
+
+/* paesaggio */
+.scenery { position: absolute; left: 0; right: 0; top: 18%; width: 100%; height: 42%; }
+.scenery .pine { transform-box: fill-box; transform-origin: bottom center; }
+.scenery .crystal { animation: crystal 2.2s ease-in-out infinite; }
+.scenery .radiant .crystal { filter: drop-shadow(0 0 8px #86efac); } .scenery .dire .crystal { filter: drop-shadow(0 0 8px #f87171); }
+@keyframes crystal { 50% { opacity: .55; } }
+.arena-ground { position: absolute; left: 0; right: 0; top: 52%; bottom: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.12), transparent 60%),
+    repeating-linear-gradient(100deg, rgba(0,0,0,.05) 0 3px, transparent 3px 11px),
+    linear-gradient(var(--grass1), var(--grass2)); transition: background 2s; }
+.arena-ground::before { content: ""; position: absolute; left: 0; right: 0; top: -14px; height: 18px;
+  background: radial-gradient(circle at 8px 18px, var(--grass1) 8px, transparent 9px) 0 0 / 16px 18px repeat-x; }
+.arena-river { position: absolute; left: -5%; right: -5%; top: 30%; height: 30px; transform: rotate(-3deg); overflow: hidden; border-radius: 50%;
+  background: linear-gradient(90deg, #2c8fbf, #53b8e0, #2c8fbf); opacity: .7; box-shadow: 0 0 0 4px rgba(255,255,255,.12); }
+.arena-river i { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,.45) 40px 52px, transparent 52px 90px);
+  animation: river 6s linear infinite; }
+@keyframes river { to { transform: translateX(90px); } }
+.arena-path { position: absolute; left: 40%; top: 0; bottom: 0; width: 22%; transform: perspective(300px) rotateX(35deg); transform-origin: top;
+  background: linear-gradient(rgba(180,140,90,.0), rgba(180,140,90,.35)); border-radius: 40% 40% 0 0; }
+.flower-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
+.rock { position: absolute; width: 26px; height: 16px; border-radius: 50% 50% 40% 40%; background: linear-gradient(#a8a29e, #57534e); transform: scale(var(--s)); }
+.mush { position: absolute; width: 14px; height: 14px; }
+.mush::before { content: ""; position: absolute; left: 0; top: 0; width: 14px; height: 8px; border-radius: 8px 8px 2px 2px; background: radial-gradient(circle at 4px 3px, #fff 1.5px, transparent 2px), #dc2626; }
+.mush::after { content: ""; position: absolute; left: 5px; top: 7px; width: 4px; height: 7px; background: #fef3c7; border-radius: 2px; }
+.spark { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fef08a; box-shadow: 0 0 8px 2px #fde047; opacity: 0;
+  animation: firefly var(--t) ease-in-out var(--d) infinite; }
+.arena.sky-night .spark, .arena.sky-dusk .spark { opacity: 1; }
+.arena.sky-day .spark, .arena.sky-dawn .spark { background: #fff; box-shadow: 0 0 4px #fff; width: 3px; height: 3px; }
+@keyframes firefly { 0%, 100% { transform: translate(0, 0); opacity: .2; } 50% { transform: translate(18px, -24px); opacity: 1; } }
+.arena.sky-night .arena-ground::after { content: ""; position: absolute; inset: 0; background: rgba(10,20,50,.25); pointer-events: none; }
+
+/* personaggi */
 .arena-field { position: absolute; inset: 0; }
-.fighter { position: absolute; transform: translate(-50%, -100%); width: 112px; text-align: center; cursor: pointer; z-index: 2; transition: filter .3s; }
-.fighter.idle { filter: saturate(.35) brightness(.85); }
-.f-body { position: relative; height: 104px; animation: bob 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * -.3s); }
-@keyframes bob { 50% { transform: translateY(-5px); } }
-.f-hero { height: 104px; max-width: 128px; object-fit: contain; position: relative; z-index: 1;
+.fighter { position: absolute; transform: translate(-50%, -100%); width: 120px; text-align: center; cursor: pointer;
+  transition-property: left, top; transition-timing-function: linear; }
+.f-in { transform: scale(var(--sc, 1)); transform-origin: bottom center; transition: transform .6s; }
+.fighter.idle .f-body { filter: saturate(.35) brightness(.85); }
+.f-body { position: relative; height: 108px; animation: bob 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * -.3s); }
+.fighter.walking .f-body { animation: walkbob .42s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+@keyframes walkbob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-7px) rotate(2deg); } }
+.f-hero { height: 108px; max-width: 140px; object-fit: contain; position: relative; z-index: 1; transition: transform .25s;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)) drop-shadow(0 0 2px var(--pc)); }
-.f-hero.flat { height: 58px; margin-top: 40px; border-radius: 10px; border: 2px solid var(--pc); }
+.fighter.flip .f-hero { transform: scaleX(-1); }
+.fighter.striking .f-hero { transform: translateX(14px) rotate(10deg) scale(1.08); }
+.fighter.flip.striking .f-hero { transform: scaleX(-1) translateX(14px) rotate(10deg) scale(1.08); }
+.f-hero.flat { height: 58px; margin-top: 44px; border-radius: 10px; border: 2px solid var(--pc); }
 .f-shadow { position: absolute; left: 50%; bottom: -4px; width: 70px; height: 12px; transform: translateX(-50%); border-radius: 50%; background: rgba(0,0,0,.35); }
-.f-aura { position: absolute; inset: 10px 14px -2px; border-radius: 50%; background: radial-gradient(rgba(167,139,250,.6), transparent 65%);
+.f-aura { position: absolute; inset: 6px 10px -4px; border-radius: 50%; background: radial-gradient(rgba(167,139,250,.65), transparent 65%);
   animation: aura 1.8s ease-in-out infinite; }
+.fighter.has-arcana .f-body::after { content: "✦"; position: absolute; right: 18px; top: 8px; color: #c4b5fd; font-size: 14px; animation: aura 1.4s infinite; }
 @keyframes aura { 50% { transform: scale(1.18); opacity: .6; } }
-.f-tag { display: inline-flex; gap: 4px; align-items: center; background: rgba(10,12,20,.8); border: 1px solid var(--pc);
+.f-tag { display: inline-flex; gap: 4px; align-items: center; background: rgba(10,12,20,.82); border: 1px solid var(--pc);
   border-radius: 999px; padding: 1px 8px 1px 3px; font-size: 12px; white-space: nowrap; color: #fff; }
 .f-lv { background: var(--pc); color: #111; border-radius: 999px; padding: 0 5px; font: 700 11px var(--f-data, sans-serif); }
 .f-name { font-weight: 700; }
-.f-xp { width: 70px; height: 4px; margin: 3px auto 2px; border-radius: 4px; background: rgba(0,0,0,.45); overflow: hidden; }
+.f-rank { font-size: 10px; color: #fde68a; text-shadow: 0 1px 2px #000; line-height: 1.3; }
+.f-xp { width: 70px; height: 4px; margin: 1px auto 2px; border-radius: 4px; background: rgba(0,0,0,.45); overflow: hidden; }
 .f-xp i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #a3e635, #facc15); transition: width .4s; }
 .f-items { display: flex; justify-content: center; gap: 2px; height: 20px; }
 .f-items img { height: 20px; width: 27px; object-fit: cover; border-radius: 3px; border: 1px solid rgba(0,0,0,.6); }
 .f-items .f-arc { width: 26px; object-fit: contain; background: rgba(76,29,149,.85); border-color: #a78bfa; box-shadow: 0 0 6px #a78bfa; }
-.f-kda { font-size: 10.5px; color: #f8fafc; text-shadow: 0 1px 2px #000; margin-top: 4px; white-space: nowrap; }
-.f-live { display: flex; justify-content: center; gap: 4px; font-size: 10px; white-space: nowrap; color: #fff; text-shadow: 0 1px 2px #000; }
+.f-live { display: flex; justify-content: center; gap: 4px; font-size: 10px; color: #fff; text-shadow: 0 1px 2px #000; white-space: nowrap; margin-top: 4px; }
 .f-live b { font-family: var(--f-data, sans-serif); margin-left: 1px; }
-.f-cheer { position: absolute; right: 0; top: 24px; font-size: 11px; background: rgba(255,255,255,.88); color: #be185d; border-radius: 999px; padding: 0 5px; }
+.f-kda { font-size: 10px; color: #e2e8f0; text-shadow: 0 1px 2px #000; white-space: nowrap; opacity: .85; }
+.f-cheer { position: absolute; right: -4px; top: 0; font-size: 11px; background: rgba(255,255,255,.9); color: #be185d; border-radius: 999px; padding: 0 5px; }
 .fighter.dead .f-body { animation: none; transform: rotate(80deg) translate(14px, 10px); filter: grayscale(1) brightness(.6); transition: transform .3s; }
-.fighter.dead::after { content: "☠ 复活中"; position: absolute; left: 50%; top: 58%; transform: translateX(-50%); font-size: 11px;
+.fighter.dead::after { content: "☠ 复活中"; position: absolute; left: 50%; top: 60%; transform: translateX(-50%); font-size: 11px;
   background: rgba(0,0,0,.7); color: #fca5a5; padding: 1px 6px; border-radius: 6px; white-space: nowrap; z-index: 3; }
 .fighter.hit .f-body { animation: shake .4s; }
 .fighter.slapped .f-body { animation: slapped .6s; }
-.fighter.lvflash .f-hero { filter: drop-shadow(0 0 14px #fde047) brightness(1.4); }
+.fighter.lvflash .f-hero { filter: drop-shadow(0 0 16px #fde047) brightness(1.4); }
 @keyframes shake { 25% { transform: translateX(-6px) rotate(-6deg); } 75% { transform: translateX(6px) rotate(6deg); } }
 @keyframes slapped { 30% { transform: rotate(-28deg) translateX(-14px); } 60% { transform: rotate(12deg); } }
+.slash { position: absolute; left: 50%; top: 52%; width: 90px; height: 90px; transform: translate(-50%, -50%); pointer-events: none; z-index: 5;
+  background: linear-gradient(135deg, transparent 44%, #fff 48%, #fde047 50%, #fff 52%, transparent 56%); animation: slash .45s ease-out forwards; }
+@keyframes slash { from { opacity: 1; transform: translate(-50%, -50%) scale(.4) rotate(-20deg); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.3) rotate(10deg); } }
+.slap-fx { position: absolute; left: 22%; top: 46%; font-size: 34px; z-index: 6; animation: slapfx .7s ease-out forwards; pointer-events: none; }
+@keyframes slapfx { from { transform: scale(1.6) rotate(-30deg); } to { transform: scale(.8) rotate(10deg); opacity: 0; } }
 .f-pop { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); font: 800 15px var(--f-meme, sans-serif); white-space: nowrap;
   pointer-events: none; animation: fpop 1.4s ease-out forwards; z-index: 6; text-shadow: 0 2px 0 #000, 0 0 6px #000; }
 .f-pop.assist { color: #7dd3fc; font-size: 12px; }
 .f-pop.lvup { color: #fde047; }
 .f-pop.hitpop { color: #f87171; }
-.f-pop.slappop { color: #fb923c; font-size: 24px; }
+.f-pop.slappop { color: #fb923c; font-size: 26px; }
 .f-pop.cheerpop { color: #f9a8d4; }
 @keyframes fpop { to { transform: translate(-50%, -46px); opacity: 0; } }
-.goku { position: absolute; left: 34%; top: 3%; width: 92px; z-index: 4; text-align: center; animation: hover 3s ease-in-out infinite; }
-.goku-svg { width: 92px; height: 92px; filter: drop-shadow(0 0 12px rgba(253,224,71,.7)); }
-.goku .wing { transform-origin: 60px 60px; transform-box: view-box; animation: flap .5s ease-in-out infinite alternate; }
+
+/* nuvolette di chat */
+.f-say { position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%) scale(.6); opacity: 0; pointer-events: none;
+  background: #fff; color: #111; font-size: 12.5px; font-weight: 700; padding: 5px 10px; border-radius: 14px; white-space: nowrap; z-index: 8;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35); border: 2px solid var(--pc); transition: opacity .2s, transform .2s; }
+.f-say::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--pc); }
+.f-say.show { opacity: 1; transform: translateX(-50%) scale(1); }
+.fighter:has(.f-say.show) { z-index: 200 !important; }
+
+/* 大P神 */
+.goku { position: absolute; left: 44%; top: 3%; width: 96px; z-index: 150; text-align: center;
+  transition: left .9s ease-in-out, top .9s ease-in-out; animation: hover 3s ease-in-out infinite; }
+.goku.diving { animation: none; }
+.goku-svg { width: 96px; height: 96px; transition: transform .2s; }
+.goku.swing .goku-svg { transform: rotate(18deg) scale(1.1); }
+.goku .gk-aura { animation: aura 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.goku .wing { transform-box: view-box; transform-origin: 60px 60px; animation: flap .45s ease-in-out infinite alternate; }
 .goku .wing-r { animation-direction: alternate-reverse; }
-@keyframes flap { to { transform: scaleY(.75) rotate(4deg); } }
-@keyframes hover { 50% { margin-top: 8px; } }
-.goku-name { display: inline-block; background: rgba(15,23,42,.82); color: #fde047; border: 1px solid #fde047; border-radius: 999px; padding: 0 8px; font-size: 12px; font-weight: 700; }
-.goku-bubble { position: absolute; left: 88px; top: 6px; background: #fff; color: #111; font-weight: 800; padding: 3px 9px; border-radius: 12px;
-  white-space: nowrap; font-size: 13px; opacity: 0; transition: opacity .2s; }
+@keyframes flap { to { transform: scaleY(.72) rotate(4deg); } }
+@keyframes hover { 50% { transform: translateY(8px); } }
+.goku-name { display: inline-block; background: rgba(15,23,42,.85); color: #fde047; border: 1px solid #fde047; border-radius: 999px; padding: 0 8px; font-size: 12px; font-weight: 700; }
+.goku-bubble { position: absolute; left: 92px; top: 6px; background: #fff; color: #111; font-weight: 800; padding: 3px 9px; border-radius: 12px;
+  white-space: nowrap; font-size: 13px; opacity: 0; transition: opacity .2s; border: 2px solid #fde047; }
 .goku.talk .goku-bubble { opacity: 1; }
-.arena-hud { position: absolute; left: 12px; top: 10px; z-index: 3; }
+
+/* HUD */
+.arena-hud { position: absolute; left: 12px; top: 10px; z-index: 160; }
 .arena-title b { display: block; font: 400 30px var(--f-meme, sans-serif); color: #fff; text-shadow: 0 3px 0 #7c2d12, 0 0 12px rgba(0,0,0,.5); letter-spacing: 2px; }
-.arena-title span, .arena-clock { font-size: 12px; color: #0f172a; background: rgba(255,255,255,.78); border-radius: 999px; padding: 1px 8px; display: inline-block; margin-top: 3px; }
+.arena-title span, .arena-clock { font-size: 12px; color: #0f172a; background: rgba(255,255,255,.8); border-radius: 999px; padding: 1px 8px; display: inline-block; margin-top: 3px; }
 .arena-clock { display: block; width: max-content; }
-.arena-log { position: absolute; right: 10px; top: 10px; width: min(330px, 40%); margin: 0; padding: 8px 10px; list-style: none; z-index: 3;
+.arena-log { position: absolute; right: 10px; top: 10px; width: min(330px, 38%); margin: 0; padding: 8px 10px; list-style: none; z-index: 160;
   background: rgba(10,12,20,.74); border-radius: 12px; font-size: 12px; color: #e2e8f0; backdrop-filter: blur(4px); max-height: 128px; overflow: hidden; }
 .arena-log li { padding: 2px 0; animation: logIn .35s ease-out; }
 .arena-log li + li { opacity: .75; }
@@ -86,16 +164,18 @@
 .arena-rules summary { cursor: pointer; }
 .arena-rules ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.7; }
 .arena-rules b { color: var(--gold, #f2b632); }
-.update-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 99; background: #f2b632; color: #111;
+.update-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 999; background: #f2b632; color: #111;
   font-weight: 700; padding: 8px 16px; border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
 @media (max-width: 700px) {
   .arena { height: 640px; }
-  .fighter { width: 84px; }
-  .f-body, .f-hero { height: 76px; }
+  .fighter { width: 88px; }
+  .f-body, .f-hero { height: 78px; }
   .f-name { font-size: 11px; }
-  .f-kda { display: none; }
-  .arena-log { left: 10px; right: 10px; top: auto; bottom: 8px; width: auto; max-height: 74px; }
-  .goku { left: 62%; }
+  .f-kda, .f-rank { display: none; }
+  .arena-log { left: 10px; right: 10px; top: auto; bottom: 8px; width: auto; max-height: 72px; font-size: 11px; }
+  .goku { left: 60%; }
   .arena-title b { font-size: 22px; }
+  .f-say { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) { .arena *, .arena *::before, .arena *::after { animation: none !important; } }

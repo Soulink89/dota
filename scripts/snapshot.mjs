@@ -137,3 +137,29 @@ if (targets.length) {
     console.log(`✔ ${t.p.alias}: ${matches.length} partite ricostruite dagli amici, rango ${latestRank ?? "?"}`);
   }
 }
+
+// ---------- 刀塔乱斗: storico giornaliero di K/D/A (giorno di gioco 06:00-06:00, ora di Pechino) ----------
+// L'arena in home somma tutti i giorni dal lancio: questo file conserva i giorni usciti dalla finestra di 7 giorni.
+{
+  const arenaUrl = new URL("../data/arena.json", import.meta.url);
+  let arena = { days: {} };
+  try { arena = JSON.parse(await readFile(arenaUrl, "utf8")); } catch {}
+  const dayIdx = (sec) => Math.floor((sec * 1000 + 2 * 3600000) / 86400000); // +8h Pechino, -6h inizio giornata
+  for (const p of cfg.players) {
+    const id = String(BigInt(p.steam64) - 76561197960265728n);
+    let snap;
+    try { snap = JSON.parse(await readFile(new URL(`../data/${id}.json`, import.meta.url), "utf8")); } catch { continue; }
+    const agg = {};
+    for (const m of snap.matches || []) {
+      const d = (agg[dayIdx(m.start_time)] ??= { k: 0, d: 0, a: 0, n: 0 });
+      d.k += m.kills || 0; d.d += m.deaths || 0; d.a += m.assists || 0; d.n++;
+    }
+    // il giorno più vecchio della finestra è incompleto: non sovrascrive quello già salvato
+    const oldest = dayIdx(Date.now() / 1000 - days * 86400);
+    for (const k of Object.keys(agg)) if (Number(k) <= oldest) delete agg[k];
+    arena.days[id] = { ...(arena.days[id] || {}), ...agg };
+  }
+  arena.updatedAt = Date.now();
+  await writeFile(arenaUrl, JSON.stringify(arena));
+  console.log("⚔ arena.json aggiornato");
+}
