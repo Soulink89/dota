@@ -183,11 +183,11 @@
 @keyframes fcrit { 0% { transform: translate(-50%, 0) scale(1.8); } 20% { transform: translate(-50%, -8px) scale(1); } 100% { transform: translate(-50%, -54px); opacity: 0; } }
 
 /* nuvolette di chat */
-.f-say { position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%) scale(.6); opacity: 0; pointer-events: none;
+.f-say { position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(calc(-50% + var(--shift, 0px))) scale(.6); opacity: 0; pointer-events: none;
   background: #fff; color: #111; font-size: 13px; font-weight: 700; padding: 5px 11px; border-radius: 14px; white-space: nowrap; z-index: 9;
   box-shadow: 0 4px 12px rgba(0,0,0,.4); border: 2px solid var(--pc); transition: opacity .2s, transform .2s; }
-.f-say::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--pc); }
-.f-say.show { opacity: 1; transform: translateX(-50%) scale(1); }
+.f-say::after { content: ""; position: absolute; left: clamp(12px, calc(50% - var(--shift, 0px)), calc(100% - 12px)); top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--pc); }
+.f-say.show { opacity: 1; transform: translateX(calc(-50% + var(--shift, 0px))) scale(1); }
 .fighter:has(.f-say.show) { z-index: 200 !important; }
 
 /* creep */
@@ -224,6 +224,7 @@
 .goku-bubble { position: absolute; right: 100%; top: 110px; margin-right: -14px; max-width: 220px; background: #fff; color: #111; font-weight: 800; padding: 4px 11px;
   border-radius: 14px; white-space: nowrap; font-size: 14px; opacity: 0; transition: opacity .2s; border: 2px solid #fde047; }
 .goku.talk .goku-bubble { opacity: 1; }
+.goku-bubble { translate: var(--shift, 0px) 0; }
 
 /* regole + avviso aggiornamento */
 .arena-rules { margin: -4px 0 18px; font-size: 13px; color: var(--muted, #94a3b8); }
@@ -256,7 +257,8 @@
   .goku-bubble { top: 70px; font-size: 12px; }
   .arena-chat { width: auto; right: 10px; }
   .arena-chat li { font-size: 11px; }
-  .f-say { font-size: 11px; }
+  .f-say { font-size: 11px; white-space: normal; width: max-content; max-width: 150px; text-align: center; line-height: 1.35; }
+  .goku-bubble { white-space: normal; width: max-content; max-width: 140px; }
 }
 @media (prefers-reduced-motion: reduce) { .arena *, .arena *::before, .arena *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
 

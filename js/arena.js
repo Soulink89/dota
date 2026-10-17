@@ -16,7 +16,8 @@
   const DAY_MS = 86400000;
   const XP = { kill: 100, assist: 50 };
   const PUSH_XP_ = 300; // esperienza per ogni 💪 spinta dei visitatori
-  const LV_K = 20000; // livello n richiede LV_K·(n-1)² XP, senza tetto
+  const PER_MIN = 40; // 40 uccisioni (o morti, o assist) del giorno prima = 1 al minuto, cioè 10 = una ogni 4 minuti
+  const LV_K = 4000; // livello n richiede LV_K·(n-1)² XP, senza tetto
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const big = (n) => (n >= 1e8 ? (n / 1e8).toFixed(1) + "亿" : n >= 1e4 ? (n / 1e4).toFixed(1) + "万" : n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n));
 
@@ -70,7 +71,7 @@
   function rateFor(days, D) {
     for (let back = 1; back <= 7; back++) {
       const s = days[D - back];
-      if (s && s.n) return { k: s.k / 10, d: s.d / 10, a: s.a / 10, back, s };
+      if (s && s.n) return { k: s.k / PER_MIN, d: s.d / PER_MIN, a: s.a / PER_MIN, back, s };
     }
     return { k: 0, d: 0, a: 0, back: 0, s: null };
   }
@@ -301,12 +302,25 @@
     ["回泉水歇会吧", "刚才卡了"], ["就这？", "我网不好"], ["下次带个保姆", "保姆被你杀了"], ["站那么前干嘛", "我在吸引火力"],
     ["这个人头谢谢了", "送你的，不客气"], ["再来一次？", "等我买个装备"], ["技术问题", "运气而已"], ["你的走位很有想法", "……"],
   ];
+  // tiene la nuvoletta dentro l'arena: se sborda la sposta di lato (la punta resta sopra chi parla)
+  function keepInside(b) {
+    const arena = b.closest(".arena");
+    if (!arena) return;
+    // posizione "naturale" calcolata da chi parla (stabile), non dalla nuvoletta che sta ancora animandosi
+    const a = arena.getBoundingClientRect(), p = b.parentNode.getBoundingClientRect(), w = b.offsetWidth, pad = 16;
+    const left = b.classList.contains("goku-bubble") ? p.left + 14 - w : p.left + p.width / 2 - w / 2;
+    let s = 0;
+    if (left < a.left + pad) s = a.left + pad - left;
+    else if (left + w > a.right - pad) s = a.right - pad - (left + w);
+    b.style.setProperty("--shift", Math.round(s) + "px");
+  }
   function say(n, text, ms = 3200) {
     if (!n) return;
     let b = n.querySelector(".f-say");
     if (!b) { b = document.createElement("span"); b.className = "f-say"; n.appendChild(b); }
     b.textContent = text;
     b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+    keepInside(b);
     clearTimeout(b._t);
     b._t = setTimeout(() => b.classList.remove("show"), ms);
   }
@@ -463,16 +477,10 @@
       <details class="arena-rules">
         <summary>📜 乱斗规则（点我）</summary>
         <ul>
-          <li>每位选手化身<b>最近7天最常玩的英雄</b>（疯子大神固定屠夫，Kaiju大神*固定小鱼人，大B神固定幻影刺客），头顶是这个英雄最常出的装备；有至宝又玩了这个英雄的，直接穿上至宝。</li>
-          <li>节奏全看<b>前一天（北京时间早6点到早6点）的真实战绩</b>：每10次击杀 = 每分钟出手1次，每10次死亡 = 每分钟阵亡1次，每10次助攻 = 每分钟助攻1次。前一天没打的，沿用最近一天打过的战绩（最多7天前）。</li>
-          <li>出手只打<b>那天死得比自己多的人</b>；死得最多的那位，就是全场的沙包。<b>击杀</b> = 蓄力冲上去重砍，对手被打倒在地；<b>助攻</b> = 补一下轻击，对手只是跪下，马上爬起来。自己的<b>阵亡</b>（按死亡数）才会灵魂出窍、等复活。</li>
-          <li>两边每30秒出一波小兵。<b>只有Kaiju大神*会去打兵</b>：四号位也要抢钱，小鱼人本体。</li>
-          <li>击杀 +${XP.kill} 经验，助攻 +${XP.assist} 经验，每次被推一把 +${PUSH_XP} 经验；升到 N 级需要 ${LV_K.toLocaleString()}×(N−1)² 经验，<b>没有等级上限</b>。</li>
-          <li><b>从 2026年10月17日 开打，永不清零</b>：每天的战绩都累计下去，谁天天打谁就越来越强。</li>
-          <li>Soul大神在这里用的是<b>全部真实比赛</b>，输赢都算。</li>
-          <li>大P神扛着锤子在云上观战，<b>每分钟随机下来锤大金神3次</b>，风雨无阻。天色跟着真实时间变。</li>
-          <li>每30秒会爬进来一个婴儿，大B神必须停下来给他喂奶 🍼；Ping大神边喝威士忌边抽烟。</li>
-          <li><b>点选手 = 推他一把 💪</b>：每推一次 +${PUSH_XP} 经验，记在网站上，所有访客一起累计。每个选手每天你最多推 ${PUSH_MINE} 次，全体访客合计最多 ${PUSH_DAY} 次。</li>
+          <li><b>战绩怎么变成动作</b>：按每人<b>前一天</b>（北京时间早6点到次日早6点）的真实击杀/死亡/助攻：<b>每10次 = 每4分钟1次</b>。比如昨天 40杀 / 20死 / 60助攻 → 每分钟砍人1次、阵亡0.5次、助攻1.5次。每一次都会演出来，一次不少（看不到页面时的除外）。前一天没打的，用最近一次打过那天的战绩。</li>
+          <li><b>经验</b>：每次击杀 +${XP.kill}，每次助攻 +${XP.assist}，每被访客推一把 +${PUSH_XP}。死亡不扣经验。</li>
+          <li><b>等级</b>：升到 N 级需要 ${LV_K.toLocaleString("zh-CN")}×(N−1)² 经验（2级 ${LV_K.toLocaleString("zh-CN")}，5级 ${(LV_K * 16).toLocaleString("zh-CN")}，10级 ${(LV_K * 81).toLocaleString("zh-CN")}）。没有上限，从 2026年10月17日 开始累计，永不清零。</li>
+          <li><b>怎么升级</b>：前一天在真实比赛里多杀、多助攻；或者点选手推他一把 💪（每人每天对每个选手最多 ${PUSH_MINE} 次，全体访客合计最多 ${PUSH_DAY} 次）。</li>
         </ul>
       </details>`;
 
@@ -607,11 +615,12 @@
     };
 
     const prev = {};
-    let lastSlapMin = null, tauntI = 0, calmUntil = 0;
+    let lastSlapMin = null, tauntI = 0, calmUntil = 0, turn = 0, killI = 0, deathI = 0, assistI = 0;
     const tick = () => {
       const t = Date.now();
       if (F.length && dayIdx(t) !== F[0].today) { mount(el, players); return; } // nuova giornata: nuovi ritmi, conteggi che continuano
       root.className = `arena tod-${tod()}${LITE ? " lite" : ""}${active ? "" : " paused"}`;
+      root.querySelectorAll(".f-say.show, .goku.talk .goku-bubble").forEach(keepInside); // chi parla si muove: la nuvoletta resta dentro
       const minutes = Math.floor((t - dayStartMs(EPOCH)) / 60000);
       el.querySelector("#arena-clock").textContent = `开战第 ${Math.floor(minutes / 1440) + 1} 天 · ${String(Math.floor((minutes % 1440) / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
       F.forEach((f, i) => {
@@ -621,32 +630,11 @@
         if (!isDead(f)) f.hp = Math.min(100, f.hp + 0.5); // rigenerazione
         updateHud(n, cells[f.id], f, c, t);
         if (!p) { prev[f.id] = c; return; }
-        // uccisione: corre e colpisce
-        // per non fare confusione: un solo scontro animato alla volta (i conteggi restano esatti)
-        if (c.k > p.k && f.targets.length && f.lock < t && !isDead(f) && t > calmUntil) {
-          const tgt = f.targets.find((x, j) => j >= c.k % f.targets.length && !isDead(x)) || f.targets.find((x) => !isDead(x));
-          if (tgt) {
-            calmUntil = t + 2200;
-            attack(root, n, nodes[tgt.id], f, tgt);
-            push(`⚔️ ${fill(KILL_LINES[(c.k + i) % KILL_LINES.length], { a: tag(f), t: tag(tgt) })}`, "sys");
-            if ((c.k + i) % 3 === 0) {
-              const [l1, l2] = KILL_TAUNTS[tauntI++ % KILL_TAUNTS.length];
-              setTimeout(() => talk(f, `${tgt.name}，${l1}`), 1300);
-              setTimeout(() => talk(tgt, l2), 3000);
-            }
-          }
-        }
-        // morte: cade a terra, l'anima sale, poi rinasce
-        if (c.d > p.d && !isDead(f)) {
-          die(n, f, t);
-          if (c.d % 3 === 0) push(`💀 ${fill(DEATH_LINES[(c.d + i) % DEATH_LINES.length], { v: tag(f) })}`, "sys");
-        }
-        // assist: da lontano, un incantesimo che stordisce
-        if (c.a > p.a && !isDead(f) && t > calmUntil) {
-          const tgt = f.targets.find((x) => !isDead(x)) || F.find((x) => x !== f && !isDead(x));
-          if (tgt) { calmUntil = t + 1300; assist(field, n, nodes[tgt.id], f, tgt); }
-          if (c.a % 6 === 0) push(`🤝 ${fill(ASSIST_LINES[(c.a + i) % ASSIST_LINES.length], { a: tag(f) })}`, "sys");
-        }
+        // ogni uccisione / morte / assist del conteggio diventa un'animazione: si mettono in coda e si recitano una alla volta
+        // (se la pagina era in pausa, al ritorno non si recupera tutto l'arretrato: max 2 per tipo)
+        f.qk = Math.min(2, (f.qk || 0) + (c.k - p.k));
+        f.qd = Math.min(2, (f.qd || 0) + (c.d - p.d));
+        f.qa = Math.min(2, (f.qa || 0) + (c.a - p.a));
         const lv = levelOf(xpOf(c));
         if (lv > levelOf(xpOf(p))) {
           pop(n, `升级! Lv.${lv}`, "lvup");
@@ -655,6 +643,44 @@
         }
         prev[f.id] = c;
       });
+      // morti: subito (ognuno ha la sua animazione), appena il personaggio è libero
+      F.forEach((f, i) => {
+        if (f.qd > 0 && !isDead(f) && f.lock < t) {
+          f.qd--;
+          die(nodes[f.id], f, t);
+          push(`💀 ${fill(DEATH_LINES[(deathI++ + i) % DEATH_LINES.length], { v: tag(f) })}`, "sys");
+        }
+      });
+      // uccisioni e assist: uno scontro alla volta, a turno tra chi ne ha in coda
+      if (t > calmUntil) {
+        const ready = (f, q) => f[q] > 0 && !isDead(f) && f.lock < t;
+        const order = F.map((_, j) => F[(turn + j) % F.length]);
+        const killer = order.find((f) => ready(f, "qk") && f.targets.some((x) => !isDead(x)));
+        const helper = !killer && order.find((f) => ready(f, "qa"));
+        if (killer) {
+          const f = killer, i = F.indexOf(f);
+          f.qk--; turn = i + 1;
+          const live = f.targets.filter((x) => !isDead(x));
+          const tgt = live[(killI++) % live.length];
+          calmUntil = t + 2300;
+          attack(root, nodes[f.id], nodes[tgt.id], f, tgt);
+          push(`⚔️ ${fill(KILL_LINES[(killI + i) % KILL_LINES.length], { a: tag(f), t: tag(tgt) })}`, "sys");
+          if (killI % 3 === 0) {
+            const [l1, l2] = KILL_TAUNTS[tauntI++ % KILL_TAUNTS.length];
+            setTimeout(() => talk(f, `${tgt.name}，${l1}`), 1300);
+            setTimeout(() => talk(tgt, l2), 3000);
+          }
+        } else if (helper) {
+          const f = helper, i = F.indexOf(f);
+          const tgt = f.targets.find((x) => !isDead(x)) || F.find((x) => x !== f && !isDead(x));
+          f.qa--; turn = i + 1;
+          if (tgt) {
+            calmUntil = t + 1500;
+            assist(field, nodes[f.id], nodes[tgt.id], f, tgt);
+            if (assistI++ % 3 === 0) push(`🤝 ${fill(ASSIST_LINES[(assistI + i) % ASSIST_LINES.length], { a: tag(f) })}`, "sys");
+          }
+        }
+      }
       // martellate di 大P神: 3 al minuto, in secondi "casuali" ma uguali per tutti (derivati dal minuto)
       const minOfDay = Math.floor((t - dayStartMs(dayIdx(t))) / 60000);
       const sec = new Date(t).getSeconds();
@@ -796,6 +822,7 @@
       const line = GOKU_IDLE[shuffled(GOKU_IDLE.length, 11)[gi++ % GOKU_IDLE.length]];
       g.querySelector(".goku-bubble").textContent = line;
       g.classList.add("talk");
+      keepInside(g.querySelector(".goku-bubble"));
       setTimeout(() => { if (!g.classList.contains("diving")) g.classList.remove("talk"); }, 3800);
       push(`<span class="ch">[全部]</span> <b style="color:#fde047">大P神</b>: ${esc(line)}`, "talk");
     };
@@ -1061,6 +1088,7 @@
     const dx = b.left + b.width / 2 - (gb.left + gb.width / 2) - gb.width * sc * 0.5; // si mette a sinistra: il martello cala da destra
     const dy = b.top + b.height * 0.2 - (gb.top + gb.height * 0.62);
     g.classList.add("talk", "diving");
+    setTimeout(() => keepInside(bub), 950);
     g.style.transform = `translate(${dx}px, ${Math.min(dy, a.height)}px) scale(${sc})`;
     setTimeout(() => g.classList.add("raise"), 650);
     setTimeout(() => {
