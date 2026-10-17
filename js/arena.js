@@ -332,10 +332,10 @@
 
   // ---------- montaggio ----------
   const FIELD = { x0: 6, x1: 90, y0: 64, y1: 94 };
-  let timer = null, walker = null, chatter = null, spawner = null, io = null;
+  let timer = null, walker = null, chatter = null, spawner = null, sipper = null, io = null, active = true, onVis = null;
   async function mount(el, players) {
     if (!el) return;
-    [timer, walker, chatter, spawner].forEach(clearInterval); io?.disconnect();
+    [timer, walker, chatter, spawner, sipper].forEach(clearInterval); io?.disconnect();
     const mobile = window.innerWidth < 700;
     FIELD.y0 = mobile ? 60 : 64;
     FIELD.y1 = mobile ? 86 : 94; // su telefono la chat sta in basso
@@ -355,9 +355,9 @@
     const medal = tier ? `<div class="gk-medal" title="${esc(medalName)}"><img src="${API.rankIcon(Math.floor(tier / 10))}" alt="">${tier % 10 && tier < 80 ? `<img src="${API.rankStar(tier % 10)}" alt="">` : ""}</div>` : "";
 
     el.innerHTML = `
-      <section class="arena tod-${tod()}" aria-label="刀塔乱斗">
+      <section class="arena tod-${tod()}${LITE ? " lite" : ""}" aria-label="刀塔乱斗">
         <div class="arena-bg"></div><div class="arena-tint"></div><div class="arena-ground"></div>
-        <div class="arena-fx">${SPARKS}</div>
+        <div class="arena-fx">${LITE ? "" : SPARKS}</div>
         <div class="arena-top">${F.map(scoreCell).join("")}</div>
         <div class="arena-badge"><b>刀塔乱斗</b><span id="arena-clock"></span></div>
         <div class="goku">${medal}<div class="gk-name">大P神${medalName ? ` · ${esc(medalName)}` : ""}</div>${GOKU}<span class="goku-bubble"></span></div>
@@ -387,9 +387,19 @@
     F.forEach((f) => { place(nodes[f.id], f, 0); setupHero(nodes[f.id], f); });
     const isDead = (f) => nodes[f.id].classList.contains("dead");
     // video fermi quando l'arena non si vede (risparmia CPU e batteria)
-    const videos = () => [...el.querySelectorAll("video")];
-    io = new IntersectionObserver(([e]) => videos().forEach((v) => (e.isIntersecting ? v.play().catch(() => {}) : v.pause())));
+    // fuori schermo o scheda nascosta: tutto in pausa (video, animazioni, timer) per non scaldare il telefono
+    let visible = true;
+    const setActive = () => {
+      const on = visible && !document.hidden;
+      root.classList.toggle("paused", !on);
+      el.querySelectorAll("video").forEach((v) => (on ? v.play().catch(() => {}) : v.pause()));
+      active = on;
+    };
+    io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; setActive(); });
     io.observe(root);
+    document.removeEventListener("visibilitychange", onVis);
+    onVis = setActive;
+    document.addEventListener("visibilitychange", onVis);
 
     const push = (html, cls = "") => {
       const item = document.createElement("li");
@@ -499,7 +509,7 @@
     const tick = () => {
       const t = Date.now();
       if (F.length && dayIdx(t) !== F[0].today) { mount(el, players); return; } // nuova giornata: nuovi ritmi, conteggi che continuano
-      root.className = `arena tod-${tod()}`;
+      root.className = `arena tod-${tod()}${LITE ? " lite" : ""}${active ? "" : " paused"}`;
       const minutes = Math.floor((t - dayStartMs(EPOCH)) / 60000);
       el.querySelector("#arena-clock").textContent = `开战第 ${Math.floor(minutes / 1440) + 1} 天 · ${String(Math.floor((minutes % 1440) / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
       F.forEach((f, i) => {
@@ -586,10 +596,20 @@
     if (lead) push(`🏆 当前领跑：${tag(lead.f)} Lv.${levelOf(xpOf(lead.c))}（${rankOf(levelOf(xpOf(lead.c)))}）`, "sys");
     spawnWave();
     tick();
-    const alive = (fn, h) => () => (document.contains(el) ? fn() : clearInterval(h()));
-    timer = setInterval(alive(tick, () => timer), 500);
+    const alive = (fn, h) => () => (!document.contains(el) ? clearInterval(h()) : active && fn());
+    timer = setInterval(alive(tick, () => timer), LITE ? 1000 : 500);
     walker = setInterval(alive(wander, () => walker), 1200);
     chatter = setInterval(alive(chat, () => chatter), 5000);
+    // ogni tanto Ping beve un sorso e 大B神 si attacca al biberon
+    let si = 0;
+    const sip = () => {
+      const who = F.filter((f) => PROPS[f.name] && !isDead(f) && f.lock < Date.now());
+      if (!who.length) return;
+      const f = who[si++ % who.length], n = nodes[f.id];
+      replay(n, "sipping", 1800);
+      if (si % 2 === 0) setTimeout(() => talk(f, PROPS[f.name].lines[(si / 2 | 0) % PROPS[f.name].lines.length]), 900);
+    };
+    sipper = setInterval(alive(sip, () => sipper), 7000);
     spawner = setInterval(alive(spawnWave, () => spawner), 30000);
   }
 
@@ -628,23 +648,55 @@
 
   // eroe animato (render ufficiale di dota2.com): .mov HEVC per Safari, .webm per gli altri; se non va, immagine fissa
   function setupHero(n, f) {
+    const fallback = (el) => {
+      if (!el.isConnected) return;
+      const img = document.createElement("img");
+      img.className = "f-hero flat";
+      img.alt = f.heroName;
+      img.src = f.portrait || f.avatar;
+      el.replaceWith(img);
+    };
+    // modalità leggera: il render PNG (1440×1440, ~8 MB in memoria) viene rimpicciolito in un canvas da 240×240 e poi liberato
+    const cv = n.querySelector("canvas.f-hero");
+    if (cv) {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => { cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); img.onerror = null; img.removeAttribute("src"); };
+      img.onerror = () => fallback(cv);
+      img.src = f.render;
+      return;
+    }
     const v = n.querySelector("video");
     if (!v) return;
-    const fallback = () => {
-      if (!v.isConnected) return;
-      const img = document.createElement("img");
-      img.className = "f-hero" + (f.render ? "" : " flat");
-      img.alt = f.heroName;
-      img.src = f.render || f.portrait || f.avatar;
-      img.onerror = () => { if (f.portrait && img.src !== f.portrait) { img.src = f.portrait; img.classList.add("flat"); } };
-      v.replaceWith(img);
-    };
-    v.querySelector("source:last-of-type").addEventListener("error", fallback);
-    v.addEventListener("error", fallback);
+    v.querySelector("source:last-of-type").addEventListener("error", () => fallback(v));
+    v.addEventListener("error", () => fallback(v));
   }
+
+  // oggetti in mano dalla "lore": Ping大神 whisky + sigaretta, 大B神 il biberon
+  const GLASS = `<svg viewBox="0 0 30 34" class="pr-glass"><path d="M3 4 L27 4 L24 31 Q15 34 6 31 Z" fill="rgba(226,232,240,.35)" stroke="#e2e8f0" stroke-width="1.6"/>
+    <path d="M5 14 L25 14 L23.5 29.5 Q15 32 6.5 29.5 Z" fill="#c2410c" opacity=".9"/><path d="M5 14 L25 14" stroke="#fdba74" stroke-width="1.2"/>
+    <rect x="8" y="10" width="7" height="7" rx="1.5" fill="rgba(255,255,255,.75)" transform="rotate(-12 11 13)"/><rect x="15" y="12" width="6" height="6" rx="1.5" fill="rgba(255,255,255,.6)" transform="rotate(15 18 15)"/>
+    <path d="M7 6 L9 28" stroke="rgba(255,255,255,.6)" stroke-width="1.4"/></svg>`;
+  const CIG = `<span class="pr-cig"><i></i><b></b><s class="smoke s1"></s><s class="smoke s2"></s><s class="smoke s3"></s></span>`;
+  const BOTTLE = `<svg viewBox="0 0 22 44" class="pr-bottle"><path d="M8 2 Q11 -1 14 2 L15 8 L7 8 Z" fill="#fca5a5"/><rect x="4" y="8" width="14" height="5" rx="2" fill="#60a5fa"/>
+    <rect x="3" y="13" width="16" height="29" rx="5" fill="rgba(255,255,255,.55)" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="4.5" y="22" width="13" height="18.5" rx="3.5" fill="#fefce8"/><path d="M6 18 h4 M6 24 h4 M6 30 h4 M6 36 h4" stroke="#93c5fd" stroke-width="1.2"/>
+    <circle cx="14" cy="31" r="2.6" fill="#fda4af"/></svg>`;
+  const PROPS = {
+    "Ping大神": { html: `<span class="prop pr-hand-l">${GLASS}</span><span class="prop pr-mouth">${CIG}</span>`, act: "sip",
+      lines: ["再来一口", "威士忌加冰，理论上更清醒", "抽完这根就打团", "咳咳……没事，烟呛的", "喝一口，分就回来了"] },
+    "大B神": { html: `<span class="prop pr-hand-l">${BOTTLE}</span>`, act: "sip",
+      lines: ["喝口奶压压惊", "咕噜咕噜……", "奶瓶在手，天下我有", "别抢我奶瓶！", "喝完再打团"] },
+  };
+  const propsHTML = (f) => (PROPS[f.name] ? `<div class="f-props">${PROPS[f.name].html}</div>` : "");
+
+  // telefoni e dispositivi con poca memoria: niente video, immagini piccole, meno animazioni
+  const LITE = window.innerWidth < 900 || (navigator.deviceMemory && navigator.deviceMemory <= 4) || navigator.connection?.saveData ||
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function heroMedia(f) {
     if (!f.key) return `<img class="f-hero flat" src="${esc(f.portrait || f.avatar)}" alt="">`;
+    if (LITE) return `<canvas class="f-hero" width="240" height="240"></canvas>`;
     const base = `${CDN}/videos/dota_react/heroes/renders/${f.key}`;
     return `<video class="f-hero" autoplay loop muted playsinline preload="auto" disablepictureinpicture>
       <source src="${base}.mov" type='video/mp4; codecs="hvc1"'><source src="${base}.webm" type="video/webm"></video>`;
@@ -670,7 +722,7 @@
         <div class="f-body">
           <span class="f-shadow"></span>
           ${f.arcana ? `<span class="f-aura"></span>` : ""}
-          <div class="f-pose">${heroMedia(f)}</div>
+          <div class="f-pose">${heroMedia(f)}${propsHTML(f)}</div>
           <span class="f-stun">💫</span>
         </div>
       </div>
