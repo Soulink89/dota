@@ -297,6 +297,33 @@
     "Soul大神": ["节奏在我", "下一把", "冷静点打"],
   }).forEach(([k, v]) => (SAY[k] = [...(SAY[k] || []), ...v]));
 
+  // 大金神 吹牛 (parla più spesso degli altri) e Yoki che si vanta dei suoi 至宝
+  const JIN_BRAG = ["我这水平，放职业队也是首发", "我中路一个人能单杀对面三个", "天梯前一百？那是我小号", "我闭着眼都能补刀", "这把又是我MVP，没悬念",
+    "我要是认真打，你们都得叫爸爸", "我段位是真的，不信看录像", "我一出手，对面直接打字GG", "别人练十年，我玩十天", "超凡入圣只是我的起点",
+    "我的KDA，你们这辈子都打不出来", "当年我在网吧，老板都来围观", "对面中单看到我就秒退", "我输的那几把都是队友的", "我昨天一晚上上了五百分",
+    "我的影魔，全国前十", "我随便玩玩就是传奇", "教练找过我，我没空", "我要是不吹，你们都不知道我多强", "我一个人带四个呆逼也能赢"];
+  const YOKI_ARCANA = ["看我小黑至宝，帅不帅", "我有六个至宝，你们有几个？", "至宝在手，输赢无所谓", "这特效，懂的都懂", "小黑至宝，冰箭都是冰晶的",
+    "我打游戏就是为了看至宝", "主宰至宝也是我的", "齐天大圣至宝，金箍棒闪闪发光", "幻影刺客至宝，暴击都带特效", "我的至宝比你们的段位还贵",
+    "两个小黑至宝，一个看，一个用", "你没至宝，所以你输了", "这把我换个至宝打", "我的仓库，就是至宝博物馆"];
+  DIALOGS.push(
+    ["大金神", "我中路一个人能单杀对面三个", "蜗牛大神", "那你先单杀我一个"],
+    ["大金神", "天梯前一百？那是我小号", "Ping大神", "你小号也是传奇吗"],
+    ["大金神", "教练找过我，我没空", "Soul大神", "教练找你是让你别打了"],
+    ["大金神", "我昨天一晚上上了五百分", "疯子大神", "下了几分没说"],
+    ["大金神", "我一出手，对面直接打字GG", "大B神", "那是对面在说你GG"],
+    ["大金神", "我的影魔，全国前十", "Kaiju大神*", "倒数的吧"],
+    ["Yoki大神", "我有六个至宝，你们有几个？", "大金神", "我有超凡入圣"],
+    ["Yoki大神", "这特效，懂的都懂", "Ping大神", "特效好看，人还是那个人"],
+    ["Yoki大神", "我的仓库，就是至宝博物馆", "疯子大神", "老板，借我一个"],
+    ["Yoki大神", "你没至宝，所以你输了", "大B神", "原来是这个原因！"],
+    ["Yoki大神", "两个小黑至宝，一个看，一个用", "蜗牛大神", "那剩下那个打辅助？"],
+    ["Kaiju大神*", "Yoki，至宝借我用用", "Yoki大神", "嗯……不行"],
+  );
+  TRIOS.push(
+    ["大金神", "我随便玩玩就是传奇", "Ping大神", "随便玩玩就掉分", "Yoki大神", "嗯嗯，但我有至宝"],
+    ["Yoki大神", "看我小黑至宝", "大金神", "我段位比你高", "Soul大神", "你们俩都去打辅助"],
+  );
+
   // dopo un'uccisione: il vincitore sfotte, a volte la vittima risponde
   const KILL_TAUNTS = [
     ["回泉水歇会吧", "刚才卡了"], ["就这？", "我网不好"], ["下次带个保姆", "保姆被你杀了"], ["站那么前干嘛", "我在吸引火力"],
@@ -717,6 +744,10 @@
         setTimeout(() => talk(byName[b], l2), 1900);
         return;
       }
+      // 大金神 吹牛 molto più spesso; Yoki ogni tanto mostra i suoi 至宝
+      const jinF = F.find((x) => x.name === "大金神"), yokiF = F.find((x) => x.name === "Yoki大神");
+      if (jinF && ci % 4 === 1 && !isDead(jinF)) return talk(jinF, JIN_BRAG[shuffled(JIN_BRAG.length, 23)[(ci / 4 | 0) % JIN_BRAG.length]]);
+      if (yokiF && ci % 5 === 3 && !isDead(yokiF)) return talk(yokiF, YOKI_ARCANA[shuffled(YOKI_ARCANA.length, 29)[(ci / 5 | 0) % YOKI_ARCANA.length]]);
       const f = F[ci % F.length], lines = SAY[f.name];
       if (lines && !isDead(f)) talk(f, lines[shuffled(lines.length, 7 + f.id % 13)[Math.floor(ci / F.length) % lines.length]]);
     };
