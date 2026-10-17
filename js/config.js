@@ -72,6 +72,7 @@
 //      jinHates   大金神 non lo sopporta
 //      teletubby  conosciuto come "天线宝宝": giocarci insieme abbassa la media MMR della squadra
 //      lowLevelGood nelle partite di basso livello se la cava
+//    arenaHero:   id dell'eroe con cui appare nel 刀塔乱斗 (altrimenti il più giocato della settimana)
 //    heatTitle:   titolo personalizzato della tabella oraria
 //    victim:     alias di un altro giocatore: pannello 克星 (solo dove batte lui)
 //    nemesis:   alias di un altro giocatore: confronto 宿敌对比 (solo dove perde lui)
@@ -112,6 +113,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "畏战罪",
       persona: {
         meter: "babysit",
+        arenaHero: 44, // 刀塔乱斗:幻影刺客 (PA)
         friendsScan: true, // partite nascoste: ricostruite dalle partite in gruppo con gli amici
         nemesis: "大金神",
         traits: ["babysit", "milkAfk", "scared", "streamer", "russianCommander", "drowCurse", "jinTarget", "positions", "tinyPool", "jakiroOnly", "laneLoser"],
@@ -154,6 +156,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "十年不换电脑罪",
       persona: {
         meter: "wifeAway",
+        arenaHero: 14, // 刀塔乱斗: 屠夫
         heatTitle: "老婆不在家的时段",
         traits: ["proSupport", "pudgeGod", "bigBoss", "pcOld", "wifeAway", "omg", "lowPrio"],
       },
@@ -166,6 +169,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "偷钱罪",
       persona: {
         meter: "fish",
+        arenaHero: 93, // 刀塔乱斗: 小鱼人
         friendsScan: true, // partite nascoste: ricostruite dalle partite in gruppo con gli amici
         traits: ["pingBuddy", "lowRank", "allPos1", "slarkBody", "pos4Slark", "jinHates", "teletubby", "lowLevelGood"],
       },
