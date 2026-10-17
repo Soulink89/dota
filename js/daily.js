@@ -22,6 +22,7 @@
     zerokill: [["{hero} 0击杀", "昨天是来观光的"], ["零人头", "昨日佛系"], ["{hero}：0/{d}/{a}", "人头？不需要"], ["0杀", "和平主义发作了"]],
     heroloss: [["{hero}连输{n}把", "还要接着玩"], ["昨天的{hero}", "输了{n}次还不放弃"], ["{hero}×{n}", "全败"], ["输了{n}把{hero}", "英雄：放过我吧"]],
     good: [["昨天赢了{w}把", "今天准备还回去"], ["昨日{w}胜", "运气用完了"], ["{w}胜{l}负", "别得意，今天还有"], ["昨天还行", "本庭表示怀疑"]],
+    arcana: [["昨天{hero}又上场了", "至宝不能浪费"], ["{hero}的至宝特效", "昨晚亮了{n}次"], ["昨晚{n}局{hero}", "为了至宝而战"]],
     // modalità elogio
     pbest: [["昨天{hero} {k}/{d}/{a}", "大神就是大神"], ["{hero}：{k}/{d}/{a}", "昨日最佳"], ["昨日神操作", "{hero} {k}/{d}/{a}"]],
     pwins: [["昨天拿下{w}场胜利", "手感火热"], ["昨日{w}胜", "状态拉满"]],
@@ -82,6 +83,10 @@
     for (const m of ms) if (!m.win) losses[m.hero_id] = (losses[m.hero_id] || 0) + 1;
     const [hid, hn] = Object.entries(losses).sort((a, b) => b[1] - a[1])[0] || [];
     if (hn >= 2) add("heroloss", hn * 9, { hero: H(hid), n: hn }, { ...ms.find((m) => String(m.hero_id) === hid), hideInfo: true });
+    // eroi di cui ha l'arcana (dall'inventario Steam)
+    const arcIds = new Set(p.arcanaHeroes || []);
+    const arcGames = free.filter((x) => arcIds.has(x.hero_id));
+    if (arcGames.length) { const a = arcGames[arcGames.length - 1]; add("arcana", 12 + arcGames.filter((x) => x.hero_id === a.hero_id).length * 4, { hero: H(a.hero_id), n: arcGames.filter((x) => x.hero_id === a.hero_id).length }, a); }
     if (!out.length && w) add("good", 3, { w, l }, by(ms.filter((x) => x.win), (x) => x.kda), true);
 
     // un solo momento per tipo, dal più grave

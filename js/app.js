@@ -43,6 +43,11 @@
           praiseIndex: CFG.players.filter((c) => c.persona?.mode === "praise" || c.persona?.alsoPraise).indexOf(cfg),
           // partite nascoste: "Expose Public Match Data" disattivato in Dota 2
           hidden: !(data.matches || []).length && !(data.wl && data.wl.win + data.wl.lose) && data.source !== "demo" };
+        // inventario Dota 2 (至宝仓库), solo per chi ha persona.inventory
+        if (cfg.persona?.inventory) {
+          const [inv, life] = await Promise.all([API.loadInventory(id), API.loadLifetimeHeroes(id)]);
+          ctx.inventory = buildInventory(inv, life, stats);
+        }
         const quotes = R.quotes(stats, ctx, heroes);
         ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
         const roasts = R.buildRoasts(stats, name, heroes, ctx);
@@ -55,6 +60,21 @@
   }
 
 
+
+  // incrocia l'inventario con le partite: per ogni arcana, quante volte ha giocato quell'eroe
+  function buildInventory(inv, life, stats) {
+    if (!inv || !inv.arcana) return null;
+    const byName = Object.fromEntries(Object.entries(window.HERO_NAMES_ZH || {}).map(([id, zh]) => [zh, Number(id)]));
+    const lifeGames = Object.fromEntries((life || []).map((h) => [Number(h.hero_id), h.games]));
+    const weekGames = Object.fromEntries(stats.heroes.map((h) => [h.hero_id, h.games]));
+    const arcana = inv.arcana.map((a) => {
+      const heroId = byName[a.hero] ?? null;
+      return { ...a, heroId, life: heroId ? lifeGames[heroId] ?? 0 : 0, week: heroId ? weekGames[heroId] ?? 0 : 0 };
+    }).sort((a, b) => b.life - a.life);
+    const arcanaHeroes = new Set(arcana.map((a) => a.heroId).filter(Boolean));
+    const top3 = (life || []).filter((h) => h.games > 0).sort((a, b) => b.games - a.games).slice(0, 3).map((h) => Number(h.hero_id));
+    return { ...inv, arcana, arcanaHeroes: [...arcanaHeroes], top3, top3WithArcana: top3.filter((id) => arcanaHeroes.has(id)).length };
+  }
   // 本庭也得承认: elogi (dalle sole vittorie) per chi gioca bene, accanto alle prese in giro
   function alsoPraise(cfg, data, heroes, ctx, quotes, roasts) {
     if (!cfg.persona?.alsoPraise) return [];
@@ -326,6 +346,7 @@
       </section>` : ""}
 
       ${specialBlock(p.special, p.heroes)}
+      ${p.ctx.inventory ? inventoryBlock(p) : ""}
       ${cfg.persona?.nemesis || cfg.persona?.victim ? `<div id="nemesis"></div>` : ""}
 
       ${s.n ? `
@@ -450,6 +471,7 @@
     dailyPromise ??= Promise.allSettled(CFG.players.map(getPlayer)).then((res) => {
       const players = res.filter((r) => r.status === "fulfilled").map((r) => r.value).map((p) => ({
         id: p.id, index: p.ctx.index, name: p.name, heroes: p.heroes, data: p.data, hidden: p.ctx.hidden, praise: p.praise,
+        arcanaHeroes: p.ctx.inventory?.arcanaHeroes || [],
         // le partite già usate nelle battute settimanali non vengono ripetute
         exclude: new Set([...(p.quotes.usedMatches || []), ...p.roasts.map((r) => r.matchId).filter(Boolean)]),
       }));
@@ -630,6 +652,36 @@
     </div>`;
   }
 
+
+  // 至宝仓库: galleria delle arcana + rarità dell'inventario
+  const RARITY_COLORS = { "至宝": "#ade55c", "不朽": "#e4ae39", "传说": "#d32ce6", "神话": "#8847ff", "稀有": "#4b69ff", "罕见": "#5e98d9", "普通": "#b0c3d9", "赛季": "#fff34f" };
+  function inventoryBlock(p) {
+    const inv = p.ctx.inventory;
+    const order = ["至宝", "不朽", "传说", "神话", "稀有", "罕见", "普通", "赛季"];
+    const rar = order.filter((r) => inv.rarity?.[r]).map((r) => ({ r, n: inv.rarity[r] }));
+    const tot = rar.reduce((t, x) => t + x.n, 0) || 1;
+    const when = new Date(inv.fetchedAt).toLocaleDateString(LOCALE, { month: "numeric", day: "numeric" });
+    return `
+      <section class="block">
+        <div class="block-head"><h2>至宝仓库</h2><span class="muted small">Steam库存自动扫描 · ${when}</span></div>
+        <div class="sp-panel vault">
+          <div class="vault-stats">
+            <div><b>${inv.total}</b><span>件饰品</span></div>
+            <div class="arc"><b>${inv.rarity?.["至宝"] ?? inv.arcana.length}</b><span>至宝</span></div>
+            <div><b>${inv.rarity?.["不朽"] ?? 0}</b><span>不朽</span></div>
+            <div><b>${inv.rarity?.["传说"] ?? 0}</b><span>传说</span></div>
+          </div>
+          <div class="rarity-bar">${rar.map((x) => `<i style="flex:${x.n};background:${RARITY_COLORS[x.r]}" title="${x.r} ${x.n}"></i>`).join("")}</div>
+          <div class="rarity-legend">${rar.map((x) => `<span><i style="background:${RARITY_COLORS[x.r]}"></i>${x.r} ${x.n}</span>`).join("")}</div>
+          <div class="arcanas">${inv.arcana.map((a, i) => `
+            <figure class="arcana" style="--d:${i * 90}ms">
+              <div class="arcana-img"><img src="${API.itemImg(a.icon)}" alt="" loading="lazy"></div>
+              <figcaption><b>${esc(a.name)}</b><span>${esc(a.hero || "")}</span>
+                <em>生涯出场 ${a.life}场${a.week ? ` · 本周${a.week}场` : ""}</em></figcaption>
+            </figure>`).join("")}</div>
+        </div>
+      </section>`;
+  }
   function specialBlock(sp, heroesMap = {}) {
     if (!sp || (!sp.cards.length && !sp.curve && !sp.xiuxian && !sp.babysit && !sp.axes)) return "";
     const curve = sp.curve ? `

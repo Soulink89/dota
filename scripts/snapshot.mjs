@@ -41,5 +41,26 @@ for (const p of cfg.players) {
     failures++;
     console.error(`✘ ${id}: ${e.message} (tengo il file precedente)`);
   }
+  // inventario Dota 2 (至宝仓库): il browser non può leggerlo da Steam, quindi lo salviamo qui
+  if (p.persona?.inventory) {
+    try {
+      const inv = await getJSON(`https://steamcommunity.com/inventory/${p.steam64}/570/2?l=schinese&count=2000`);
+      const tag = (d, cat) => (d.tags || []).find((t) => t.category === cat)?.localized_tag_name;
+      const descs = inv.descriptions || [];
+      const rarity = {};
+      for (const a of inv.assets || []) {
+        const d = descs.find((x) => x.classid === a.classid && x.instanceid === a.instanceid);
+        const r = (d && tag(d, "Rarity")) || "其他";
+        rarity[r] = (rarity[r] || 0) + 1;
+      }
+      const arcana = descs.filter((d) => /至宝/.test(tag(d, "Rarity") || ""))
+        .map((d) => ({ name: d.market_name || d.name, hero: tag(d, "Hero") || null, icon: d.icon_url }));
+      const out = { fetchedAt: Date.now(), total: inv.total_inventory_count, rarity, arcana };
+      await writeFile(new URL(`../data/inventory-${id}.json`, import.meta.url), JSON.stringify(out));
+      console.log(`✔ inventario ${id}: ${out.total} oggetti, ${arcana.length} 至宝`);
+    } catch (e) {
+      console.error(`✘ inventario ${id}: ${e.message} (tengo il file precedente)`);
+    }
+  }
 }
 if (failures === cfg.players.length) process.exitCode = 1;

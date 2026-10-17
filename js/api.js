@@ -68,6 +68,12 @@
     }
   }
 
+  // Inventario Dota 2: Steam non permette di leggerlo dal browser, quindi lo salva lo script
+  // automatico (scripts/snapshot.mjs) in data/inventory-<id>.json
+  const loadInventory = (id) => getJSON(`data/inventory-${id}.json?t=${Math.floor(Date.now() / 600000)}`, 8000).catch(() => null);
+  // partite di carriera per eroe (per sapere quanto gioca gli eroi di cui ha l'arcana)
+  const loadLifetimeHeroes = (id) => getJSON(`${OD}/players/${id}/heroes`, 20000).catch(() => null);
+
   let heroesPromise;
   function loadHeroes() {
     heroesPromise ??= getJSON(HEROES_URL, 20000).catch(() => ({})).then((heroes) => {
@@ -82,6 +88,9 @@
     toAccountId,
     loadPlayer,
     loadHeroes,
+    loadInventory,
+    loadLifetimeHeroes,
+    itemImg: (icon) => `https://community.cloudflare.steamstatic.com/economy/image/${icon}/256fx192f`,
     heroImg: (hero) => (hero?.img ? STEAM_CDN + hero.img.replace(/\?$/, "") : ""),
     heroIcon: (hero) => (hero?.icon ? STEAM_CDN + hero.icon.replace(/\?$/, "") : ""),
     rankIcon: (tier) => `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${tier}.png`,

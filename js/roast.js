@@ -334,6 +334,8 @@
       avgK: s.n ? (s.kills / s.n).toFixed(1) : 0, gpm: Math.round(s.avgGpm),
       dg: s.matches.filter((m) => m.hero_id === DROW).length,
       ab: abandonN(s), sup: s.sup,
+      t1: ctx.inventory ? H(ctx.inventory.top3[0]) : "", t2: ctx.inventory ? H(ctx.inventory.top3[1]) : "", t3: ctx.inventory ? H(ctx.inventory.top3[2]) : "", t3a: ctx.inventory?.top3WithArcana,
+      invTotal: ctx.inventory?.total, invArc: ctx.inventory?.rarity?.["至宝"] ?? ctx.inventory?.arcana?.length, invImm: ctx.inventory?.rarity?.["不朽"] ?? 0,
       lastTime: s.lastStart ? new Date(s.lastStart.start_time * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "",
       perNight: (s.n / Math.max(1, s.sessions)).toFixed(1), nights: s.sessions,
       dwr: (() => { const d = s.matches.filter((m) => m.hero_id === DROW); return d.length ? Math.round((d.filter((m) => m.win).length / d.length) * 100) : 0; })(),
@@ -519,6 +521,13 @@
       // ----- Yoki神 -----
       { id: "y-night", hero: () => DROW, when: () => T("drowArcana") && s.lateN >= 3, weight: 78, icon: "🌌", title: "凌晨的至宝", v: [
         ["本周{late}局是半夜开的。凌晨三点的小黑至宝特效，格外刺眼。", "凌晨三点", "至宝特效闪瞎眼"]] },
+      // dall'inventario Steam (至宝仓库)
+      { id: "y-inv-top", hero: () => ctx.inventory.top3[0], when: () => ctx.inventory && ctx.inventory.top3WithArcana >= 2, weight: 91, icon: "💎", title: "没有至宝不上场", v: [
+        ["生涯玩得最多的三个英雄：{t1}、{t2}、{t3}。其中{t3a}个有至宝。没有至宝的英雄，基本不配被他选。", "没有至宝的英雄", "不配上场"]] },
+      { id: "y-inv-count", hero: () => 114, when: () => ctx.inventory && ctx.inventory.total >= 100, weight: 83, icon: "🎒", title: "饰品比英雄池深", v: [
+        ["库存{invTotal}件饰品，{invArc}个至宝、{invImm}个不朽。饰品池深不见底，会玩的英雄掰着手指头数。", "饰品{invTotal}件", "三板斧照旧"]] },
+      { id: "y-inv-two", hero: () => DROW, when: () => ctx.inventory && ctx.inventory.arcana.filter((a) => a.heroId === DROW).length >= 2, weight: 79, icon: "👯", title: "两个小黑至宝", v: [
+        ["小黑有两个至宝：一个拿来打，一个拿来在泉水里换着欣赏。", "两个小黑至宝", "一个打一个看"]] },
       { id: "y-wallet", when: () => T("drowArcana"), weight: 70, icon: "🎁", title: "至宝的代价", v: [
         ["抽至宝花的钱，够请Ping神喝一个月的威士忌。他选择了小黑。", "一个月的威士忌", "还是一个至宝？"]] },
       { id: "y-arcana", hero: () => DROW, when: () => T("drowArcana"), weight: 92, icon: "💎", title: "至宝改变人生", v: [
