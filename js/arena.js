@@ -15,7 +15,7 @@
   const ITEMS_URL = "https://cdn.jsdelivr.net/npm/dotaconstants@latest/build/item_ids.json";
   const DAY_MS = 86400000;
   const XP = { kill: 100, assist: 50 };
-  const PUSH_XP_ = 300; // esperienza per ogni 💪 spinta dei visitatori
+  const PUSH_XP_ = 10; // esperienza per ogni 💪 spinta dei visitatori
   const PER_MIN = 40; // 40 uccisioni (o morti, o assist) del giorno prima = 1 al minuto, cioè 10 = una ogni 4 minuti
   const LV_K = 4000; // livello n richiede LV_K·(n-1)² XP, senza tetto
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -477,10 +477,9 @@
       <details class="arena-rules">
         <summary>📜 乱斗规则（点我）</summary>
         <ul>
-          <li><b>战绩怎么变成动作</b>：按每人<b>前一天</b>（北京时间早6点到次日早6点）的真实击杀/死亡/助攻：<b>每10次 = 每4分钟1次</b>。比如昨天 40杀 / 20死 / 60助攻 → 每分钟砍人1次、阵亡0.5次、助攻1.5次。每一次都会演出来，一次不少（看不到页面时的除外）。前一天没打的，用最近一次打过那天的战绩。</li>
-          <li><b>经验</b>：每次击杀 +${XP.kill}，每次助攻 +${XP.assist}，每被访客推一把 +${PUSH_XP}。死亡不扣经验。</li>
-          <li><b>等级</b>：升到 N 级需要 ${LV_K.toLocaleString("zh-CN")}×(N−1)² 经验（2级 ${LV_K.toLocaleString("zh-CN")}，5级 ${(LV_K * 16).toLocaleString("zh-CN")}，10级 ${(LV_K * 81).toLocaleString("zh-CN")}）。没有上限，从 2026年10月17日 开始累计，永不清零。</li>
-          <li><b>怎么升级</b>：前一天在真实比赛里多杀、多助攻；或者点选手推他一把 💪（每人每天对每个选手最多 ${PUSH_MINE} 次，全体访客合计最多 ${PUSH_DAY} 次）。</li>
+          <li>动作看<b>昨天的真实战绩</b>：每10次击杀/死亡/助攻 = 每4分钟演1次。</li>
+          <li>击杀 +${XP.kill} 经验，助攻 +${XP.assist}，访客点一下 +${PUSH_XP}。</li>
+          <li>升到 N 级需要 ${LV_K.toLocaleString("zh-CN")}×(N−1)² 经验，没有上限，永不清零。</li>
         </ul>
       </details>`;
 
