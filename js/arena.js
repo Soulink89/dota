@@ -111,6 +111,7 @@
         today, rates, base, now: rates[today],
         // quanto farma:补刀 al minuto della settimana → quota di tempo passata a picchiare i creep
         farm: p.cfg.persona?.arenaFarm ? { ...farmShare(matches), share: Math.max(0.6, farmShare(matches).share) } : { lpm: 0, share: 0 },
+        yd: yesterday(matches, p.heroes), // partite del giorno prima, per i dialoghi del giorno
       });
     }
     // bersagli: chi nel giorno di riferimento è morto più di me (se nessuno, il più "morto" della compagnia)
@@ -455,6 +456,53 @@
   const setMyPushes = (id, v) => { try { localStorage.setItem(myKey(id), v); } catch {} };
   const getPushes = (id) => fetch(PUSH_URL("get", id)).then((r) => (r.ok ? r.json() : { value: 0 })).then((j) => j.value || 0).catch(() => 0);
 
+  // ---------- dialoghi del giorno: nascono dalle partite vere del giorno prima ----------
+  const isWin = (m) => (m.player_slot < 128) === m.radiant_win;
+  function yesterday(matches, heroes) {
+    const D = dayIdx(Date.now()) - 1;
+    const ms = matches.filter((m) => dayIdx(m.start_time * 1000) === D);
+    if (!ms.length) return null;
+    const hn = (id) => heroes?.[id]?.localized_name || "某英雄";
+    const cnt = {};
+    ms.forEach((m) => (cnt[m.hero_id] = (cnt[m.hero_id] || 0) + 1));
+    const best = [...ms].sort((a, b) => b.kills - a.kills)[0], worst = [...ms].sort((a, b) => b.deaths - a.deaths)[0];
+    const lastEnd = Math.max(...ms.map((m) => m.start_time + (m.duration || 0)));
+    const endH = (new Date(lastEnd * 1000 + 8 * 3600000).getUTCHours()); // ora di Pechino
+    const sum = (k) => ms.reduce((t, m) => t + (m[k] || 0), 0);
+    return { n: ms.length, w: ms.filter(isWin).length, l: ms.filter((m) => !isWin(m)).length, k: sum("kills"), d: sum("deaths"), a: sum("assists"),
+      hero: hn(Object.entries(cnt).sort((a, b) => b[1] - a[1])[0][0]), best: { h: hn(best.hero_id), k: best.kills, d: best.deaths, a: best.assists },
+      worst: { h: hn(worst.hero_id), k: worst.kills, d: worst.deaths, a: worst.assists }, late: endH < 6 ? endH : null,
+      long: Math.round(Math.max(...ms.map((m) => m.duration || 0)) / 60) };
+  }
+  function dailyTalk(F) {
+    const say = {}, dlg = [];
+    const add = (name, line) => (say[name] ||= []).push(line);
+    const played = F.filter((f) => f.yd), idle = F.filter((f) => !f.yd);
+    const other = (f, j) => { const o = F.filter((x) => x !== f); return o[(j + f.id) % o.length]; };
+    const jin = F.find((f) => f.name === "大金神");
+    played.forEach((f, j) => {
+      const y = f.yd, soul = f.name === "Soul大神";
+      add(f.name, `昨天${y.best.h} ${y.best.k}/${y.best.d}/${y.best.a}，看到没？`);
+      if (y.w > y.l) add(f.name, `昨天${y.w}胜${y.l}负，谁能挡我？`);
+      else if (!soul) add(f.name, f.name === "大金神" ? `昨天${y.l}负？队友的锅，系统局` : `昨天输了${y.l}把，今天找回来`);
+      if (y.n >= 5) add(f.name, `昨天打了${y.n}把，眼睛都花了`);
+      if (y.late != null) add(f.name, `昨天打到凌晨${y.late}点，困死了`);
+      if (y.long >= 55) add(f.name, `昨天有一把打了${y.long}分钟，打到天荒地老`);
+      if (!soul && y.worst.d >= 10) dlg.push([other(f, j).name, `${f.name}，昨天${y.worst.h}死了${y.worst.d}次，送快递呢？`, f.name, "那是战术性死亡"]);
+      if (y.best.k >= 15) dlg.push([f.name, `昨天${y.best.h}拿了${y.best.k}个人头`, other(f, j + 3).name, "对面是人机吧"]);
+      if (!soul && y.l >= 3 && y.l > y.w) dlg.push([other(f, j + 1).name, `${f.name}昨天${y.w}胜${y.l}负，还好意思上线？`, f.name, "今天不一样"]);
+      if (y.n >= 4) dlg.push([other(f, j + 2).name, `${f.name}昨天打了${y.n}把${y.hero}`, f.name, "手感来了，停不下来"]);
+    });
+    idle.forEach((f, j) => dlg.push([other(f, j + 4).name, `${f.name}昨天人呢？一把没打`, f.name, "在忙，在忙"]));
+    if (played.length >= 2) {
+      const mostD = [...played].sort((a, b) => b.yd.d - a.yd.d)[0], mostK = [...played].sort((a, b) => b.yd.k - a.yd.k)[0];
+      if (jin && mostK !== jin) dlg.push([jin.name, `${mostK.name}昨天${mostK.yd.k}杀？肯定是对面送的`, mostK.name, "你昨天才几杀？"]);
+      if (jin && mostK === jin) add(jin.name, `昨天全场击杀王是我，${jin.yd.k}杀，服不服`);
+      if (mostD.name !== "Soul大神") dlg.push([mostK.name, `昨天死最多的是${mostD.name}，${mostD.yd.d}次`, mostD.name, "我在吸引火力"]);
+    }
+    return { say, dlg };
+  }
+
   // ---------- schermata di caricamento ----------
   const TIPS = ["正在给大P神磨锤子…", "正在给Ping大神倒威士忌…", "正在给大B神冲奶粉…", "正在召唤小兵…", "正在加载英雄模型…",
     "正在统计大金神昨天死了几次…", "正在帮Kaiju大神找小鱼人…", "正在给疯子大神的电脑开机（需要五分钟）…", "正在擦亮Yoki大神的至宝…"];
@@ -742,6 +790,9 @@
 
     // chiacchiere: ogni 5 secondi qualcuno parla; un turno su tre è un botta e risposta
     const byName = Object.fromEntries(F.map((f) => [f.name, f]));
+    // dialoghi del giorno (dalle partite di ieri): escono spesso, uno ogni due battute
+    const daily = dailyTalk(F);
+    const dailyD = daily.dlg.filter(([a, , b]) => byName[a] && byName[b] && a !== b);
     const dialogs = DIALOGS.filter(([a, , b]) => byName[a] && byName[b]);
     let ci = Math.floor(Date.now() / 5000);
     const chat = () => {
@@ -756,7 +807,8 @@
         return;
       }
       if (dialogs.length && ci % 2 === 0) {
-        const [a, l1, b, l2] = dialogs[shuffled(dialogs.length, 5)[(ci / 2 | 0) % dialogs.length]];
+        const useDaily = dailyD.length && (ci / 2 | 0) % 2 === 0;
+        const [a, l1, b, l2] = useDaily ? dailyD[shuffled(dailyD.length, 37)[(ci / 4 | 0) % dailyD.length]] : dialogs[shuffled(dialogs.length, 5)[(ci / 2 | 0) % dialogs.length]];
         if (isDead(byName[a])) return;
         talk(byName[a], l1);
         setTimeout(() => talk(byName[b], l2), 1900);
@@ -775,7 +827,10 @@
       }
       if (jinF && ci % 4 === 1 && !isDead(jinF)) return talk(jinF, JIN_BRAG[shuffled(JIN_BRAG.length, 23)[(ci / 4 | 0) % JIN_BRAG.length]]);
       if (yokiF && ci % 5 === 3 && !isDead(yokiF)) return talk(yokiF, YOKI_ARCANA[shuffled(YOKI_ARCANA.length, 29)[(ci / 5 | 0) % YOKI_ARCANA.length]]);
-      const f = F[ci % F.length], lines = SAY[f.name];
+      const f = F[ci % F.length];
+      const dl = daily.say[f.name];
+      if (dl && ci % 3 === 0 && !isDead(f)) return talk(f, dl[(ci / 3 / F.length | 0) % dl.length]); // frase sulle partite di ieri
+      const lines = SAY[f.name];
       if (lines && !isDead(f)) talk(f, lines[shuffled(lines.length, 7 + f.id % 13)[Math.floor(ci / F.length) % lines.length]]);
     };
 
