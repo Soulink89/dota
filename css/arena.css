@@ -403,3 +403,17 @@
   background: radial-gradient(ellipse at 40% 40%, #bef264, #65a30d 60%, #3f6212); opacity: .85; animation: spread .8s ease-out; transition: opacity 2s; }
 .puddle.dry { opacity: 0; }
 @keyframes spread { from { transform: translate(-50%, -50%) scale(.1); } }
+
+/* 至宝: riflettore e bagliore sul personaggio che indossa un'arcana (Yoki大神) */
+.fighter.has-arcana .f-body::before { content: ""; position: absolute; left: 50%; bottom: -6px; width: 130px; height: 230px; transform: translateX(-50%);
+  pointer-events: none; z-index: 0; clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  background: linear-gradient(rgba(233,213,255,0), rgba(216,180,254,.28) 45%, rgba(253,230,138,.38)); filter: blur(3px); animation: spot 3s ease-in-out infinite; }
+@keyframes spot { 50% { opacity: .65; } }
+.fighter.has-arcana .f-aura { width: 150px; height: 54px; background: radial-gradient(rgba(253,230,138,.85), rgba(192,132,252,.55) 40%, rgba(124,58,237,.18) 62%, transparent 72%); }
+.fighter.has-arcana .f-hero { filter: drop-shadow(0 0 6px rgba(216,180,254,.95)) drop-shadow(0 0 14px rgba(167,139,250,.6)); }
+.arena.lite .fighter.has-arcana .f-hero { filter: drop-shadow(0 0 5px rgba(216,180,254,.9)); }
+.fighter.has-arcana .f-pose::after { content: "✦ ✧ ✦"; inset: auto; left: 50%; top: 10%; transform: translateX(-50%); width: auto; height: auto; background: none;
+  font-size: 14px; letter-spacing: 18px; color: #fde68a; text-shadow: 0 0 8px #c084fc; white-space: nowrap; animation: twinkle2 1.6s ease-in-out infinite; }
+@keyframes twinkle2 { 50% { opacity: .25; letter-spacing: 26px; } }
+.fighter.has-arcana .f-name::after { content: "至宝"; margin-left: 4px; padding: 0 5px; border-radius: 4px; font-size: 10px; vertical-align: 1px;
+  color: #3b0764; background: linear-gradient(90deg, #fde68a, #e9d5ff); box-shadow: 0 0 6px rgba(216,180,254,.8); }
