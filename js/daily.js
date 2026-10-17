@@ -29,10 +29,14 @@
   };
 
   const dayKey = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  // "Ieri" in senso da gamer: dalle 6:00 di ieri alle 6:00 di oggi, così le partite dopo mezzanotte
+  // contano per la serata in cui sono cominciate. Prima delle 6 di mattina, "ieri sera" è la serata in corso.
+  const DAY_START_HOUR = 6;
   function yesterdayRange(now = new Date()) {
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const start = new Date(end.getTime() - 86400000);
-    return { start: start.getTime() / 1000, end: end.getTime() / 1000, date: start };
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), DAY_START_HOUR);
+    const end = new Date(Math.min(now.getTime(), new Date(now.getFullYear(), now.getMonth(), now.getDate(), DAY_START_HOUR).getTime()));
+    return { start: start.getTime() / 1000, end: end.getTime() / 1000, date };
   }
 
   // tutti i momenti imbarazzanti di ieri per un giocatore, dal peggiore al meno grave

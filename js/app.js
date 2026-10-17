@@ -39,6 +39,8 @@
         // index: ogni giocatore riceve varianti diverse delle battute; week: ruotano ogni settimana
         const ctx = { persona: cfg.persona, rankTier: data.profile?.rank_tier,
           index: CFG.players.indexOf(cfg), week: Math.floor((Date.now() / 86400000 + 3) / 7),
+          // posizione tra i giocatori "elogiati": ognuno riceve versioni diverse degli elogi
+          praiseIndex: CFG.players.filter((c) => c.persona?.mode === "praise" || c.persona?.alsoPraise).indexOf(cfg),
           // partite nascoste: "Expose Public Match Data" disattivato in Dota 2
           hidden: !(data.matches || []).length && !(data.wl && data.wl.win + data.wl.lose) && data.source !== "demo" };
         const quotes = R.quotes(stats, ctx, heroes);
@@ -46,12 +48,22 @@
         const roasts = R.buildRoasts(stats, name, heroes, ctx);
         return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx, praise,
           verdict: R.verdict(stats, ctx), roasts, quotes, special: R.specials(stats, ctx),
-          split: splitRoasts(roasts) };
+          split: splitRoasts(roasts), kudos: alsoPraise(cfg, data, heroes, ctx, quotes, roasts) };
       })().catch((e) => { cache.delete(id); throw e; }));
     }
     return cache.get(id);
   }
 
+
+  // 本庭也得承认: elogi (dalle sole vittorie) per chi gioca bene, accanto alle prese in giro
+  function alsoPraise(cfg, data, heroes, ctx, quotes, roasts) {
+    if (!cfg.persona?.alsoPraise) return [];
+    const usedM = new Set([...(quotes.usedMatches || []), ...roasts.map((r) => r.matchId).filter(Boolean)]);
+    const wins = (data.matches || []).filter((m) => (m.player_slot < 128) === m.radiant_win && !usedM.has(m.match_id));
+    return R.praiseList(R.computeStats(wins, DAYS), heroes, ctx)
+      .filter((x) => x.id !== "g-pool") // non contraddire le battute sul pool di eroi
+      .slice(0, 4);
+  }
   // Ogni battuta compare una sola volta: 3 diventano meme (preferibilmente con un eroe), le altre capi d'accusa.
   // roasts[0] resta nei capi d'accusa perché è anche la frase del manifesto in home.
   function splitRoasts(roasts, shuffle = false) {
@@ -231,7 +243,8 @@
     const s = p.stats, v = p.verdict, prof = p.data.profile || {};
     const fav = s.heroes[0] && p.heroes[s.heroes[0].hero_id];
     const wl = p.data.wl;
-    const life = !wl || !(wl.win + wl.lose) ? "–" : p.praise ? `${wl.win}场胜利` : `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%`;
+    // Soul: le sconfitte di carriera sono "censurate"
+    const life = !wl || !(wl.win + wl.lose) ? "–" : p.praise ? `${wl.win}胜 – <span class="redact" title="机密">████</span>负 · 胜率 <span class="redact" title="机密">██.█%</span>` : `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%`;
     const memeHeroes = s.heroes.length ? s.heroes.map((h) => p.heroes[h.hero_id]) : [null];
     const collage = s.heroes.slice(0, 5).map((h) => p.heroes[h.hero_id]).filter(Boolean);
 
@@ -333,6 +346,17 @@
       <section class="block">
         <div class="block-head"><h2>${p.praise ? "功绩" : "罪状"}</h2><span class="muted small" id="charges-count"></span></div>
         <div class="charges" id="charges"></div>
+      </section>` : ""}
+
+      ${p.kudos.length ? `
+      <section class="block">
+        <div class="block-head"><h2>本庭也得承认</h2><span class="muted small">骂归骂，这几局确实打得漂亮</span></div>
+        <div class="kudos">${p.kudos.map((k, i) => { const h = k.heroId && p.heroes[k.heroId]; return `
+          <article class="kudo" style="--d:${i * 70}ms">
+            ${h ? `<div class="kudo-bg" style="background-image:url('${API.heroImg(h)}')"></div>` : ""}
+            <span class="kudo-icon">${k.icon}</span>
+            <div><h4>${esc(k.title)}</h4><p>${esc(k.text)}</p></div>
+          </article>`; }).join("")}</div>
       </section>` : ""}
 
       ${s.heroes.length ? `
@@ -444,7 +468,7 @@
     const top = [...d.memes.values()].map((l) => l[0]).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 6);
     el.innerHTML = `
       <section class="block daily-block">
-        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)} · 每天零点自动更新</span></div>
+        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)}晚 · 每天早上6点自动更新</span></div>
         ${top.length ? `<div class="memes daily-grid">${top.map((m, i) => dailyCard(m, d.byId.get(m.playerId).heroes, i, true)).join("")}</div>`
                      : `<p class="muted daily-empty">昨天全员休战，本庭今日无料可黑。</p>`}
       </section>`;
@@ -458,7 +482,7 @@
     if (!list.length || location.hash.indexOf(p.id) < 0) return;
     el.innerHTML = `
       <section class="block daily-block">
-        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)} · 根据昨天的比赛自动生成</span></div>
+        <div class="block-head"><h2>昨日表情包</h2><span class="muted small">${dailyDate(d.date)}晚 · 根据昨晚的比赛自动生成</span></div>
         <div class="memes daily-grid">${list.map((m, i) => dailyCard(m, p.heroes, i, false)).join("")}</div>
       </section>`;
   }

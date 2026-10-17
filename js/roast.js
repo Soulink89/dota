@@ -239,30 +239,84 @@
   const groupWr = (gs) => { const n = gs.reduce((t, g) => t + g.n, 0); return n ? (gs.reduce((t, g) => t + g.wins, 0) / n) * 100 : 0; };
   const groupN = (gs) => gs.reduce((t, g) => t + g.n, 0);
 
-  // ---------- Regole delle battute ----------
-  // v: varianti [testo, meme sopra, meme sotto]. generic: vale per tutti i giocatori.
-  // match: la partita citata (se già usata nei 语录 la battuta viene saltata).
-  // ---------- Modalità elogio (persona.mode = "praise"): solo vittorie, solo complimenti ----------
-  function praiseList(s, heroes) {
+  // Elogi: ogni voce ha 3 versioni [titolo, testo, meme sopra, meme sotto]; ogni giocatore "elogiato"
+  // (mode "praise" o alsoPraise) riceve una versione diversa grazie a ctx.praiseIndex.
+  const PRAISE = {
+    best: [["神级操作", "{hero} {kd}，教科书级别的一局。", "{hero} {kd}", "这就是大神"],
+      ["名场面", "{hero} {kd}，这一局可以直接剪进集锦。", "{hero} {kd}", "集锦预定"],
+      ["高光时刻", "{hero} {kd}，对面赛后默默点了个赞。", "{hero} {kd}", "对面：服了"]],
+    wins: [["胜利收割机", "本周拿下{n}场胜利，场场都是硬仗。", "本周{n}胜", "实力说明一切"],
+      ["连战连捷", "本周{n}场胜利入账，状态在线。", "{n}场胜利", "状态在线"],
+      ["赢家", "这周赢了{n}把，每一把都赢得明明白白。", "赢了{n}把", "赢得明明白白"]],
+    kda: [["稳如泰山", "胜场平均KDA {kda}，节奏稳、失误少。", "KDA {kda}", "稳如泰山"],
+      ["细节大师", "胜场KDA {kda}，每个技能都放在该放的地方。", "KDA {kda}", "细节拉满"],
+      ["冷静杀手", "胜场KDA {kda}，不急不躁，该出手时就出手。", "KDA {kda}", "冷静致命"]],
+    assist: [["团战发动机", "{hero}一局{a}次助攻，哪里需要哪里就有他。", "{a}次助攻", "团战发动机"],
+      ["队友的靠山", "{hero}一局{a}次助攻，每场团战都有他的身影。", "{a}次助攻", "队友的靠山"],
+      ["节奏大师", "{hero}{a}次助攻，整局的节奏都在他手里。", "{a}次助攻", "节奏大师"]],
+    gpm: [["经济碾压", "{hero} {gpm} GPM，发育一骑绝尘。", "{gpm} GPM", "经济碾压"],
+      ["发育如飞", "{hero} {gpm} GPM，装备领先对面一个版本。", "{gpm} GPM", "装备领先一个版本"],
+      ["财神降临", "{hero}每分钟{gpm}金，钱包比对面五个人加起来还鼓。", "{gpm}金/分钟", "财神降临"]],
+    kills: [["收割全场", "{hero}一局{k}个人头，对面看到他就绕路。", "{k}杀", "对面绕路走"],
+      ["杀神", "{hero}拿下{k}个人头，对面的复活读秒没停过。", "{k}个人头", "对面在泉水排队"],
+      ["战场主宰", "{hero}{k}杀，这一局他说了算。", "{k}杀", "他说了算"]],
+    pool: [["全能大神", "本周{distinct}个不同的英雄都拿下了胜利，什么位置都能扛。", "{distinct}个英雄", "全部拿下"],
+      ["英雄池之海", "{distinct}个英雄都赢过，对面根本不知道该ban谁。", "{distinct}个英雄", "ban不完"],
+      ["百变高手", "这周换了{distinct}个英雄赢球，每个都玩得有模有样。", "{distinct}种赢法", "百变高手"]],
+    fast: [["速战速决", "{hero}只用{min}分钟就结束了战斗。", "{min}分钟取胜", "速战速决"],
+      ["闪电战", "{min}分钟拿下比赛，对面还没出完核心装。", "{min}分钟", "闪电战"],
+      ["效率之王", "{hero}{min}分钟收工，效率拉满。", "{min}分钟收工", "效率之王"]],
+    long: [["持久战之王", "{hero}鏖战{min}分钟，笑到了最后。", "{min}分钟", "笑到最后"],
+      ["耐力惊人", "{min}分钟的硬仗也能拿下，心态稳如磐石。", "{min}分钟硬仗", "照样拿下"],
+      ["后期大师", "{hero}打满{min}分钟，后期越打越强。", "{min}分钟", "越打越强"]],
+    dmg: [["伤害爆表", "{hero}一局打出{dmg}点英雄伤害，对面血条瞬间清空。", "{dmg}伤害", "血条清空"],
+      ["输出机器", "{hero} {dmg}点伤害，全场输出第一档。", "{dmg}伤害", "输出机器"],
+      ["火力全开", "{hero}打出{dmg}点伤害，团战一开就是他的舞台。", "{dmg}伤害", "火力全开"]],
+  };
+
+  // s: statistiche sulle sole vittorie
+  function praiseList(s, heroes, ctx = {}) {
     if (!s.n) return [];
+    const pi = ctx.praiseIndex || 0, week = ctx.week || 0;
     const H = (id) => heroes[id]?.localized_name || "英雄";
-    const by = (f) => s.matches.reduce((b, m) => (b == null || f(m) > f(b) ? m : b), null);
-    const best = by((m) => m.kda), ass = by((m) => m.assists), gpm = by((m) => m.gold_per_min ?? 0), kil = by((m) => m.kills);
+    const by = (f, list = s.matches) => list.reduce((b, m) => (b == null || f(m) > f(b) ? m : b), null);
     const kd = (m) => `${m.kills}/${m.deaths}/${m.assists}`;
+    const used = new Set();
     const out = [];
-    const add = (id, weight, icon, title, text, top, bottom, m) => out.push({ id, weight, icon, title, text, meme: { top, bottom }, heroId: m?.hero_id ?? null, matchId: m?.match_id ?? null });
-    add("g-best", 95, "🏆", "神级操作", `${H(best.hero_id)} ${kd(best)}，教科书级别的一局。`, `${H(best.hero_id)} ${kd(best)}`, "这就是大神", best);
-    add("g-wins", 90, "👑", "胜利收割机", `本周拿下${s.n}场胜利，场场都是硬仗。`, `本周${s.n}胜`, "实力说明一切", null);
-    add("g-kda", 85, "🛡️", "稳如泰山", `胜场平均KDA ${s.avgKda.toFixed(2)}，节奏稳、失误少。`, `KDA ${s.avgKda.toFixed(2)}`, "稳如泰山", null);
-    if (ass && ass !== best) add("g-assist", 80, "🤝", "团战发动机", `${H(ass.hero_id)}一局${ass.assists}次助攻，哪里需要哪里就有他。`, `${ass.assists}次助攻`, "团战发动机", ass);
-    if (gpm && gpm.gold_per_min && gpm !== best && gpm !== ass) add("g-gpm", 75, "💰", "经济碾压", `${H(gpm.hero_id)} ${gpm.gold_per_min} GPM，发育一骑绝尘。`, `${gpm.gold_per_min} GPM`, "经济碾压", gpm);
-    if (kil && kil !== best && kil !== ass && kil !== gpm && kil.kills >= 8) add("g-kills", 70, "⚔️", "收割全场", `${H(kil.hero_id)}一局${kil.kills}个人头，对面看到他就绕路。`, `${kil.kills}杀`, "对面绕路走", kil);
-    if (s.distinctHeroes >= 4) add("g-pool", 65, "🌟", "全能大神", `本周${s.distinctHeroes}个不同的英雄都拿下了胜利，什么位置都能扛。`, `${s.distinctHeroes}个英雄`, "全部拿下", s.matches.find((m) => m.hero_id === s.heroes[0]?.hero_id));
+    const add = (key, weight, icon, vars, m) => {
+      const bank = PRAISE[key];
+      if (pi >= bank.length) return;
+      const [title, text, top, bottom] = bank[(pi + week) % bank.length];
+      if (m) used.add(m.match_id);
+      out.push({ id: "g-" + key, weight, icon, title, text: fill(text, vars), meme: { top: fill(top, vars), bottom: fill(bottom, vars) },
+        heroId: m?.hero_id ?? null, matchId: m?.match_id ?? null });
+    };
+    const free = () => s.matches.filter((m) => !used.has(m.match_id));
+    const best = by((m) => m.kda);
+    add("best", 95, "🏆", { hero: H(best.hero_id), kd: kd(best) }, best);
+    add("wins", 90, "👑", { n: s.n });
+    add("kda", 85, "🛡️", { kda: s.avgKda.toFixed(2) });
+    const ass = by((m) => m.assists, free());
+    if (ass && ass.assists >= 15) add("assist", 80, "🤝", { hero: H(ass.hero_id), a: ass.assists }, ass);
+    const gpm = by((m) => m.gold_per_min ?? 0, free());
+    if (gpm && gpm.gold_per_min >= 500) add("gpm", 75, "💰", { hero: H(gpm.hero_id), gpm: gpm.gold_per_min }, gpm);
+    const kil = by((m) => m.kills, free());
+    if (kil && kil.kills >= 10) add("kills", 72, "⚔️", { hero: H(kil.hero_id), k: kil.kills }, kil);
+    const dmg = by((m) => m.hero_damage ?? 0, free());
+    if (dmg && dmg.hero_damage >= 25000) add("dmg", 70, "💥", { hero: H(dmg.hero_id), dmg: dmg.hero_damage.toLocaleString("zh-CN") }, dmg);
+    const fast = by((m) => -m.duration, free());
+    if (fast && fast.duration <= 32 * 60) add("fast", 66, "⚡", { hero: H(fast.hero_id), min: Math.round(fast.duration / 60) }, fast);
+    const long = by((m) => m.duration, free());
+    if (long && long.duration >= 48 * 60) add("long", 64, "⏳", { hero: H(long.hero_id), min: Math.round(long.duration / 60) }, long);
+    if (s.distinctHeroes >= 4) add("pool", 60, "🌟", { distinct: s.distinctHeroes }, s.matches.find((m) => m.hero_id === s.heroes[0]?.hero_id && !used.has(m.match_id)));
     return out.sort((a, b) => b.weight - a.weight);
   }
 
+  // ---------- Regole delle battute ----------
+  // v: varianti [testo, meme sopra, meme sotto]. generic: vale per tutti i giocatori.
+  // match: la partita citata (se già usata nei 语录 la battuta viene saltata).
   function buildRoasts(s, name, heroes, ctx = {}) {
-    if (ctx.persona?.mode === "praise") return praiseList(s, heroes);
+    if (ctx.persona?.mode === "praise") return praiseList(s, heroes, ctx);
     const H = (id) => heroes[id]?.localized_name || "神秘英雄";
     const fav = s.heroes[0];
     const persona = ctx.persona || {};
@@ -427,6 +481,11 @@
       { id: "k-jin", hero: () => 25, when: () => T("jinHates"), weight: 84, icon: "😤", title: "金神黑名单", v: [
         ["金神看他不顺眼。能让一个天天吹牛的人都嫌弃，这也是一种实力。", "金神：嫌弃", "Kaiju：这是实力"]] },
 
+      { id: "k-class", hero: () => 39, when: () => T("pingBuddy"), weight: 78, icon: "🎓", title: "最认真的听众", v: [
+        ["Ping神喝多了在DC开课，全场只有他听得最认真——因为他是真的听不懂。", "Ping神开课", "Kaiju：记笔记中"]] },
+      { id: "k-tele", hero: () => 128, when: () => T("teletubby") && T("lowRank"), weight: 72, icon: "📺", title: "天线宝宝的天线", v: [
+        ["头上的天线收得到外星信号，就是收不到小地图上的敌人。", "天线：满格", "小地图：没看"]] },
+
       // ----- 疯子大神 -----
       { id: "f-load", hero: () => 34, when: () => T("pcOld"), weight: 90, icon: "🖥️", title: "加载中……", v: [
         ["开机五分钟，进游戏十分钟。等他加载完，对面已经推上高地了。", "加载中……", "对面已上高地"]] },
@@ -442,6 +501,11 @@
       { id: "f-drop", hero: () => 98, when: () => T("lowPrio") && abandonN(s) > 0, weight: 86, icon: "🔌", title: "已断开连接", v: [
         ["本周有{ab}局显示“已断开”。对面以为他在绕后gank，其实他在等电脑重启。", "已断开连接", "电脑重启中"]] },
 
+      { id: "f-agenda", hero: () => 46, when: () => T("bigBoss"), weight: 76, icon: "📅", title: "大老板的日程表", v: [
+        ["开会、签合同、见客户……大老板的日程表上，最后一行永远是：等老婆睡着，开一把刀塔。", "日程表最后一行", "等老婆睡着"]] },
+      { id: "f-gear", hero: () => 87, when: () => T("proSupport") && T("pcOld"), weight: 74, icon: "🕯️", title: "双重标准", v: [
+        ["给队友买眼、买雾、买绷带，花钱眼都不眨；给自己换电脑，十年都下不了决心。", "给队友买眼：舍得", "给自己换电脑：舍不得"]] },
+
       // ----- 蜗牛大神 -----
       { id: "s-run", hero: () => 63, when: () => T("allNighter"), weight: 92, icon: "🏃", title: "通宵跑路王", v: [
         ["每次喊“通宵”喊得最响的是他，两三把之后第一个跑的也是他。剩下四个人面面相觑：说好的通宵呢？", "今晚通宵！", "剩下四个人：？"]] },
@@ -453,6 +517,10 @@
         ["嗓门是全队最大的。对面没开麦，也知道他今晚要“干”。", "对面没开麦", "也听见他在喊干"]] },
 
       // ----- Yoki神 -----
+      { id: "y-night", hero: () => DROW, when: () => T("drowArcana") && s.lateN >= 3, weight: 78, icon: "🌌", title: "凌晨的至宝", v: [
+        ["本周{late}局是半夜开的。凌晨三点的小黑至宝特效，格外刺眼。", "凌晨三点", "至宝特效闪瞎眼"]] },
+      { id: "y-wallet", when: () => T("drowArcana"), weight: 70, icon: "🎁", title: "至宝的代价", v: [
+        ["抽至宝花的钱，够请Ping神喝一个月的威士忌。他选择了小黑。", "一个月的威士忌", "还是一个至宝？"]] },
       { id: "y-arcana", hero: () => DROW, when: () => T("drowArcana"), weight: 92, icon: "💎", title: "至宝改变人生", v: [
         ["抽出小黑至宝那天起，他的刀塔就只剩小黑了。至宝特效，比他的人生规划还清晰。", "抽到小黑至宝", "从此只玩小黑"]] },
       { id: "y-drowwr", hero: () => DROW, when: () => T("drowArcana") && s.matches.filter((m) => m.hero_id === DROW).length >= 2, weight: 86, icon: "🏹", title: "至宝不加属性", v: [
@@ -648,5 +716,5 @@
     };
   }
 
-  window.TribunaleRoast = { computeStats, verdict, buildRoasts, quotes, specials, isWin, isMid, medalName, approxMmr };
+  window.TribunaleRoast = { computeStats, verdict, buildRoasts, praiseList, quotes, specials, isWin, isMid, medalName, approxMmr };
 })();

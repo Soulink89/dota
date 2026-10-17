@@ -9,6 +9,7 @@
 //  "note" (opzionale): il sospiro del giudice (法官叹气), mostrato sotto l'indice.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
 //    mode:        "praise" = modalità elogio: solo partite vinte, solo complimenti, manifesto 表彰令
+//    alsoPraise:  true = oltre alle prese in giro, sezione "本庭也得承认" con elogi dalle vittorie
 //    meter:      indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风), "fish" (小鱼人浓度); assente = voto su 100
 //    claimedRank: la medaglia che dice di avere (先锋, 卫士, 中军, 统帅, 传奇, 万古流芳, 超凡入圣, 冠绝一世)
 //    rival:       il giocatore che prende sempre in giro
@@ -120,6 +121,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "至宝炫耀罪",
       persona: {
         meter: "axes",
+        alsoPraise: true,
         traits: ["threeAxes", "drowArcana", "drow15", "noSupport", "pingStudent", "hardToRoast"],
       },
     },
@@ -134,6 +136,7 @@ window.TRIBUNALE_CONFIG = {
       persona: {
         meter: "allNighter",
         victim: "金神",
+        alsoPraise: true,
         traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
       },
     },
