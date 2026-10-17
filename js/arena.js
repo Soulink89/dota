@@ -504,6 +504,7 @@
       <details class="arena-rules">
         <summary>📜 乱斗规则（点我）</summary>
         <ul>
+          <li>每人化身<b>最近7天玩得最多的英雄</b>（有这个英雄的至宝就穿上）；疯子大神固定屠夫，Kaiju大神*固定小鱼人，大B神固定幻影刺客。</li>
           <li>动作看<b>昨天的真实战绩</b>：每10次击杀/死亡/助攻 = 每4分钟演1次。</li>
           <li>击杀 +${XP.kill} 经验，助攻 +${XP.assist}，访客点一下 +${PUSH_XP}。</li>
           <li>升到 N 级需要 ${LV_K.toLocaleString("zh-CN")}×(N−1)² 经验，没有上限，永不清零。</li>
