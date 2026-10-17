@@ -744,7 +744,7 @@
       <div class="sp-panel sp-baby">
         <div class="sp-head"><span>👩‍🍼</span><div><h4>保姆计时器</h4><p class="muted small">前期需要被保护多少分钟才能自己走路</p></div></div>
         <div class="baby-row"><span>普通人</span><div class="baby-track"><i style="width:${pct(sp.babysit.normal)}%"></i><em style="left:${pct(sp.babysit.normal)}%">${sp.babysit.normal}分钟</em></div></div>
-        <div class="baby-row hot"><span>B神</span><div class="baby-track"><i class="${sp.babysit.minutes ? "" : "inf"}" style="width:${sp.babysit.minutes ? pct(sp.babysit.minutes) : 100}%"></i><em style="left:${sp.babysit.minutes ? pct(sp.babysit.minutes) : 96}%">${sp.babysit.minutes ? sp.babysit.minutes + "分钟" : "∞"}</em></div></div>
+        <div class="baby-row hot"><span>大B神</span><div class="baby-track"><i class="${sp.babysit.minutes ? "" : "inf"}" style="width:${sp.babysit.minutes ? pct(sp.babysit.minutes) : 100}%"></i><em style="left:${sp.babysit.minutes ? pct(sp.babysit.minutes) : 96}%">${sp.babysit.minutes ? sp.babysit.minutes + "分钟" : "∞"}</em></div></div>
         <div class="baby-scale">${[0, 10, 20, 30, 40].filter((m) => m <= max).map((m) => `<span style="left:${pct(m)}%">${m}'</span>`).join("")}</div>
       </div>`; })() : "";
     return `

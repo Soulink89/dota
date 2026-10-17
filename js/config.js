@@ -39,7 +39,7 @@
 //      streamer   fa dirette in prima persona
 //      russianCommander  l'unico che riesce a dare ordini ai russi
 //      drowCurse  non vince mai con Drow Ranger (小黑)
-//      jinTarget  preso sempre in giro da 金神
+//      jinTarget  preso sempre in giro da 大金神
 //      positions  gioca solo pos 1 o 3
 //      tinyPool   pool di eroi minuscolo
 //      jakiroOnly unico supporto: Jakiro (双头龙)
@@ -48,13 +48,13 @@
 //      drowArcana ha trovato l'arcana di Drow (小黑至宝) e gioca solo lei
 //      drow15     dice di poter giocare Drow in ogni ruolo, da 1 a 5
 //      noSupport  non ha mai giocato supporto
-//      pingStudent una sera Ping神 gli ha fatto la lezione e lui ha risposto solo "嗯嗯"
+//      pingStudent una sera Ping大神 gli ha fatto la lezione e lui ha risposto solo "嗯嗯"
 //      hardToRoast gioca bene: "il tribunale non trova di cosa accusarlo"
 //      allNighter urla "stanotte si gioca fino all'alba" e scappa dopo 2-3 partite
 //      loud       voce altissima, urla "干干干"
 //      allHeroes  sa giocare qualunque eroe
 //      tooGood    gioca bene: il tribunale fatica a trovare accuse
-//      jinMidKiller ha distrutto 金神 in mid
+//      jinMidKiller ha distrutto 大金神 in mid
 //      proSupport supporto di professione
 //      pudgeGod   "屠夫叼霸天", si vanta del suo Pudge
 //      bigBoss    capo milionario
@@ -62,12 +62,12 @@
 //      wifeAway   gioca solo quando la moglie non c'è (meter "wifeAway" = ore di "libertà")
 //      omg        ama la custom OMG
 //      lowPrio    finisce in low priority (小黑屋) perché il PC non carica
-//      pingBuddy  基友 inseparabile di Ping神
+//      pingBuddy  基友 inseparabile di Ping大神
 //      lowRank    rango bassissimo
 //      allPos1    gioca ogni eroe da pos 1
 //      slarkBody  "小鱼人本体": Slark, più 骷髅王 e 死灵法师
 //      pos4Slark  anche in pos 4 prende Slark e ruba il farm
-//      jinHates   金神 non lo sopporta
+//      jinHates   大金神 non lo sopporta
 //      teletubby  conosciuto come "天线宝宝": giocarci insieme abbassa la media MMR della squadra
 //      lowLevelGood nelle partite di basso livello se la cava
 //    heatTitle:   titolo personalizzato della tabella oraria
@@ -80,7 +80,7 @@ window.TRIBUNALE_CONFIG = {
   players: [
     {
       steam64: "76561198073722385",
-      alias: "金神",
+      alias: "大金神",
       accusa: "自封无敌中单",
       color: "#f2b632",
       bounty: "吹牛罪",
@@ -93,7 +93,7 @@ window.TRIBUNALE_CONFIG = {
     },
     {
       steam64: "76561198110591464",
-      alias: "Ping神",
+      alias: "Ping大神",
       accusa: "DC首席理论家",
       color: "#8f7bff",
       bounty: "醉驾英雄罪",
@@ -104,19 +104,19 @@ window.TRIBUNALE_CONFIG = {
     },
     {
       steam64: "76561198070245875",
-      alias: "B神",
+      alias: "大B神",
       accusa: "人称呆逼",
       color: "#4fc3f7",
       bounty: "畏战罪",
       persona: {
         meter: "babysit",
-        nemesis: "金神",
+        nemesis: "大金神",
         traits: ["babysit", "milkAfk", "scared", "streamer", "russianCommander", "drowCurse", "jinTarget", "positions", "tinyPool", "jakiroOnly", "laneLoser"],
       },
     },
     {
       steam64: "76561198072997187",
-      alias: "Yoki神",
+      alias: "Yoki大神",
       accusa: "小黑1-5号位",
       color: "#5eead4",
       bounty: "至宝炫耀罪",
@@ -131,13 +131,13 @@ window.TRIBUNALE_CONFIG = {
       steam64: "76561198092667598",
       alias: "蜗牛大神",
       accusa: "喊通宵的男人",
-      bio: "随便虐过金神的“无敌中单”",
+      bio: "随便虐过大金神的“无敌中单”",
       note: "哎，实在没啥好黑的，打得没问题啊。",
       color: "#93c5fd",
       bounty: "通宵诈骗罪",
       persona: {
         meter: "allNighter",
-        victim: "金神",
+        victim: "大金神",
         alsoPraise: true,
         traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
       },

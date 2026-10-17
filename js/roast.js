@@ -428,17 +428,17 @@
         ["{n}场，胜率{wr}%，KDA {kda}。数据平均到国家统计局拿他当样本。", "胜率 {wr}%", "稳定的平庸"],
         ["胜率{wr}%，不上不下，跟他的段位一样卡在中间。", "{wr}%", "上不去也掉不完"]] },
 
-      // ----- 金神: vanteria (le frasi tipiche sono già nei 语录, qui solo angoli diversi) -----
+      // ----- 大金神: vanteria (le frasi tipiche sono già nei 语录, qui solo angoli diversi) -----
       { id: "p-hours", when: () => persona.meter === "brag" && s.n > 0, weight: 88, icon: "🎺", title: "吹牛时长", v: [
         ["本周打了{hours}小时刀，按他的习惯，赛后吹牛至少再翻一倍。群友的耳朵本周加班{hours2}小时。", "打刀{hours}小时", "吹牛{hours2}小时"]] },
-      { id: "p-name", when: () => persona.meter === "brag", weight: 84, icon: "🥇", title: "金神的“金”", v: [
-        ["外号“金神”，金子的金。可惜段位是{rank}，含金量约等于镀金。", "金神", "镀金的"]] },
+      { id: "p-name", when: () => persona.meter === "brag", weight: 84, icon: "🥇", title: "大金神的“金”", v: [
+        ["外号“大金神”，金子的金。可惜段位是{rank}，含金量约等于镀金。", "大金神", "镀金的"]] },
       { id: "p-shots", when: () => persona.meter === "brag" && s.wins > 0, weight: 80, icon: "📸", title: "截图狂魔", v: [
         ["每赢一把就要在群里发截图。本周{w}胜，群相册已经满了。", "赢一把", "发十张截图"]] },
       { id: "p-silent", when: () => persona.meter === "brag" && s.losses > 0, weight: 82, icon: "🤐", title: "选择性沉默", v: [
         ["输了{l}把，群里一张截图都没有。奇怪，难道截图键只在赢的时候能用？", "输了{l}把", "截图键坏了"]] },
 
-      // ----- Ping神 -----
+      // ----- Ping大神 -----
       { id: "p-allround", when: () => T("allRounder") && s.distinctHeroes >= 5, weight: 80, icon: "🎲", title: "全能选手", v: s.wr < 50
         ? [["本周{n}场用了{distinct}个英雄，一号位到五号位全试了一遍。什么位置都会打，什么位置都会输。", "什么位置都会打", "什么位置都会输"]]
         : [["{n}场{distinct}个英雄。什么位置都会打，什么位置都打得一般。", "{distinct}个英雄", "没有一个精通"]] },
@@ -478,13 +478,13 @@
         ["比赛记录不公开。小鱼人的暗影之舞，原来是用在战绩上的。", "暗影之舞", "用在了战绩上"]] },
       { id: "k-rank", hero: () => 42, when: () => T("lowRank") && ctx.rankTier, weight: 92, icon: "📉", title: "段位海拔", v: [
         ["段位{rank}。小鱼人跳得再远，也跳不出这个分段。", "段位：{rank}", "小鱼人也跳不出去"]] },
-      { id: "k-ping", hero: () => 36, when: () => T("pingBuddy"), weight: 88, icon: "👬", title: "Ping神的基友", v: [
-        ["Ping神的铁杆基友。一个负责在DC讲理论，一个负责在游戏里提供反例。", "Ping神讲理论", "Kaiju负责反例"]] },
-      { id: "k-jin", hero: () => 25, when: () => T("jinHates"), weight: 84, icon: "😤", title: "金神黑名单", v: [
-        ["金神看他不顺眼。能让一个天天吹牛的人都嫌弃，这也是一种实力。", "金神：嫌弃", "Kaiju：这是实力"]] },
+      { id: "k-ping", hero: () => 36, when: () => T("pingBuddy"), weight: 88, icon: "👬", title: "Ping大神的基友", v: [
+        ["Ping大神的铁杆基友。一个负责在DC讲理论，一个负责在游戏里提供反例。", "Ping大神讲理论", "Kaiju负责反例"]] },
+      { id: "k-jin", hero: () => 25, when: () => T("jinHates"), weight: 84, icon: "😤", title: "大金神黑名单", v: [
+        ["大金神看他不顺眼。能让一个天天吹牛的人都嫌弃，这也是一种实力。", "大金神：嫌弃", "Kaiju：这是实力"]] },
 
       { id: "k-class", hero: () => 39, when: () => T("pingBuddy"), weight: 78, icon: "🎓", title: "最认真的听众", v: [
-        ["Ping神喝多了在DC开课，全场只有他听得最认真——因为他是真的听不懂。", "Ping神开课", "Kaiju：记笔记中"]] },
+        ["Ping大神喝多了在DC开课，全场只有他听得最认真——因为他是真的听不懂。", "Ping大神开课", "Kaiju：记笔记中"]] },
       { id: "k-tele", hero: () => 128, when: () => T("teletubby") && T("lowRank"), weight: 72, icon: "📺", title: "天线宝宝的天线", v: [
         ["头上的天线收得到外星信号，就是收不到小地图上的敌人。", "天线：满格", "小地图：没看"]] },
 
@@ -514,11 +514,11 @@
       { id: "s-snail", hero: () => 53, when: () => T("allNighter"), weight: 88, icon: "🐌", title: "蜗牛的速度", v: [
         ["外号蜗牛大神。喊通宵的速度像火箭，下线的速度——也像火箭。只有“蜗牛”两个字跟他不沾边。", "喊通宵：火箭", "下线：也是火箭"]] },
       { id: "s-pool", hero: () => s.heroes[1]?.hero_id, when: () => T("allHeroes") && s.n >= 5 && s.distinctHeroes / s.n >= 0.5, weight: 84, icon: "🌊", title: "英雄池深不见底", v: [
-        ["{n}场{distinct}个英雄。英雄池深到Yoki神的三板斧扔进去，都听不到回声。", "{n}场{distinct}个英雄", "三板斧：自愧不如"]] },
+        ["{n}场{distinct}个英雄。英雄池深到Yoki大神的三板斧扔进去，都听不到回声。", "{n}场{distinct}个英雄", "三板斧：自愧不如"]] },
       { id: "s-loud", hero: () => 2, when: () => T("loud"), weight: 86, icon: "📢", title: "人形扩音器", v: [
         ["嗓门是全队最大的。对面没开麦，也知道他今晚要“干”。", "对面没开麦", "也听见他在喊干"]] },
 
-      // ----- Yoki神 -----
+      // ----- Yoki大神 -----
       { id: "y-night", hero: () => DROW, when: () => T("drowArcana") && s.lateN >= 3, weight: 78, icon: "🌌", title: "凌晨的至宝", v: [
         ["本周{late}局是半夜开的。凌晨三点的小黑至宝特效，格外刺眼。", "凌晨三点", "至宝特效闪瞎眼"]] },
       // dall'inventario Steam (至宝仓库)
@@ -529,26 +529,26 @@
       { id: "y-inv-two", hero: () => DROW, when: () => ctx.inventory && ctx.inventory.arcana.filter((a) => a.heroId === DROW).length >= 2, weight: 79, icon: "👯", title: "两个小黑至宝", v: [
         ["小黑有两个至宝：一个拿来打，一个拿来在泉水里换着欣赏。", "两个小黑至宝", "一个打一个看"]] },
       { id: "y-wallet", when: () => T("drowArcana"), weight: 70, icon: "🎁", title: "至宝的代价", v: [
-        ["抽至宝花的钱，够请Ping神喝一个月的威士忌。他选择了小黑。", "一个月的威士忌", "还是一个至宝？"]] },
+        ["抽至宝花的钱，够请Ping大神喝一个月的威士忌。他选择了小黑。", "一个月的威士忌", "还是一个至宝？"]] },
       { id: "y-arcana", hero: () => DROW, when: () => T("drowArcana"), weight: 92, icon: "💎", title: "至宝改变人生", v: [
         ["抽出小黑至宝那天起，他的刀塔就只剩小黑了。至宝特效，比他的人生规划还清晰。", "抽到小黑至宝", "从此只玩小黑"]] },
       { id: "y-drowwr", hero: () => DROW, when: () => T("drowArcana") && s.matches.filter((m) => m.hero_id === DROW).length >= 2, weight: 86, icon: "🏹", title: "至宝不加属性", v: [
         ["本周小黑{dg}场，胜率{dwr}%。至宝加特效，不加胜率。", "小黑至宝", "不加胜率"]] },
       { id: "y-cheat", hero: () => fav?.hero_id, when: () => T("drowArcana") && fav && fav.hero_id !== DROW, weight: 90, icon: "🫢", title: "嘴上小黑", v: [
         ["嘴上天天小黑，本周玩得最多的却是{favHero}（{favGames}场）。小黑：我只是个至宝展示架。", "嘴上：小黑", "手上：{favHero}"]] },
-      { id: "y-ping", hero: () => 39, when: () => T("pingStudent"), weight: 88, icon: "🎓", title: "Ping神的学生", v: [
-        ["被Ping神在DC里教导了一整晚，从站位讲到人生。他全程只回了两个字：嗯嗯。", "Ping神：你听我说", "Yoki：嗯嗯"]] },
+      { id: "y-ping", hero: () => 39, when: () => T("pingStudent"), weight: 88, icon: "🎓", title: "Ping大神的学生", v: [
+        ["被Ping大神在DC里教导了一整晚，从站位讲到人生。他全程只回了两个字：嗯嗯。", "Ping大神：你听我说", "Yoki：嗯嗯"]] },
       { id: "y-clean", when: () => T("hardToRoast") && s.n >= 5 && s.wr >= 55, weight: 84, icon: "🔍", title: "黑料稀缺", v: [
         ["本庭翻遍他{n}场比赛，胜率{wr}%，能黑的东西少得可怜。只好黑他的至宝了。", "本庭找黑料", "找不到"]] },
       { id: "y-carry", hero: () => s.heroes[1]?.hero_id, when: () => T("noSupport") && s.n >= 5 && s.pureSup === 0, weight: 80, icon: "🚫", title: "辅助？什么辅助", v: [
         ["本周{n}场，每一场都在拿资源。队友的经济？那是什么，能吃吗？", "经济分配", "全部归我"]] },
 
-      // ----- B神 -----
+      // ----- 大B神 -----
       { id: "b-hidden", hero: () => 62, when: () => ctx.hidden && T("babysit"), weight: 99, icon: "🙈", title: "比赛记录：机密", v: [
         ["比赛数据设为不公开。打得怎么样？本庭查不到，但他自己心里有数。", "比赛记录", "不敢公开"],
         ["连OpenDota都查不到他的比赛。打得怎么样，只有他自己知道。", "OpenDota", "查无此人"]] },
       { id: "b-pos", hero: () => 44, when: () => T("positions"), weight: 86, icon: "1️⃣", title: "只会1号位和3号位", v: [
-        ["只会1号位和3号位。2号位？那是金神吹牛的地盘，他不敢去。", "1号位或3号位", "其他位置：不会"]] },
+        ["只会1号位和3号位。2号位？那是大金神吹牛的地盘，他不敢去。", "1号位或3号位", "其他位置：不会"]] },
       { id: "b-pool", hero: () => 18, when: () => T("tinyPool") && (!s.n || s.distinctHeroes <= 5), weight: 84, icon: "🖐️", title: "一只手的英雄池", v: [
         ["英雄池：剑圣、幻刺、斯温，最近又加了个猥琐力丸。四个英雄，一只手还剩一根手指。", "英雄池", "剑圣 幻刺 斯温 力丸"],
         ["英雄池三四个，选英雄阶段永远是全场最快的——反正就那几个。", "选英雄阶段", "3秒选完"]] },
@@ -564,9 +564,9 @@
       { id: "b-dad", hero: () => 102, when: () => T("milkAfk"), weight: 74, icon: "🍼", title: "双重身份", v: [
         ["游戏里要别人当保姆，游戏外自己当保姆。双重身份，两边都忙不过来。", "游戏里要保姆", "游戏外当保姆"]] },
       { id: "b-russian", hero: () => 99, when: () => T("russianCommander"), weight: 76, icon: "🇷🇺", title: "外语人才", v: [
-        ["俄语水平：能指挥毛子。中文水平：吵不过金神。", "俄语", "满级"]] },
-      { id: "b-jin", hero: () => 17, when: () => T("jinTarget"), weight: 82, icon: "🎯", title: "金神的固定靶子", v: [
-        ["被金神天天说菜。被一个传奇1说菜，这才是本周最大的伤害。", "被金神说菜", "暴击伤害"]] },
+        ["俄语水平：能指挥毛子。中文水平：吵不过大金神。", "俄语", "满级"]] },
+      { id: "b-jin", hero: () => 17, when: () => T("jinTarget"), weight: 82, icon: "🎯", title: "大金神的固定靶子", v: [
+        ["被大金神天天说菜。被一个传奇1说菜，这才是本周最大的伤害。", "被大金神说菜", "暴击伤害"]] },
       { id: "b-drow", hero: () => DROW, when: () => T("drowCurse") && s.matches.some((m) => m.hero_id === DROW && !m.win), weight: 90, icon: "🏹", title: "小黑诅咒", v: [
         ["本周又拿了小黑，又输了。小黑的胜率在他手里是一个常数：0。", "小黑", "从未赢过"]] },
       { id: "b-scared", hero: () => 67, when: () => T("scared") && s.n >= 3 && s.kills / s.n < 5, weight: 80, icon: "🫣", title: "人头？不敢要", v: [
@@ -633,7 +633,7 @@
     const trashM = t.has("trashTalk") && take(s.matches, (m) => m.deaths);
     if (trashM) q.push({ quote: `${rival}太菜了`, stamp: "双标", heroId: trashM.hero_id,
       reply: `说这话的人，本周用${H(trashM.hero_id)}一局死了${trashM.deaths}次。${rival}：谢谢，有被安慰到。` });
-    // ----- B神 -----
+    // ----- 大B神 -----
     if (t.has("babysit")) q.push({ quote: "保我！再保我十分钟！", stamp: "巨婴",
       reply: s.n ? `别人保6、7分钟就够了，他要保${babysitMinutes(s)}分钟。保姆都能考个育婴师证了。` : "别人保6、7分钟就够了，他要保30分钟。保姆都能考个育婴师证了。" });
     if (t.has("milkAfk")) q.push({ quote: "等一下，我去给孩子喂个奶", stamp: "挂机",
@@ -649,9 +649,9 @@
       q.push({ quote: "这把小黑稳了", stamp: "诅咒",
         reply: dw.length ? `本周小黑${dw.filter((m) => m.win).length}胜${dw.filter((m) => !m.win).length}负。小黑：我跟你有仇吗？` : "说完这句话的每一局，小黑都输了。小黑：我跟你有仇吗？" });
     }
-    if (t.has("jinTarget")) q.push({ quote: "我不菜！金神你别说话！", stamp: "实锤",
-      reply: "金神天天说他菜。金神说了一辈子大话，本庭认定：只有这一句是真的。" });
-    // ----- Yoki神 -----
+    if (t.has("jinTarget")) q.push({ quote: "我不菜！大金神你别说话！", stamp: "实锤",
+      reply: "大金神天天说他菜。大金神说了一辈子大话，本庭认定：只有这一句是真的。" });
+    // ----- Yoki大神 -----
     if (t.has("drow15")) q.push({ quote: "小黑1到5号位都能玩", stamp: "离谱", heroId: DROW,
       reply: "五号位小黑？队友问他插不插眼，他说：我的箭就是眼。" });
     if (t.has("noSupport")) q.push({ quote: "辅助？我不会，我只会carry", stamp: "核心病",
@@ -686,8 +686,8 @@
         : "喊完这句没多久，DC里只剩一个灰色的头像。说好的不下线，结果只有头像留了下来。" });
     if (t.has("loud")) q.push({ quote: "干干干！！！", stamp: "扰民",
       reply: "每局开始前的固定口号。喊得最响，DC里其他人的耳机音量统一调到了10%。" });
-    if (t.has("jinMidKiller")) q.push({ quote: "金神的中路？轻轻松松", stamp: "补刀",
-      reply: "这句话他能说一辈子。金神每听一次，血压就高一次。" });
+    if (t.has("jinMidKiller")) q.push({ quote: "大金神的中路？轻轻松松", stamp: "补刀",
+      reply: "这句话他能说一辈子。大金神每听一次，血压就高一次。" });
     q.usedMatches = usedM;
     return q;
   }
@@ -695,7 +695,7 @@
   // ---------- 专项调查: pannelli speciali, solo dati che lo mettono in ridicolo ----------
   function specials(s, ctx = {}) {
     const traits = new Set(ctx.persona?.traits || []);
-    // B神: il timer del 保姆 c'è anche senza dati
+    // 大B神: il timer del 保姆 c'è anche senza dati
     const babysit = traits.has("babysit") ? { minutes: s.n ? babysitMinutes(s) : null, normal: 7 } : null;
     if (!s.n) return babysit ? { cards: [], curve: null, xiuxian: null, babysit } : null;
     const cards = [];

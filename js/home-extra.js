@@ -18,7 +18,7 @@
     brag: "在群里吹牛", midKing: "抢中路", blameTeam: "赛后甩锅", rigged: "说系统局", lastPick: "最后一个选英雄", trashTalk: "嘲讽别人",
     drunk: "喝酒开黑", smoker: "赛后抽烟", theorist: "在DC讲课", xiuxian: "凌晨开局", mmrAnxiety: "盯着天梯分看", ancientOneDay: "幻想上万古",
     babysit: "不带保姆出门", milkAfk: "喂奶时排队", drowCurse: "玩小黑", scared: "躲在野区", jakiroOnly: "被迫打辅助",
-    drowArcana: "选小黑", threeAxes: "用第四把斧头", noSupport: "抢辅助的钱", pingStudent: "听Ping神上课",
+    drowArcana: "选小黑", threeAxes: "用第四把斧头", noSupport: "抢辅助的钱", pingStudent: "听Ping大神上课",
     allNighter: "喊通宵", loud: "开麦大喊",
     wifeAway: "当着老婆开黑", pcOld: "用老电脑排天梯", lowPrio: "排队时离开电脑", pudgeGod: "闭眼放钩子",
     slarkBody: "秒选小鱼人", pos4Slark: "四号位拿核心", lowRank: "查自己的段位",
