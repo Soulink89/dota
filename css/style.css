@@ -588,3 +588,21 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .kudo p { margin: 0; color: #e7e2d6; font-size: 14.5px; }
 .redact { display: inline-block; padding: 0 2px; border-radius: 3px; background: #0b0b0f; color: #0b0b0f; letter-spacing: -1px; user-select: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
 @media (max-width: 680px) { .kudos { grid-template-columns: 1fr; } }
+
+/* ---------- nota "solo vittorie" (modalità elogio) ---------- */
+.pill-gold { color: #fde68a; background: rgba(250,204,21,.14); border-color: rgba(250,204,21,.45); }
+.wins-only {
+  display: flex; align-items: center; gap: 24px; padding: 20px 26px; margin-bottom: 14px; border-radius: 16px;
+  background: linear-gradient(135deg, rgba(250,204,21,.16), rgba(94,211,124,.08)), var(--panel);
+  border: 1px solid rgba(250,204,21,.45); box-shadow: 0 0 40px -18px rgba(250,204,21,.6);
+}
+.wins-only-seal {
+  flex: none; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+  font: 900 17px/1.15 var(--f-meme); color: #3b2a05; transform: rotate(-10deg);
+  background: radial-gradient(circle at 35% 30%, #fff3b0, #facc15 55%, #b8860b);
+  box-shadow: 0 0 0 4px rgba(250,204,21,.25), 0 8px 20px rgba(0,0,0,.45); animation: stamp .5s cubic-bezier(.3,1.6,.5,1) both;
+}
+.wins-only h3 { margin: 0 0 6px; font: 400 24px var(--f-display); letter-spacing: .04em; color: #fde68a; }
+.wins-only p { margin: 0; color: #e7e2d6; font-size: 14.5px; }
+.wins-only b { color: #fde68a; }
+@media (max-width: 680px) { .wins-only { flex-direction: column; text-align: center; } }

@@ -269,6 +269,7 @@
               </div>
               <div class="phero-links">
                 ${sourceBadge(p)}
+                ${p.praise ? `<span class="pill pill-gold">🏅 本页仅展示胜场</span>` : ""}
                 <a class="pill pill-link" href="https://www.opendota.com/players/${id}" target="_blank" rel="noopener">OpenDota ↗</a>
                 <a class="pill pill-link" href="https://www.dotabuff.com/players/${id}" target="_blank" rel="noopener">Dotabuff ↗</a>
                 <a class="pill pill-link" href="https://steamcommunity.com/profiles/${esc(cfg.steam64)}" target="_blank" rel="noopener">Steam ↗</a>
@@ -283,6 +284,12 @@
           </div>
         </div>
       </section>
+
+      ${p.praise ? `
+      <section class="wins-only">
+        <div class="wins-only-seal">只收<br>胜场</div>
+        <div><h3>本页特别说明</h3><p>根据本庭特别条例，<b>${esc(p.name)}</b>的页面<b>只收录胜利的比赛</b>：统计、图表、比赛列表和海报全部只看胜场，败场一律不予记录。</p></div>
+      </section>` : ""}
 
       ${p.ctx.hidden ? `
       <section class="classified">
@@ -366,7 +373,7 @@
       </section>` : ""}
 
       <section class="block">
-        <div class="block-head"><h2>最近比赛</h2><span class="muted small">最近${DAYS}天</span></div>
+        <div class="block-head"><h2>最近比赛</h2><span class="muted small">最近${DAYS}天${p.praise ? " · 仅显示胜场" : ""}</span></div>
         ${s.n ? `<div class="matches">${s.matches.map((m) => matchRow(m, p.heroes[m.hero_id])).join("")}</div>`
               : `<p class="muted">最近${DAYS}天没有比赛。</p>`}
       </section>
