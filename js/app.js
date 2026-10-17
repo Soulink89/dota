@@ -34,6 +34,7 @@
         const name = cfg.alias || p.personaname || `玩家 ${id}`;
         // modalità elogio: si contano solo le partite vinte
         const praise = cfg.persona?.mode === "praise";
+        const rawMatches = data.matches || []; // partite reali (anche le sconfitte): servono all'arena
         if (praise) data = { ...data, matches: (data.matches || []).filter((m) => (m.player_slot < 128) === m.radiant_win) };
         const stats = R.computeStats(data.matches, DAYS);
         // index: ogni giocatore riceve varianti diverse delle battute; week: ruotano ogni settimana
@@ -55,7 +56,7 @@
         const quotes = R.quotes(stats, ctx, heroes);
         ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
         const roasts = R.buildRoasts(stats, name, heroes, ctx);
-        return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx, praise, legend: cfg.persona?.mode === "legend",
+        return { id, cfg, data, rawMatches, heroes, name, steamName: p.personaname, stats, ctx, praise, legend: cfg.persona?.mode === "legend",
           verdict: R.verdict(stats, ctx), roasts, quotes, special: R.specials(stats, ctx),
           split: splitRoasts(roasts), kudos: alsoPraise(cfg, data, heroes, ctx, quotes, roasts) };
       })().catch((e) => { cache.delete(id); throw e; }));
@@ -191,6 +192,7 @@
   async function renderHome() {
     document.title = "刀塔法庭";
     app.innerHTML = `
+      <div id="arena-home"></div>
       <section class="hero-intro">
         <div class="hero-intro-text">
           <p class="eyebrow">每周庭审 · 最近${DAYS}天</p>
@@ -200,7 +202,6 @@
         <div class="hero-gavel" aria-hidden="true">⚖</div>
       </section>
       <section class="court-stats" id="court-stats"></section>
-      <div id="fortune-home"></div>
       <div id="daily-home"></div>
       <div id="arcana-home"></div>
       <div class="block-head"><h2>通缉榜</h2><span class="muted small">点击海报查看卷宗</span></div>
@@ -215,6 +216,7 @@
       </section>
       <div id="awards-home"></div>
       <div id="board-home"></div>
+      <div id="fortune-home"></div>
       <div id="group-heat"></div>`;
 
     const cards = document.querySelectorAll("#cards .wanted.skeleton");
@@ -237,6 +239,7 @@
       <div class="cs"><span>🧑‍⚖️</span><b>${counter(accused.length)}</b><em>在押被告</em></div>`;
     animateCounters(document.getElementById("court-stats"));
     renderDailyHome();
+    if (window.TribunaleArena) window.TribunaleArena.mount(document.getElementById("arena-home"), loaded.slice().sort((a, b) => a.ctx.index - b.ctx.index));
     renderHomeExtras(loaded.sort((a, b) => a.ctx.index - b.ctx.index));
     allHeadlines().then(setTicker);
   }
@@ -1016,6 +1019,26 @@
   }
   setInterval(softRefresh, 60 * 1000);
   document.addEventListener("visibilitychange", softRefresh);
+
+  // Nuova versione del sito: confronta il <meta name="build"> con quello pubblicato e, se è cambiato,
+  // ricarica da sola (all'apertura, ogni 5 minuti e quando si torna sulla scheda)
+  const BUILD = document.querySelector('meta[name="build"]')?.content;
+  let reloading = false;
+  async function checkBuild() {
+    if (!BUILD || reloading || document.hidden || location.protocol === "file:") return;
+    try {
+      const html = await (await fetch(`index.html?t=${Date.now()}`, { cache: "no-store" })).text();
+      const live = html.match(/<meta name="build" content="(\d+)"/)?.[1];
+      if (live && live !== BUILD) {
+        reloading = true;
+        document.body.insertAdjacentHTML("beforeend", `<div class="update-toast">🔄 网站有新版本，正在自动刷新…</div>`);
+        setTimeout(() => location.reload(), 1200);
+      }
+    } catch {}
+  }
+  checkBuild();
+  setInterval(checkBuild, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", checkBuild);
   window.addEventListener("hashchange", route);
   renderNav();
   route();
