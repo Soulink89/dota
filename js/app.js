@@ -214,7 +214,7 @@
       <div class="wanted-bounty"><span>${p.praise ? "奖金" : "悬赏"}</span><b>🪙 ${p.ctx.hidden ? "机密" : (p.praise ? Math.max(1, s.kills) * 300 : bounty).toLocaleString(LOCALE)}</b><span>金</span></div>
       <div class="wanted-stats">
         <div><b>${p.ctx.hidden ? "?" : s.n}</b><span>场</span></div>
-        <div><b>${p.ctx.hidden ? "?" : s.n ? Math.round(s.wr) + "%" : "–"}</b><span>胜率</span></div>
+        <div><b>${p.ctx.hidden ? "?" : p.praise ? "*" : s.n ? Math.round(s.wr) + "%" : "–"}</b><span>胜率</span></div>
         ${p.praise ? `<div><b>${s.kills}</b><span>击杀</span></div>` : `<div><b>${p.ctx.hidden ? "?" : s.deaths}</b><span>送头</span></div>`}
       </div>
       ${resultStrip(s)}
@@ -244,7 +244,7 @@
     const fav = s.heroes[0] && p.heroes[s.heroes[0].hero_id];
     const wl = p.data.wl;
     // Soul: le sconfitte di carriera sono "censurate"
-    const life = !wl || !(wl.win + wl.lose) ? "–" : p.praise ? `${wl.win}胜 – <span class="redact" title="机密">████</span>负 · 胜率 <span class="redact" title="机密">██.█%</span>` : `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%`;
+    const life = !wl || !(wl.win + wl.lose) ? "–" : p.praise ? `${wl.win}胜 – *负 · 胜率 *` : `${wl.win}胜 – ${wl.lose}负 · ${((wl.win / (wl.win + wl.lose)) * 100).toFixed(1)}%`;
     const memeHeroes = s.heroes.length ? s.heroes.map((h) => p.heroes[h.hero_id]) : [null];
     const collage = s.heroes.slice(0, 5).map((h) => p.heroes[h.hero_id]).filter(Boolean);
 
@@ -297,8 +297,8 @@
         <div><h3>比赛数据：不予公开</h3><p>Dota 2 设置 → 社交 → “公开比赛数据”：关闭。以下判决依据群友证词。</p></div>
       </section>` : `
       <section class="kpis">
-        ${kpi("场次", s.n ? counter(s.n) : "0", `浪费了 ${fmt1(s.hours)} 小时人生`)}
-        ${kpi("胜率", s.n ? counter(Math.round(s.wr), "%") : "–", `${s.wins}胜 · ${s.losses}负`)}
+        ${p.praise ? kpi("胜场", s.n ? counter(s.n) : "0", `胜利用时 ${fmt1(s.hours)} 小时`, "pos") : kpi("场次", s.n ? counter(s.n) : "0", `浪费了 ${fmt1(s.hours)} 小时人生`)}
+        ${p.praise ? kpi("胜率", "*", `${s.wins}胜 · *负`) : kpi("胜率", s.n ? counter(Math.round(s.wr), "%") : "–", `${s.wins}胜 · ${s.losses}负`)}
         ${kpi("KDA", s.n ? counter(s.avgKda, "", 1) : "–", `${s.kills} / ${s.deaths} / ${s.assists}`)}
         ${p.praise ? kpi("击杀", s.n ? counter(s.kills) : "0", s.n ? `每局 ${fmt1(s.kills / s.n)} 个` : "–", "pos") : kpi("送头", s.n ? counter(s.deaths) : "0", s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", "neg")}
         ${kpi("平均GPM", s.n ? counter(Math.round(s.avgGpm)) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
@@ -369,7 +369,7 @@
       ${s.heroes.length ? `
       <section class="block">
         <div class="block-head"><h2>${p.praise ? "本周招牌英雄" : "本周受害英雄"}</h2><span class="muted small">${p.praise ? "带来胜利的英雄" : "被他玩过的英雄"}</span></div>
-        <div class="heroes">${s.heroes.slice(0, 8).map((h) => heroTile(h, p.heroes[h.hero_id])).join("")}</div>
+        <div class="heroes">${s.heroes.slice(0, 8).map((h) => heroTile(h, p.heroes[h.hero_id], p.praise)).join("")}</div>
       </section>` : ""}
 
       <section class="block">
@@ -579,13 +579,13 @@
     return `<div class="kpi"><span class="kpi-label">${label}</span><b class="kpi-val ${cls}">${value}</b><span class="kpi-sub">${sub}</span></div>`;
   }
 
-  function heroTile(h, hero) {
+  function heroTile(h, hero, praise = false) {
     const wr = Math.round((h.wins / h.games) * 100);
     return `<div class="htile">
       <div class="htile-img" style="${hero ? `background-image:url('${API.heroImg(hero)}')` : ""}"></div>
       <div class="htile-body">
         <b>${esc(hero?.localized_name || "英雄 #" + h.hero_id)}</b>
-        <span>${h.games}场 · <em class="${wr >= 50 ? "pos" : "neg"}">${wr}%</em> · 死${h.d}次</span>
+        <span>${praise ? `${h.wins}场胜利` : `${h.games}场 · <em class="${wr >= 50 ? "pos" : "neg"}">${wr}%</em> · 死${h.d}次`}</span>
         <div class="bar"><i style="width:${wr}%"></i></div>
       </div>
     </div>`;
