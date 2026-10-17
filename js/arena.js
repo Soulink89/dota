@@ -393,6 +393,7 @@
         <div class="arena-field">${F.map((f, i) => fighterHTML(f, i)).join("")}</div>
         <ol class="arena-chat" id="arena-log"></ol>
       </section>
+      ${LITE ? `<div class="arena-lite-note">📱 手机端已自动切换为<b>简化画质</b>（静态英雄、精简特效），以免手机发烫、卡顿。想看完整的动态英雄和特效，请用<b>电脑</b>打开。</div>` : ""}
       <details class="arena-rules">
         <summary>📜 乱斗规则（点我）</summary>
         <ul>
