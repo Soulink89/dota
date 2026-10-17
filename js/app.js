@@ -219,12 +219,16 @@
       <div id="fortune-home"></div>
       <div id="group-heat"></div>`;
 
+    const arenaEl = document.getElementById("arena-home");
+    window.TribunaleArena?.loader(arenaEl);
+    let nLoaded = 0;
     const cards = document.querySelectorAll("#cards .wanted.skeleton");
     const loaded = [];
     await Promise.all(CFG.players.map(async (cfg, i) => {
       try {
         const p = await getPlayer(cfg);
         loaded.push(p);
+        window.TribunaleArena?.progress(arenaEl, (++nLoaded / CFG.players.length) * 0.5, `正在读取 ${p.name} 的战绩…`);
         cards[i].outerHTML = wantedPoster(p, i);
       } catch (e) {
         cards[i].outerHTML = `<article class="wanted wanted-empty"><h3>证据暂缺</h3><p>OpenDota 没有响应，请稍后再试。</p></article>`;

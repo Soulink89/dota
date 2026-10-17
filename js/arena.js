@@ -330,6 +330,29 @@
   const setMyPushes = (id, v) => { try { localStorage.setItem(myKey(id), v); } catch {} };
   const getPushes = (id) => fetch(PUSH_URL("get", id)).then((r) => (r.ok ? r.json() : { value: 0 })).then((j) => j.value || 0).catch(() => 0);
 
+  // ---------- schermata di caricamento ----------
+  const TIPS = ["正在给大P神磨锤子…", "正在给Ping大神倒威士忌…", "正在给大B神冲奶粉…", "正在召唤小兵…", "正在加载英雄模型…",
+    "正在统计大金神昨天死了几次…", "正在帮Kaiju大神找小鱼人…", "正在给疯子大神的电脑开机（需要五分钟）…", "正在擦亮Yoki大神的至宝…"];
+  const loaderHTML = (p = 0) => `<div class="arena-loader" data-p="${p}">
+      <div class="al-title">刀塔乱斗</div>
+      <div class="al-bar"><i style="width:${Math.round(p * 100)}%"></i></div>
+      <div class="al-info"><span class="al-tip">${TIPS[0]}</span><b class="al-pct">${Math.round(p * 100)}%</b></div>
+    </div>`;
+  function progress(el, p, tip) {
+    const l = el?.querySelector(".arena-loader");
+    if (!l) return;
+    const v = Math.max(Number(l.dataset.p || 0), Math.min(1, p)); // la barra non torna mai indietro
+    l.dataset.p = v;
+    l.querySelector(".al-bar i").style.width = Math.round(v * 100) + "%";
+    l.querySelector(".al-pct").textContent = Math.round(v * 100) + "%";
+    l.querySelector(".al-tip").textContent = tip || TIPS[Math.floor(v * 100 / 12) % TIPS.length];
+  }
+  // segnaposto mostrato subito, mentre si caricano i dati dei giocatori
+  function loader(el) {
+    if (el) el.innerHTML = `<section class="arena arena-pre tod-${tod()}">${loaderHTML(0)}</section>`;
+  }
+  const loadImage = (src) => new Promise((res) => { const i = new Image(); i.onload = i.onerror = () => res(); i.src = src; });
+
   // ---------- montaggio ----------
   const FIELD = { x0: 6, x1: 90, y0: 64, y1: 94 };
   let timer = null, walker = null, chatter = null, spawner = null, sipper = null, io = null, active = true, onVis = null;
@@ -339,10 +362,14 @@
     const mobile = window.innerWidth < 700;
     FIELD.y0 = mobile ? 60 : 64;
     FIELD.y1 = mobile ? 86 : 94; // su telefono la chat sta in basso
+    const startP = Number(el.querySelector(".arena-loader")?.dataset.p || 0);
+    progress(el, 0.5, "正在读取乱斗战绩…");
     const [ids, hist] = await Promise.all([loadItemIds(), loadHistory()]);
+    progress(el, 0.56, "正在统计大家的推力 💪…");
     const F = buildFighters(players, ids, hist);
     const today = dayIdx(Date.now());
     const [pushes, pushDays] = await Promise.all([Promise.all(F.map((f) => getPushes(f.id))), Promise.all(F.map((f) => getPushes(`${f.id}-d${today}`)))]);
+    progress(el, 0.62);
     const jin = F.find((f) => f.name === "大金神");
     F.forEach((f, i) => {
       f.x = FIELD.x0 + ((i + 0.5) / F.length) * (FIELD.x1 - FIELD.x0);
@@ -355,7 +382,8 @@
     const medal = tier ? `<div class="gk-medal" title="${esc(medalName)}"><img src="${API.rankIcon(Math.floor(tier / 10))}" alt="">${tier % 10 && tier < 80 ? `<img src="${API.rankStar(tier % 10)}" alt="">` : ""}</div>` : "";
 
     el.innerHTML = `
-      <section class="arena tod-${tod()}${LITE ? " lite" : ""}" aria-label="刀塔乱斗">
+      <section class="arena loading tod-${tod()}${LITE ? " lite" : ""}" aria-label="刀塔乱斗">
+        ${loaderHTML(Math.max(startP, 0.62))}
         <div class="arena-bg"></div><div class="arena-tint"></div><div class="arena-ground"></div>
         <div class="arena-fx">${LITE ? "" : SPARKS}</div>
         <div class="arena-top">${F.map(scoreCell).join("")}</div>
@@ -384,7 +412,8 @@
     const log = el.querySelector("#arena-log");
     const nodes = Object.fromEntries(F.map((f) => [f.id, el.querySelector(`[data-fid="${f.id}"]`)]));
     const cells = Object.fromEntries(F.map((f) => [f.id, el.querySelector(`[data-sid="${f.id}"]`)]));
-    F.forEach((f) => { place(nodes[f.id], f, 0); setupHero(nodes[f.id], f); });
+    F.forEach((f) => place(nodes[f.id], f, 0));
+    const heroReady = F.map((f) => setupHero(nodes[f.id], f));
     const isDead = (f) => nodes[f.id].classList.contains("dead");
     // video fermi quando l'arena non si vede (risparmia CPU e batteria)
     // fuori schermo o scheda nascosta: tutto in pausa (video, animazioni, timer) per non scaldare il telefono
@@ -594,6 +623,15 @@
     const now = Date.now();
     const lead = F.map((f, i) => ({ f, c: counts(f, i, now) })).filter((x) => x.c).sort((a, b) => xpOf(b.c) - xpOf(a.c))[0];
     if (lead) push(`🏆 当前领跑：${tag(lead.f)} Lv.${levelOf(xpOf(lead.c))}（${rankOf(levelOf(xpOf(lead.c)))}）`, "sys");
+    // aspetta sfondo e modelli degli eroi (al massimo 12 secondi), aggiornando la barra; poi si parte
+    const assets = [loadImage(LITE ? "assets/arena-bg-m.jpg" : "assets/arena-bg.jpg"), ...heroReady];
+    let doneN = 0;
+    assets.forEach((a) => a.then(() => progress(el, 0.62 + (0.38 * ++doneN) / assets.length)));
+    await Promise.race([Promise.all(assets), new Promise((r) => setTimeout(r, 12000))]);
+    progress(el, 1, "准备就绪！");
+    await new Promise((r) => setTimeout(r, 350));
+    root.classList.remove("loading");
+    setTimeout(() => el.querySelector(".arena-loader")?.remove(), 700);
     spawnWave();
     tick();
     const alive = (fn, h) => () => (!document.contains(el) ? clearInterval(h()) : active && fn());
@@ -647,29 +685,36 @@
   }
 
   // eroe animato (render ufficiale di dota2.com): .mov HEVC per Safari, .webm per gli altri; se non va, immagine fissa
+  // prepara il modello dell'eroe; la promessa si risolve quando è pronto (o è fallito, così il gioco parte lo stesso)
   function setupHero(n, f) {
-    const fallback = (el) => {
-      if (!el.isConnected) return;
-      const img = document.createElement("img");
-      img.className = "f-hero flat";
-      img.alt = f.heroName;
-      img.src = f.portrait || f.avatar;
-      el.replaceWith(img);
-    };
-    // modalità leggera: il render PNG (1440×1440, ~8 MB in memoria) viene rimpicciolito in un canvas da 240×240 e poi liberato
-    const cv = n.querySelector("canvas.f-hero");
-    if (cv) {
-      const img = new Image();
-      img.decoding = "async";
-      img.onload = () => { cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); img.onerror = null; img.removeAttribute("src"); };
-      img.onerror = () => fallback(cv);
-      img.src = f.render;
-      return;
-    }
-    const v = n.querySelector("video");
-    if (!v) return;
-    v.querySelector("source:last-of-type").addEventListener("error", () => fallback(v));
-    v.addEventListener("error", () => fallback(v));
+    return new Promise((done) => {
+      const fallback = (el) => {
+        if (el.isConnected) {
+          const img = document.createElement("img");
+          img.className = "f-hero flat";
+          img.alt = f.heroName;
+          img.src = f.portrait || f.avatar;
+          el.replaceWith(img);
+        }
+        done();
+      };
+      // modalità leggera: il render PNG (1440×1440, ~8 MB in memoria) viene rimpicciolito in un canvas da 240×240 e poi liberato
+      const cv = n.querySelector("canvas.f-hero");
+      if (cv) {
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => { cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); img.onerror = null; img.removeAttribute("src"); done(); };
+        img.onerror = () => fallback(cv);
+        img.src = f.render;
+        return;
+      }
+      const v = n.querySelector("video");
+      if (!v) { const i = n.querySelector("img.f-hero"); return i && !i.complete ? (i.onload = i.onerror = done) : done(); }
+      if (v.readyState >= 3) return done();
+      v.addEventListener("canplay", done, { once: true });
+      v.querySelector("source:last-of-type").addEventListener("error", () => fallback(v));
+      v.addEventListener("error", () => fallback(v));
+    });
   }
 
   // oggetti in mano dalla "lore": Ping大神 whisky + sigaretta, 大B神 il biberon
@@ -861,5 +906,5 @@
     setTimeout(() => g.classList.remove("talk", "diving"), 3000);
   }
 
-  window.TribunaleArena = { mount };
+  window.TribunaleArena = { mount, loader, progress };
 })();
