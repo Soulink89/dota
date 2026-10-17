@@ -43,6 +43,8 @@
           praiseIndex: CFG.players.filter((c) => c.persona?.mode === "praise" || c.persona?.alsoPraise).indexOf(cfg),
           // partite nascoste: "Expose Public Match Data" disattivato in Dota 2
           hidden: !(data.matches || []).length && !(data.wl && data.wl.win + data.wl.lose) && data.source !== "demo" };
+        // monumento: dati di carriera per i "leggendari" che non giocano più
+        if (cfg.persona?.mode === "legend") ctx.legend = await API.loadLegend(id);
         // inventario Dota 2 (至宝仓库), solo per chi ha persona.inventory
         if (cfg.persona?.inventory) {
           const [inv, life] = await Promise.all([API.loadInventory(id), API.loadLifetimeHeroes(id)]);
@@ -51,7 +53,7 @@
         const quotes = R.quotes(stats, ctx, heroes);
         ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
         const roasts = R.buildRoasts(stats, name, heroes, ctx);
-        return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx, praise,
+        return { id, cfg, data, heroes, name, steamName: p.personaname, stats, ctx, praise, legend: cfg.persona?.mode === "legend",
           verdict: R.verdict(stats, ctx), roasts, quotes, special: R.specials(stats, ctx),
           split: splitRoasts(roasts), kudos: alsoPraise(cfg, data, heroes, ctx, quotes, roasts) };
       })().catch((e) => { cache.delete(id); throw e; }));
@@ -97,6 +99,10 @@
   function headlines(p) {
     const s = p.stats, n = esc(p.name), H = (id) => esc(p.heroes[id]?.localized_name || "");
     if (p.ctx.hidden) return [`<b>${n}</b>：比赛数据未公开，本庭无法统计`];
+    if (p.legend) {
+      const L = p.ctx.legend || {};
+      return [`<b>${n}</b>：已退役${L.lastMatch ? Math.floor((Date.now() / 1000 - L.lastMatch) / 86400) : "?"}天 · ${esc(medalName(p.data.profile?.rank_tier))} · 江湖仍有他的传说`];
+    }
     if (p.praise) {
       if (!s.n) return [`<b>${n}</b>：本周休养生息`];
       const b = s.bestGame;
@@ -216,7 +222,7 @@
         cards[i].outerHTML = `<article class="wanted wanted-empty"><h3>证据暂缺</h3><p>OpenDota 没有响应，请稍后再试。</p></article>`;
       }
     }));
-    const accused = loaded.filter((p) => !p.praise); // i giocatori in modalità elogio non sono "imputati"
+    const accused = loaded.filter((p) => !p.praise && !p.legend); // elogiati e leggende non sono "imputati"
     const sum = (f) => accused.reduce((t, p) => t + f(p.stats), 0);
     document.getElementById("court-stats").innerHTML = `
       <div class="cs"><span>💀</span><b>${counter(sum((s) => s.deaths))}</b><em>本周被告合计送头</em></div>
@@ -229,7 +235,27 @@
     allHeadlines().then(setTicker);
   }
 
+  // manifesto "传说" in pietra per i leggendari ritirati
+  function legendPoster(p) {
+    const wl = p.data.wl || { win: 0, lose: 0 }, L = p.ctx.legend || {};
+    const days = L.lastMatch ? Math.floor((Date.now() / 1000 - L.lastMatch) / 86400) : null;
+    return `<a class="wanted legend-poster" href="#/p/${p.id}">
+      <div class="wanted-top"><span>传 说</span><small>LEGEND · 名人堂</small></div>
+      <div class="wanted-photo">${avatar(p, p.name, "avatar-wanted")}</div>
+      <h3>${esc(p.name)}</h3>
+      <p class="wanted-crime">${esc(medalName(p.data.profile?.rank_tier))} · ${esc(p.cfg.accusa || "")}</p>
+      <div class="wanted-stats">
+        <div><b>${(wl.win + wl.lose).toLocaleString(LOCALE)}</b><span>生涯局数</span></div>
+        <div><b>${wl.win.toLocaleString(LOCALE)}</b><span>胜场</span></div>
+        <div><b>${days ?? "?"}</b><span>退役天数</span></div>
+      </div>
+      <p class="wanted-quote">🕯️ 他没有离开刀塔，只是刀塔里已经没有值得他证明的东西了。</p>
+      <span class="wanted-cta">瞻仰纪念碑 →</span>
+    </a>`;
+  }
+
   function wantedPoster(p, i) {
+    if (p.legend) return legendPoster(p);
     const s = p.stats, v = p.verdict, top = p.roasts[0];
     const bounty = Math.max(1, s.deaths) * 300;
     const tilt = [-2.2, 1.8, -1.2, 2.4][i % 4];
@@ -269,6 +295,7 @@
       return;
     }
     document.title = `${p.name} · 刀塔法庭`;
+    if (p.legend) return renderLegend(p, cfg, id); // pagina monumento, completamente diversa
     const s = p.stats, v = p.verdict, prof = p.data.profile || {};
     const fav = s.heroes[0] && p.heroes[s.heroes[0].hero_id];
     const wl = p.data.wl;
@@ -557,7 +584,7 @@
         <div class="block-head"><h2>今日黄历</h2><span class="muted small">${today.toLocaleDateString(LOCALE, { month: "long", day: "numeric", weekday: "long" })} · 每天自动更新</span></div>
         <div class="almanac">${X.fortunes(players, heroes).map((f, i) => {
           const h = heroes[f.hero];
-          return `<a class="alm ${f.p.praise ? "alm-gold" : ""}" href="#/p/${f.p.id}" style="--d:${i * 60}ms">
+          return `<a class="alm ${f.p.praise ? "alm-gold" : f.p.legend ? "alm-stone" : ""}" href="#/p/${f.p.id}" style="--d:${i * 60}ms">
             <div class="alm-head"><b>${esc(f.p.name)}</b><span class="alm-stars">${f.starsText}</span></div>
             <div class="alm-row yi"><i>宜</i><span>${esc(f.yi)}</span></div>
             <div class="alm-row ji"><i>忌</i><span>${esc(f.ji)}</span></div>
@@ -646,6 +673,140 @@
       <section class="block">
         <div class="block-head"><h2>全员作息表</h2><span class="muted small">这群人到底什么时候睡觉 · 本周${all.length}局</span></div>
         <div class="sp-panel">${heatmap(all)}</div>
+      </section>`;
+  }
+
+  // ---------- 纪念碑: pagina monumento per i leggendari ritirati (persona.mode = "legend") ----------
+  const LEGEND_SAYINGS = [
+    "大金神这波中路……算了，不说了。",
+    "超凡不是喊出来的，是一局一局打出来的。",
+    "你们打，我在群里看看就行。",
+    "大金神的段位也挺好的，至少名字听起来很厉害。",
+    "当年我玩齐天大圣的时候，大金神还在研究怎么补刀。",
+    "别问我什么时候复出，问就是在路上。",
+  ];
+  let retireTimer;
+  function renderLegend(p, cfg, id) {
+    const L = p.ctx.legend || {}, prof = p.data.profile || {}, wl = p.data.wl || { win: 0, lose: 0 };
+    const tier = prof.rank_tier, games = wl.win + wl.lose;
+    const hours = Math.round((L.seconds || 0) / 3600);
+    const last = L.lastMatch ? new Date(L.lastMatch * 1000) : null;
+    const fmtN = (n) => Number(n || 0).toLocaleString(LOCALE);
+    // ogni giorno un ordine diverso per le "frasi da chat"
+    const day = Math.floor(Date.now() / 86400000);
+    const sayings = LEGEND_SAYINGS.map((s, i) => ({ s, k: (i * 7 + day) % LEGEND_SAYINGS.length })).sort((a, b) => a.k - b.k).slice(0, 4).map((x) => x.s);
+    app.innerHTML = `
+      <div class="player legend-page" style="${colorStyle(cfg)}">
+        <a href="#/" class="back">← 法庭</a>
+        <section class="mon-scene">
+          <div class="candle c1"><i></i></div><div class="candle c2"><i></i></div>
+          <div class="monument">
+            <div class="mon-cap">纪 念 碑</div>
+            <div class="mon-avatar">${avatar(p, p.name, "avatar-xl")}</div>
+            <h1 class="mon-name">${esc(p.name)}</h1>
+            <p class="mon-sub">${esc(cfg.accusa || "远古大神")} · Steam：${esc(p.steamName || "")}</p>
+            <div class="mon-medal">${medal(tier)}<div><b>${esc(medalName(tier))}</b><span id="mon-top"></span></div></div>
+            <div class="mon-inscription">
+              <p>生涯 <b>${fmtN(games)}</b> 局 · <b>${fmtN(wl.win)}</b> 胜</p>
+              <p>在刀塔里度过 <b>${fmtN(hours)}</b> 小时</p>
+              <p>最后一局：<b>${last ? last.toLocaleDateString(LOCALE, { year: "numeric", month: "long", day: "numeric" }) : "已成传说"}</b></p>
+            </div>
+            <p class="mon-epitaph">“他没有离开刀塔，只是刀塔里已经没有值得他证明的东西了。”</p>
+          </div>
+          <div class="candle c3"><i></i></div><div class="candle c4"><i></i></div>
+        </section>
+
+        ${last ? `<section class="retire-clock"><span>退役计时</span><b id="retire-clock">—</b><em>江湖上仍流传着他的传说</em></section>` : ""}
+
+        ${L.heroes?.length ? `
+        <section class="block">
+          <div class="block-head"><h2>传世英雄</h2><span class="muted small">生涯出场最多的英雄</span></div>
+          <div class="legend-heroes">${L.heroes.map((h, i) => { const hero = p.heroes[h.hero_id]; const wr = Math.round((h.win / h.games) * 100); return `
+            <div class="lhero" style="--d:${i * 90}ms">
+              <div class="lhero-img" style="${hero ? `background-image:url('${API.heroImg(hero)}')` : ""}"></div>
+              <b>${esc(hero?.localized_name || "英雄")}</b><span>${h.games}场 · 胜率${wr}%</span>
+            </div>`; }).join("")}</div>
+        </section>` : ""}
+
+        <section class="block">
+          <div class="block-head"><h2>生涯战功</h2><span class="muted small">数据来自 OpenDota</span></div>
+          <div class="kpis legend-kpis">
+            ${kpi("总击杀", counter(L.kills || 0), "对面的复活读秒，有一半是他制造的", "pos")}
+            ${kpi("总助攻", counter(L.assists || 0), "团战里从来不缺他")}
+            ${kpi("总补刀", counter(L.lastHits || 0), "兵线见了他都绕道")}
+            ${kpi("游戏时长", counter(hours), "小时 · 一段青春", "")}
+          </div>
+        </section>
+
+        <div id="legend-vs"></div>
+
+        <section class="block">
+          <div class="block-head"><h2>群聊冒泡</h2><span class="muted small">偶尔出现，点评一句就走 · 艺术加工</span></div>
+          <div class="chat">${sayings.map((s, i) => `
+            <div class="bubble-row" style="--d:${i * 150}ms">${avatar(p, p.name, "chat-av")}<div class="bubble"><b>${esc(p.name)}</b><p>${esc(s)}</p></div></div>`).join("")}</div>
+        </section>
+
+        <section class="block flowers">
+          <button class="btn flower-btn" id="flower-btn">💐 献花</button>
+          <span class="muted small" id="flower-count"></span>
+          <div class="flower-field" id="flower-field"></div>
+        </section>
+      </div>`;
+
+    // conto del ritiro in tempo reale
+    clearInterval(retireTimer);
+    if (last) {
+      const tick = () => {
+        const el = document.getElementById("retire-clock");
+        if (!el) return clearInterval(retireTimer);
+        const t = Math.floor((Date.now() - last.getTime()) / 1000), pad = (n) => String(n).padStart(2, "0");
+        el.textContent = `${Math.floor(t / 86400)}天 ${pad(Math.floor(t / 3600) % 24)}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
+      };
+      tick();
+      retireTimer = setInterval(tick, 1000);
+    }
+
+    // 献花: ogni visitatore può lasciare un fiore (contato solo nel proprio browser)
+    let flowers = 0;
+    try { flowers = Number(localStorage.getItem("tribunale:flowers:" + id)) || 0; } catch {}
+    const showCount = () => { document.getElementById("flower-count").textContent = flowers ? `你已献花 ${flowers} 朵` : "献上一朵花，致敬传说"; };
+    showCount();
+    document.getElementById("flower-btn").addEventListener("click", () => {
+      flowers++;
+      try { localStorage.setItem("tribunale:flowers:" + id, String(flowers)); } catch {}
+      showCount();
+      const f = document.createElement("span");
+      f.className = "flower";
+      f.textContent = ["💐", "🌹", "🌸", "🌼", "🌷"][flowers % 5];
+      f.style.left = 10 + Math.random() * 80 + "%";
+      document.getElementById("flower-field").appendChild(f);
+      setTimeout(() => f.remove(), 2600);
+    });
+
+    animateCounters(app);
+    renderLegendExtras(p, cfg);
+  }
+
+  // confronto medaglie col rivale e verifica "本群最高分" (calcolata sui ranghi di tutti i giocatori)
+  async function renderLegendExtras(p, cfg) {
+    const res = await Promise.allSettled(CFG.players.map(getPlayer));
+    const all = res.filter((r) => r.status === "fulfilled").map((r) => r.value);
+    const tier = p.data.profile?.rank_tier || 0;
+    const top = all.every((q) => q === p || (q.data.profile?.rank_tier || 0) <= tier);
+    const topEl = document.getElementById("mon-top");
+    if (topEl && top && tier) topEl.textContent = "本群最高分";
+    const rival = all.find((q) => q.cfg.alias === cfg.persona?.rival);
+    const el = document.getElementById("legend-vs");
+    if (!el || !rival) return;
+    const rt = rival.data.profile?.rank_tier;
+    el.innerHTML = `
+      <section class="block">
+        <div class="block-head"><h2>真·超凡 vs 自称超凡</h2><span class="muted small">段位不会说谎</span></div>
+        <div class="sp-panel legend-vs">
+          <div class="lvs">${medal(tier)}<b>${esc(p.name)}</b><span>${esc(medalName(tier))}</span><em>真的打上去了</em></div>
+          <div class="lvs-mid">VS</div>
+          <div class="lvs">${medal(rt)}<b>${esc(rival.name)}</b><span>${esc(medalName(rt))}</span><em>${rival.cfg.persona?.claimedRank ? `自称“${esc(rival.cfg.persona.claimedRank)}”` : "嘴上超凡"}</em></div>
+        </div>
       </section>`;
   }
   // ---------- grafici ----------

@@ -730,3 +730,87 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .titem:not(.on) b { color: var(--muted); font-size: 12px; }
 @media (max-width: 1000px) { .tracker-items { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 680px) { .tracker { flex-direction: column !important; text-align: center; } .tracker-ring { width: 130px; height: 130px; } .tracker-ring > div { width: 102px; height: 102px; } }
+
+/* ---------- 纪念碑 (pagina leggenda) ---------- */
+.legend-page { padding-top: 22px; }
+.mon-scene { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 18px; padding: 30px 0 10px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(203,213,225,.12), transparent 60%); }
+.monument {
+  position: relative; width: min(560px, 100%); padding: 34px 36px 30px; text-align: center; color: #e5e7eb;
+  border-radius: 140px 140px 14px 14px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.08), transparent 40%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 3px, transparent 3px 9px),
+    linear-gradient(180deg, #6b7280, #4b5563 40%, #374151);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.15), inset 0 -18px 30px rgba(0,0,0,.35), 0 40px 70px -30px rgba(0,0,0,.9);
+  border: 2px solid #9ca3af; animation: rise .8s both;
+}
+.monument::after { content: ""; position: absolute; left: -30px; right: -30px; bottom: -26px; height: 26px; border-radius: 6px;
+  background: linear-gradient(180deg, #4b5563, #1f2937); box-shadow: 0 16px 30px -10px rgba(0,0,0,.8); }
+.mon-cap { font: 900 15px var(--f-meme); letter-spacing: .6em; color: #d1d5db; margin-bottom: 14px; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+.mon-avatar { display: inline-block; padding: 6px; border-radius: 50%; background: linear-gradient(135deg, #e5e7eb, #6b7280); }
+.mon-avatar .avatar-xl { border-color: #e5e7eb; filter: grayscale(.35); }
+.mon-name { margin: 14px 0 4px; font: 400 clamp(46px, 7vw, 74px)/1 var(--f-display); letter-spacing: .08em;
+  color: #f3f4f6; text-shadow: 0 2px 0 #1f2937, 0 -1px 0 rgba(255,255,255,.3), 0 0 30px rgba(255,255,255,.18); }
+.mon-sub { margin: 0 0 16px; color: #cbd5e1; font-size: 14px; }
+.mon-medal { display: inline-flex; align-items: center; gap: 12px; padding: 8px 18px; border-radius: 999px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.15); }
+.mon-medal .medal { width: 56px; height: 56px; }
+.mon-medal > div { display: flex; flex-direction: column; text-align: left; }
+.mon-medal b { font: 700 20px var(--f-data); color: #fde68a; }
+.mon-medal span { font-size: 12px; font-weight: 800; color: #fbbf24; letter-spacing: .1em; }
+.mon-inscription { margin: 20px auto 0; padding: 14px 0; border-top: 1px solid rgba(255,255,255,.18); border-bottom: 1px solid rgba(255,255,255,.18); }
+.mon-inscription p { margin: 6px 0; font-size: 15.5px; color: #e5e7eb; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+.mon-inscription b { font: 700 19px var(--f-data); color: #fff; }
+.mon-epitaph { margin: 16px 0 0; font-style: italic; color: #d1d5db; font-size: 14.5px; }
+.candle { position: relative; width: 22px; height: 70px; border-radius: 4px 4px 2px 2px; background: linear-gradient(90deg, #f5f0e1, #d9cfb5); box-shadow: 0 10px 18px -6px rgba(0,0,0,.7); }
+.candle.c2, .candle.c3 { height: 100px; }
+.candle i { position: absolute; left: 50%; top: -26px; width: 14px; height: 24px; margin-left: -7px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff7c2, #ffb52e 55%, rgba(255,90,0,.0) 75%); filter: blur(.4px);
+  box-shadow: 0 0 24px 8px rgba(255,170,40,.45); animation: flicker 1.6s ease-in-out infinite alternate; }
+.candle.c2 i, .candle.c4 i { animation-duration: 2.1s; }
+@keyframes flicker { 0% { transform: scale(1) rotate(-2deg); opacity: .95; } 50% { transform: scale(1.08, .94) rotate(2deg); } 100% { transform: scale(.94, 1.06) rotate(-1deg); opacity: .85; } }
+.retire-clock { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 40px 0 10px; text-align: center; }
+.retire-clock span { font-size: 12px; letter-spacing: .3em; color: var(--muted); }
+.retire-clock b { font: 700 clamp(30px, 5vw, 46px)/1 var(--f-data); color: #e5e7eb; text-shadow: 0 0 22px rgba(203,213,225,.35); }
+.retire-clock em { font-style: normal; color: var(--muted); font-size: 13px; }
+.legend-heroes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.lhero { display: flex; flex-direction: column; gap: 4px; padding-bottom: 10px; border-radius: 14px; overflow: hidden; background: var(--panel); border: 1px solid rgba(203,213,225,.25); text-align: center; animation: rise .5s both; animation-delay: var(--d); }
+.lhero-img { aspect-ratio: 16 / 10; background: center 20% / cover no-repeat #1b1e2a; filter: saturate(.8); }
+.lhero b { font: 700 15px var(--f-data); }
+.lhero span { font-size: 12px; color: var(--muted); }
+.legend-kpis { grid-template-columns: repeat(4, 1fr); }
+.legend-vs { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
+.lvs { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.lvs .medal { width: 84px; height: 84px; }
+.lvs b { font: 400 24px var(--f-display); letter-spacing: .05em; }
+.lvs span { font: 700 15px var(--f-data); color: #fde68a; }
+.lvs em { font-style: normal; font-size: 12.5px; color: var(--muted); }
+.lvs-mid { font: 400 34px var(--f-display); color: var(--red); text-shadow: 0 0 18px rgba(232,71,60,.6); }
+.chat { display: flex; flex-direction: column; gap: 12px; }
+.bubble-row { display: flex; gap: 10px; align-items: flex-end; animation: rise .5s both; animation-delay: var(--d); }
+.chat-av { width: 38px; height: 38px; border-width: 2px; border-color: #cbd5e1; }
+.bubble { position: relative; max-width: 560px; padding: 10px 14px; border-radius: 16px 16px 16px 4px; background: #1f2633; border: 1px solid var(--line-2); }
+.bubble b { font-size: 12px; color: #cbd5e1; }
+.bubble p { margin: 2px 0 0; font-size: 15px; color: #f3f4f6; }
+.flowers { position: relative; display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 90px; }
+.flower-btn { font-size: 16px; }
+.flower-field { position: absolute; inset: -60px 0 0; pointer-events: none; overflow: hidden; }
+.flower { position: absolute; bottom: 0; font-size: 30px; animation: flower-up 2.6s ease-out forwards; }
+@keyframes flower-up { from { transform: translateY(0) scale(.6); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-120px) scale(1.2) rotate(20deg); opacity: 0; } }
+/* manifesto e 黄历 della leggenda */
+.legend-poster { background: radial-gradient(circle at 30% 15%, rgba(255,255,255,.12), transparent 40%), linear-gradient(170deg, #9ca3af, #6b7280 55%, #4b5563) !important; color: #f3f4f6; }
+.legend-poster .wanted-top span, .legend-poster h3 { color: #f9fafb; text-shadow: 0 2px 0 #1f2937; }
+.legend-poster .wanted-top small, .legend-poster .wanted-crime, .legend-poster .wanted-cta { color: #fde68a; }
+.legend-poster .wanted-photo { background: #e5e7eb; border-color: #374151; }
+.legend-poster .avatar-wanted { filter: grayscale(.6) contrast(1.05); }
+.legend-poster .wanted-stats div { border-color: rgba(255,255,255,.35); }
+.legend-poster .wanted-stats b { color: #fff; }
+.legend-poster .wanted-stats span, .legend-poster .wanted-quote { color: #e5e7eb; }
+.alm-stone { background: linear-gradient(160deg, #6b7280, #374151) !important; border-color: #d1d5db !important; box-shadow: inset 0 0 0 3px #374151, inset 0 0 0 4px rgba(209,213,219,.6), 0 18px 34px -16px rgba(0,0,0,.8) !important; }
+@media (max-width: 1000px) { .legend-heroes { grid-template-columns: repeat(3, 1fr); } .legend-kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 680px) {
+  .candle { display: none; }
+  .monument { padding: 26px 18px 24px; border-radius: 90px 90px 12px 12px; }
+  .legend-heroes { grid-template-columns: repeat(2, 1fr); }
+  .legend-vs { grid-template-columns: 1fr; }
+}

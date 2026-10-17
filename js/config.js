@@ -9,6 +9,7 @@
 //  "note" (opzionale): il sospiro del giudice (法官叹气), mostrato sotto l'indice.
 //  "persona" (opzionale) attiva battute su misura, 语录 e 专项调查:
 //    mode:        "praise" = modalità elogio: solo partite vinte, solo complimenti, manifesto 表彰令
+//                 "legend" = monumento (纪念碑) per chi non gioca più: carriera, medaglia, 群聊冒泡; rival = chi viene "commentato"
 //    alsoPraise:  true = oltre alle prese in giro, sezione "本庭也得承认" con elogi dalle vittorie
 //    inventory:   true = scansione dell'inventario Dota 2 (至宝仓库); l'inventario Steam deve essere pubblico
 //    meter:      indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风), "fish" (小鱼人浓度); assente = voto su 100
@@ -174,6 +175,14 @@ window.TRIBUNALE_CONFIG = {
       bounty: "刀塔传奇",
       // modalità elogio: solo partite vinte, nessuna presa in giro
       persona: { mode: "praise", meter: "praise" },
+    },
+    {
+      steam64: "76561198084363077",
+      alias: "大P神",
+      accusa: "远古时代的超凡大神",
+      color: "#cbd5e1",
+      // monumento: non gioca più, pagina commemorativa (solo ironia affettuosa)
+      persona: { mode: "legend", rival: "大金神" },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },
   ],

@@ -24,6 +24,9 @@
     slarkBody: "秒选小鱼人", pos4Slark: "四号位拿核心", lowRank: "查自己的段位",
   };
   const YI_PRAISE = ["带飞全场", "秀操作", "上分", "carry队友", "拿MVP"];
+  // leggende ritirate (mode "legend")
+  const YI_LEGEND = ["群里冒泡", "点评大金神", "看群友打", "回忆当年"];
+  const JI_LEGEND = ["重新下载刀塔", "复出", "看天梯排名"];
   const STAR = (n) => "★".repeat(n) + "☆".repeat(5 - n);
 
   function fortunes(players, heroes) {
@@ -40,12 +43,12 @@
     return players.map((p) => {
       const praise = p.praise;
       const traitJi = (p.cfg.persona?.traits || []).map((t) => JI_TRAIT[t]).filter(Boolean);
-      const yi = praise ? take(YI_PRAISE, usedYi) : take(YI, usedYi);
-      const ji = praise ? "手下留情" : take(traitJi.length ? traitJi : JI, usedJi);
+      const yi = p.legend ? take(YI_LEGEND, usedYi) : praise ? take(YI_PRAISE, usedYi) : take(YI, usedYi);
+      const ji = p.legend ? take(JI_LEGEND, usedJi) : praise ? "手下留情" : take(traitJi.length ? traitJi : JI, usedJi);
       const own = p.stats.heroes.map((h) => h.hero_id);
       let hero = take(own.length ? own : heroIds, usedHero);
       if (!heroes[hero]) hero = take(heroIds, usedHero);
-      const stars = praise ? 5 : 1 + Math.floor(r() * 4); // 1-4 stelle; 5 solo per i "大神" in modalità elogio
+      const stars = praise || p.legend ? 5 : 1 + Math.floor(r() * 4); // 1-4 stelle; 5 solo per elogiati e leggende
       return { p, yi, ji, hero, stars, starsText: STAR(stars) };
     });
   }

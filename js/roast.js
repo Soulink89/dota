@@ -566,7 +566,7 @@
       { id: "b-russian", hero: () => 99, when: () => T("russianCommander"), weight: 76, icon: "🇷🇺", title: "外语人才", v: [
         ["俄语水平：能指挥毛子。中文水平：吵不过大金神。", "俄语", "满级"]] },
       { id: "b-jin", hero: () => 17, when: () => T("jinTarget"), weight: 82, icon: "🎯", title: "大金神的固定靶子", v: [
-        ["被大金神天天说菜。被一个传奇1说菜，这才是本周最大的伤害。", "被大金神说菜", "暴击伤害"]] },
+        ["被大金神天天说菜。被一个连自己段位都要吹的人说菜，这才是本周最大的伤害。", "被大金神说菜", "暴击伤害"]] },
       { id: "b-drow", hero: () => DROW, when: () => T("drowCurse") && s.matches.some((m) => m.hero_id === DROW && !m.win), weight: 90, icon: "🏹", title: "小黑诅咒", v: [
         ["本周又拿了小黑，又输了。小黑的胜率在他手里是一个常数：0。", "小黑", "从未赢过"]] },
       { id: "b-scared", hero: () => 67, when: () => T("scared") && s.n >= 3 && s.kills / s.n < 5, weight: 80, icon: "🫣", title: "人头？不敢要", v: [
