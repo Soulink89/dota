@@ -473,7 +473,7 @@
         <div class="arena-field">${F.map((f, i) => fighterHTML(f, i)).join("")}</div>
         <ol class="arena-chat" id="arena-log"></ol>
       </section>
-      ${LITE ? `<div class="arena-lite-note">📱 手机端画面为简化版</div>` : ""}
+      ${LITE ? `<div class="arena-lite-note">📱 手机端画面为简化版，完整细节请在电脑上查看 💻</div>` : ""}
       <details class="arena-rules">
         <summary>📜 乱斗规则（点我）</summary>
         <ul>
