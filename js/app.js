@@ -584,8 +584,8 @@
     try { m = await (await fetch(`data/jin-meme.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch { return ""; }
     const d = (s) => s.slice(5).replace("-", "/");
     return `<section class="block jin-meme">
-        <div class="block-head"><h2>小金金上分记</h2><span class="muted small">${m.days.map(d).join("–")} · ${m.games}局 ${m.wins}胜${m.losses}负 · ${esc(m.from)} → ${esc(m.to)} · 每天自动更新</span></div>
-        <div class="jin-meme-wrap"><img src="data/jin-meme.gif?v=${m.updatedAt}" alt="大金神上分记" loading="lazy" width="240" height="240"></div>
+        <div class="block-head"><h2>金神超凡之旅</h2><span class="muted small">${m.days.map(d).join("–")} · ${m.games}局 ${m.wins}胜${m.losses}负 · ${esc(m.from)} → ${esc(m.to)} · 每天自动更新</span></div>
+        <div class="jin-meme-wrap"><img src="data/jin-meme.gif?v=${m.updatedAt}" alt="金神超凡之旅" loading="lazy" width="240" height="240"></div>
       </section>`;
   }
 

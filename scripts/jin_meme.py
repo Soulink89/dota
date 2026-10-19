@@ -132,7 +132,7 @@ def make(day, games, mmr0=3500, STEP=25):
     for gi, g in enumerate(games, 1):
         if g["hero"] not in cache: cache[g["hero"]] = chibi(g["hero"])
         cam[0] = mmr; ch = cache[g["hero"]]; y0 = y_of(mmr)
-        top = f"小金金上分 {g.get("date", "")} 第{gi}局"
+        top = f"金神超凡之旅 {g.get("date", "")} 第{gi}局"
         kda = f'{base.ZH.get(g["hero"], "")} {g["k"]}/{g["d"]}/{g["a"]}'
         add(scene(mmr, ch, y0, top, kda, wl=(w, l)), 700)
         if g["win"]:
