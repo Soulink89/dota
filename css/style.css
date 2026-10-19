@@ -299,7 +299,11 @@ a.pcard:hover .pcard-bg { transform: scale(1.06); opacity: 0.45; }
   .phero::after { background: linear-gradient(180deg, rgba(10,11,17,.3), rgba(10,11,17,.95) 45%); }
   .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .kpi-val { font-size: 30px; }
-  .memes { grid-template-columns: 1fr; }
+  .memes { grid-template-columns: repeat(2, 1fr); gap: 10px; }  /* telefono: 2 meme per riga */
+  .meme { border-radius: 12px; }
+  .meme figcaption { padding: 8px; }
+  .meme-top, .meme-bottom { font-size: 15px; -webkit-text-stroke: 1px #000; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+  .meme.daily figcaption { padding-bottom: 26px; }
   .memes .meme:nth-child(3) { display: block; }
   .charges { grid-template-columns: 1fr; }
   .mrow { grid-template-columns: 64px 1.2fr 1fr 1fr; gap: 10px; padding-right: 12px; }
@@ -836,3 +840,9 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 /* 小金金上分记: GIF giornaliera di 大金神 */
 .jin-meme-wrap { display: flex; justify-content: center; padding: 14px; border-radius: 16px; background: var(--panel, rgba(20,23,33,.72)); border: 1px solid rgba(242,182,50,.3); }
 .jin-meme-wrap img { width: min(360px, 100%); height: auto; image-rendering: auto; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+
+/* telefono: meme a 2 per riga, testi più piccoli */
+@media (max-width: 680px) {
+  .meme.daily figcaption { padding-bottom: 30px; }
+  .daily-info { padding: 4px 6px; font-size: 9.5px; line-height: 1.3; }
+}
