@@ -203,6 +203,7 @@
       </section>
       <section class="court-stats" id="court-stats"></section>
       <div id="daily-home"></div>
+      <div id="jin-meme-home"></div>
       <div id="arcana-home"></div>
       <div class="block-head"><h2>通缉榜</h2><span class="muted small">点击海报查看卷宗</span></div>
       <section class="wanted-grid" id="cards">
@@ -243,6 +244,7 @@
       <div class="cs"><span>🧑‍⚖️</span><b>${counter(accused.length)}</b><em>在押被告</em></div>`;
     animateCounters(document.getElementById("court-stats"));
     renderDailyHome();
+    jinMemeBlock().then((h) => { const e = document.getElementById("jin-meme-home"); if (e) e.innerHTML = h; });
     if (window.TribunaleArena) window.TribunaleArena.mount(document.getElementById("arena-home"), loaded.slice().sort((a, b) => a.ctx.index - b.ctx.index));
     renderHomeExtras(loaded.sort((a, b) => a.ctx.index - b.ctx.index));
     allHeadlines().then(setTicker);
@@ -472,6 +474,7 @@
     };
     renderJokes(p.split);
     renderDailyPlayer(p);
+    if (cfg.alias === "大金神") jinMemeBlock().then((h) => document.getElementById("daily-p")?.insertAdjacentHTML("beforebegin", h));
     if (cfg.persona?.nemesis) renderNemesis(p, cfg.persona.nemesis);
     else if (cfg.persona?.victim) renderNemesis(p, cfg.persona.victim, "better");
     document.getElementById("reroll")?.addEventListener("click", () => renderJokes(splitRoasts(p.roasts, true)));
@@ -573,6 +576,17 @@
                      : `<p class="muted daily-empty">昨天全员休战，本庭今日无料可黑。</p>`}
       </section>`;
     startCountdown();
+  }
+
+  // GIF di 大金神 che scala i ranghi (creata ogni giorno da scripts/jin_meme.py via GitHub Actions)
+  async function jinMemeBlock() {
+    let m;
+    try { m = await (await fetch(`data/jin-meme.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch { return ""; }
+    const d = (s) => s.slice(5).replace("-", "/");
+    return `<section class="block jin-meme">
+        <div class="block-head"><h2>小金金上分记</h2><span class="muted small">${m.days.map(d).join("–")} · ${m.games}局 ${m.wins}胜${m.losses}负 · ${esc(m.from)} → ${esc(m.to)} · 每天自动更新</span></div>
+        <div class="jin-meme-wrap"><img src="data/jin-meme.gif?v=${m.updatedAt}" alt="大金神上分记" loading="lazy" width="240" height="240"></div>
+      </section>`;
   }
 
   async function renderDailyPlayer(p) {

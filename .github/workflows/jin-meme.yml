@@ -1,0 +1,30 @@
+name: GIF di 大金神
+
+on:
+  schedule:
+    - cron: "40 22 * * *" # ogni giorno alle 06:40 di Pechino, appena finita la "giornata di gioco"
+  workflow_dispatch: {}     # pulsante "Run workflow" manuale
+
+permissions:
+  contents: write
+
+jobs:
+  gif:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Font cinese
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow
+      - name: Crea la GIF (ultimi 2 giorni)
+        working-directory: scripts
+        run: python -W ignore jin_meme.py --site
+      - name: Salva la GIF
+        run: |
+          git config user.name "tribunale-bot"
+          git config user.email "tribunale-bot@users.noreply.github.com"
+          git add data/jin-meme.gif data/jin-meme.json
+          git diff --cached --quiet || (git commit -m "GIF di 大金神" && git pull --rebase && git push)

@@ -832,3 +832,7 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
   filter: drop-shadow(0 0 12px rgba(253,230,138,.45)); animation: inf-shine 4s linear infinite, inf-breathe 3s ease-in-out infinite; }
 @keyframes inf-shine { to { background-position: 300% 0; } }
 @keyframes inf-breathe { 50% { transform: scale(1.08); } }
+
+/* 小金金上分记: GIF giornaliera di 大金神 */
+.jin-meme-wrap { display: flex; justify-content: center; padding: 14px; border-radius: 16px; background: var(--panel, rgba(20,23,33,.72)); border: 1px solid rgba(242,182,50,.3); }
+.jin-meme-wrap img { width: min(360px, 100%); height: auto; image-rendering: auto; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
