@@ -175,7 +175,8 @@ if __name__ == "__main__":
         day = datetime.datetime.utcfromtimestamp(x["start_time"] + 2 * 3600)
         games.append({"day": day.strftime("%Y-%m-%d"), "date": day.strftime("%m/%d"), "hero": x["hero_id"], "k": x["kills"], "d": x["deaths"],
                       "a": x["assists"], "win": (x["player_slot"] < 128) == x["radiant_win"]})
-    last2 = sorted({g["day"] for g in games})[-2:]
+    today = (datetime.datetime.utcnow() + datetime.timedelta(hours=2)).strftime("%Y-%m-%d")  # giornata di gioco in corso (06:00 Pechino)
+    last2 = sorted({g["day"] for g in games if g["day"] < today})[-2:]  # solo giornate già finite
     games = [g for g in games if g["day"] in last2]
     # arrivo = rango attuale vero (OpenDota), a metà della stella; si risale al punto di partenza ±25 a partita
     prof = json.loads(base.urllib.request.urlopen(base.urllib.request.Request(f"https://api.opendota.com/api/players/{base.ACCOUNT}", headers={"User-Agent": "Mozilla/5.0"}), timeout=60).read())
