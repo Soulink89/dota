@@ -112,6 +112,10 @@
       return [`<b>${n}</b>：本周拿下${s.n}场胜利`, ...(b ? [`<b>${n}</b>：最佳一局 ${H(b.hero_id)} ${b.kills}/${b.deaths}/${b.assists}`] : [])];
     }
     if (!s.n) return [`<b>${n}</b>：本周一局未打`];
+    if (p.cfg.persona?.praiseFirst) { // pagina da lodare: nel ticker solo notizie belle
+      const mk = [...s.matches].sort((a, b) => b.kills - a.kills)[0];
+      return [`<b>${n}</b>：本周拿下${s.wins}场胜利`, `<b>${n}</b>：单局最多 ${mk.kills} 杀（${H(mk.hero_id)}）`];
+    }
     const out = [`<b>${n}</b>：本周${s.n}场 · ${s.wins}胜${s.losses}负`];
     if (s.mostDeaths) out.push(`<b>${n}</b>：最惨一局 ${H(s.mostDeaths.hero_id)} ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}`);
     out.push(`<b>${n}</b>：当前${s.streak}${s.streakWin ? "连胜" : "连败"}`);
@@ -312,6 +316,9 @@
     document.title = `${p.name} · 刀塔法庭`;
     if (p.legend) return renderLegend(p, cfg, id); // pagina monumento, completamente diversa
     const s = p.stats, v = p.verdict, prof = p.data.profile || {};
+    const glow = !!cfg.persona?.praiseFirst; // pagina da lodare: niente numeri brutti
+    const mk = s.n ? [...s.matches].sort((a, b) => b.kills - a.kills)[0] : null; // partita con più uccisioni
+    const bg = glow ? mk : s.bestGame;
     const fav = s.heroes[0] && p.heroes[s.heroes[0].hero_id];
     const wl = p.data.wl;
     // Soul: le sconfitte di carriera sono "censurate"
@@ -376,12 +383,15 @@
         <div><h3>比赛数据：不予公开</h3><p>Dota 2 设置 → 社交 → “公开比赛数据”：关闭。以下判决依据群友证词。</p></div>
       </section>` : `
       <section class="kpis">
-        ${p.praise ? kpi("胜场", s.n ? counter(s.n) : "0", `胜利用时 ${fmt1(s.hours)} 小时`, "pos") : kpi("场次", s.n ? counter(s.n) : "0", `浪费了 ${fmt1(s.hours)} 小时人生`)}
+        ${p.praise ? kpi("胜场", s.n ? counter(s.n) : "0", `胜利用时 ${fmt1(s.hours)} 小时`, "pos") : kpi("场次", s.n ? counter(s.n) : "0", glow ? `${fmt1(s.hours)} 小时，场场精彩` : `浪费了 ${fmt1(s.hours)} 小时人生`)}
         ${p.praise ? kpi("胜率", "*", `${s.wins}胜 · *负`) : kpi("胜率", s.n ? counter(Math.round(s.wr), "%") : "–", `${s.wins}胜 · ${s.losses}负`)}
         ${kpi("KDA", s.n ? counter(s.avgKda, "", 1) : "–", `${s.kills} / ${s.deaths} / ${s.assists}`)}
-        ${p.praise ? kpi("击杀", s.n ? counter(s.kills) : "0", s.n ? `每局 ${fmt1(s.kills / s.n)} 个` : "–", "pos") : kpi("送头", s.n ? counter(s.deaths) : "0", s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", "neg")}
+        ${p.praise || glow ? kpi("击杀", s.n ? counter(s.kills) : "0", s.n ? `每局 ${fmt1(s.kills / s.n)} 个` : "–", "pos") : kpi("送头", s.n ? counter(s.deaths) : "0", s.n ? `每局 ${fmt1(s.avgDeaths)} 次` : "–", "neg")}
+        ${glow ? kpi("助攻", s.n ? counter(s.assists) : "0", s.n ? `每局 ${fmt1(s.assists / s.n)} 次 · 团队核心` : "–", "pos") : ""}
         ${kpi("平均GPM", s.n ? counter(Math.round(s.avgGpm)) : "–", s.n ? `${Math.round(s.avgXpm)} XPM` : "–")}
-        ${p.praise ? kpi("最佳一局", s.bestGame ? `${s.bestGame.kills}/${s.bestGame.deaths}/${s.bestGame.assists}` : "–", s.bestGame ? esc(p.heroes[s.bestGame.hero_id]?.localized_name || "") : "–", "pos") : kpi("最惨一局", s.mostDeaths ? `${s.mostDeaths.deaths}死` : "–", s.mostDeaths ? `${esc(p.heroes[s.mostDeaths.hero_id]?.localized_name || "")} · ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}` : "–", "neg")}
+        ${glow && s.n ? kpi("最高GPM", counter(Math.max(...s.matches.map((m) => m.gold_per_min || 0))), "单局最快发育", "pos") : ""}
+        ${glow && s.n ? (() => { const a = [...s.matches].sort((x, y) => y.assists - x.assists)[0]; return kpi("单局最多助攻", `${a.assists}`, `${esc(p.heroes[a.hero_id]?.localized_name || "")} · ${a.kills}/${a.deaths}/${a.assists}`, "pos"); })() : ""}
+        ${p.praise || glow ? kpi(glow ? "单局最多击杀" : "最佳一局", bg ? `${bg.kills}/${bg.deaths}/${bg.assists}` : "–", bg ? esc(p.heroes[bg.hero_id]?.localized_name || "") : "–", "pos") : kpi("最惨一局", s.mostDeaths ? `${s.mostDeaths.deaths}死` : "–", s.mostDeaths ? `${esc(p.heroes[s.mostDeaths.hero_id]?.localized_name || "")} · ${s.mostDeaths.kills}/${s.mostDeaths.deaths}/${s.mostDeaths.assists}` : "–", "neg")}
       </section>`}
 
       ${p.quotes.length ? `
@@ -405,10 +415,10 @@
 
       ${s.n ? `
       <section class="block">
-        <div class="block-head"><h2>数据图鉴</h2><span class="muted small">${p.praise ? "只看胜场" : "只挑丢人的看"}</span></div>
+        <div class="block-head"><h2>数据图鉴</h2><span class="muted small">${p.praise ? "只看胜场" : glow ? "数据不会骗人：就是强" : "只挑丢人的看"}</span></div>
         <div class="viz-grid">
           <div class="sp-panel">
-            <div class="sp-head"><span>💀</span><div><h4>${p.praise ? "每局表现" : "人头 vs 送头"}</h4><p class="muted small">每局击杀（上）和死亡（下），从旧到新</p></div></div>
+            <div class="sp-head"><span>💀</span><div><h4>${p.praise || glow ? "每局表现" : "人头 vs 送头"}</h4><p class="muted small">每局击杀（上）和死亡（下），从旧到新</p></div></div>
             ${kdChart(s.matches, p.heroes)}
           </div>
           <div class="sp-panel">
@@ -448,7 +458,7 @@
 
       ${s.heroes.length ? `
       <section class="block">
-        <div class="block-head"><h2>${p.praise ? "本周招牌英雄" : "本周受害英雄"}</h2><span class="muted small">${p.praise ? "带来胜利的英雄" : "被他玩过的英雄"}</span></div>
+        <div class="block-head"><h2>${p.praise || glow ? "本周招牌英雄" : "本周受害英雄"}</h2><span class="muted small">${p.praise || glow ? "带来胜利的英雄" : "被他玩过的英雄"}</span></div>
         <div class="heroes">${s.heroes.slice(0, 8).map((h) => heroTile(h, p.heroes[h.hero_id], p.praise)).join("")}</div>
       </section>` : ""}
 
@@ -594,7 +604,9 @@
     let best = 0, run = 0;
     [...ms].sort((a, b) => a.start_time - b.start_time).forEach((m) => { run = isW(m) ? run + 1 : 0; best = Math.max(best, run); });
     const life = (await API.loadLifetimeHeroes(p.id)) || [];
-    const signature = life.filter((h) => h.games >= 10 && h.win / h.games >= 0.55).sort((a, b) => b.win / b.games - a.win / a.games);
+    const extra = (p.cfg.persona?.signatureExtra || []).map(Number);  // 绝活 indicati a mano (es. 地卜师)
+    const signature = life.filter((h) => (h.games >= 10 && h.win / h.games >= 0.55) || extra.includes(Number(h.hero_id)))
+      .sort((a, b) => extra.includes(Number(b.hero_id)) - extra.includes(Number(a.hero_id)) || b.win / b.games - a.win / a.games);
     const lifeWr = pct(wl.win || 0, (wl.win || 0) + (wl.lose || 0));
     const cards = [
       { icon: "🗡️", title: `打C胜率 ${core.length ? pct(coreW, core.length) : "–"}%`, text: core.length ? `这周拿核心位 ${core.length} 局，赢了 ${coreW} 局。给他资源，他就还你一场胜利。` : "这周还没拿过核心位，但谁都知道他一拿C就是赢。" },
@@ -604,12 +616,15 @@
         : { icon: "🏆", title: `本周拿下 ${s.wins} 场胜利`, text: `最长${best}连胜。基本没输过——输的那几把，都是队友的锅。` },
       { icon: "🎯", title: "1到5号位都能打", text: `核心局 ${core.length} 局，辅助局 ${sup.length} 局。缺什么补什么，打什么都像本命。` },
       { icon: "📚", title: `绝活英雄 ${signature.length >= 20 ? signature.length : "不下20"}个`, text: `生涯 ${life.filter((h) => h.games > 0).length} 个英雄上过手；本庭认证（10局以上、胜率55%+）的绝活就有 ${signature.length} 个。英雄池深不见底。` },
+      (() => { const dm = ms.filter((m) => m.hero_damage); if (!dm.length) return null; const top = [...dm].sort((a, b) => b.hero_damage - a.hero_damage)[0];
+        return { icon: "💥", title: `场均英雄伤害 ${Math.round(dm.reduce((t, m) => t + m.hero_damage, 0) / dm.length).toLocaleString(LOCALE)}`,
+          text: `单局最高打出 ${top.hero_damage.toLocaleString(LOCALE)} 伤害（${p.heroes[top.hero_id]?.localized_name || ""}），对面全员都记住了他。` }; })(),
       { icon: "📈", title: `生涯 ${(wl.win || 0).toLocaleString(LOCALE)} 场胜利`, text: lifeWr >= 55 ? `生涯胜率 ${lifeWr}%，一场一场打出来的。` : "一场一场打出来的，没有一场是躺赢的。" },
     ];
     el.innerHTML = `
       <section class="block praise-first">
         <div class="block-head"><h2>吹爆专区 · 先吹为敬</h2><span class="muted small">数据说话：${esc(p.name)} 就是强</span></div>
-        <div class="kudos">${cards.map((k, i) => `
+        <div class="kudos">${cards.filter(Boolean).map((k, i) => `
           <article class="kudo" style="--d:${i * 70}ms"><span class="kudo-icon">${k.icon}</span><div><h4>${esc(k.title)}</h4><p>${esc(k.text)}</p></div></article>`).join("")}</div>
         ${signature.length ? `<div class="pf-heroes"><span class="muted small">绝活英雄墙</span><div>${signature.slice(0, 24).map((h) => {
           const hero = p.heroes[h.hero_id]; return hero ? `<img src="${API.heroIcon(hero)}" alt="" title="${esc(hero.localized_name)} · ${h.games}局 胜率${pct(h.win, h.games)}%">` : ""; }).join("")}</div></div>` : ""}
