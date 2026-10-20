@@ -368,6 +368,8 @@
         <div><h3>比赛数据未公开 · 群友比赛还原</h3><p>他在Dota 2里关掉了“公开比赛数据”。以下 <b>${s.n}</b> 局是从<b>和群友一起打的比赛</b>里找出来的，单排的比赛本庭看不到。每小时自动更新。</p></div>
       </section>` : ""}
 
+      ${cfg.persona?.praiseFirst ? `<div id="praise-first"></div>` : ""}
+
       ${p.ctx.hidden ? `
       <section class="classified">
         <div class="classified-stamp">机密</div>
@@ -474,6 +476,7 @@
     };
     renderJokes(p.split);
     renderDailyPlayer(p);
+    if (cfg.persona?.praiseFirst) praiseFirstBlock(p);
     if (cfg.alias === "大金神") jinMemeBlock().then((h) => document.getElementById("daily-p")?.insertAdjacentHTML("beforebegin", h));
     if (cfg.persona?.nemesis) renderNemesis(p, cfg.persona.nemesis);
     else if (cfg.persona?.victim) renderNemesis(p, cfg.persona.victim, "better");
@@ -576,6 +579,41 @@
                      : `<p class="muted daily-empty">昨天全员休战，本庭今日无料可黑。</p>`}
       </section>`;
     startCountdown();
+  }
+
+  // 吹爆专区 (persona.praiseFirst): lodi in cima alla pagina, tutte dai dati veri
+  async function praiseFirstBlock(p) {
+    const el = document.getElementById("praise-first");
+    if (!el) return;
+    const s = p.stats, ms = p.rawMatches || [], wl = p.data.wl || {};
+    const isW = (m) => (m.player_slot < 128) === m.radiant_win;
+    const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+    // partite da core (C): tanto oro al minuto
+    const core = ms.filter((m) => (m.gold_per_min || 0) >= 500), coreW = core.filter(isW).length;
+    const sup = ms.filter((m) => (m.gold_per_min || 0) < 400);
+    let best = 0, run = 0;
+    [...ms].sort((a, b) => a.start_time - b.start_time).forEach((m) => { run = isW(m) ? run + 1 : 0; best = Math.max(best, run); });
+    const life = (await API.loadLifetimeHeroes(p.id)) || [];
+    const signature = life.filter((h) => h.games >= 10 && h.win / h.games >= 0.55).sort((a, b) => b.win / b.games - a.win / a.games);
+    const lifeWr = pct(wl.win || 0, (wl.win || 0) + (wl.lose || 0));
+    const cards = [
+      { icon: "🗡️", title: `打C胜率 ${core.length ? pct(coreW, core.length) : "–"}%`, text: core.length ? `这周拿核心位 ${core.length} 局，赢了 ${coreW} 局。给他资源，他就还你一场胜利。` : "这周还没拿过核心位，但谁都知道他一拿C就是赢。" },
+      // si mostra solo il lato che fa bella figura
+      s.wr >= 55
+        ? { icon: "🏆", title: `本周胜率 ${Math.round(s.wr)}%`, text: `${s.wins}胜，最长${best}连胜。基本没输过，输的那几把也是队友的锅。` }
+        : { icon: "🏆", title: `本周拿下 ${s.wins} 场胜利`, text: `最长${best}连胜。基本没输过——输的那几把，都是队友的锅。` },
+      { icon: "🎯", title: "1到5号位都能打", text: `核心局 ${core.length} 局，辅助局 ${sup.length} 局。缺什么补什么，打什么都像本命。` },
+      { icon: "📚", title: `绝活英雄 ${signature.length >= 20 ? signature.length : "不下20"}个`, text: `生涯 ${life.filter((h) => h.games > 0).length} 个英雄上过手；本庭认证（10局以上、胜率55%+）的绝活就有 ${signature.length} 个。英雄池深不见底。` },
+      { icon: "📈", title: `生涯 ${(wl.win || 0).toLocaleString(LOCALE)} 场胜利`, text: lifeWr >= 55 ? `生涯胜率 ${lifeWr}%，一场一场打出来的。` : "一场一场打出来的，没有一场是躺赢的。" },
+    ];
+    el.innerHTML = `
+      <section class="block praise-first">
+        <div class="block-head"><h2>吹爆专区 · 先吹为敬</h2><span class="muted small">数据说话：${esc(p.name)} 就是强</span></div>
+        <div class="kudos">${cards.map((k, i) => `
+          <article class="kudo" style="--d:${i * 70}ms"><span class="kudo-icon">${k.icon}</span><div><h4>${esc(k.title)}</h4><p>${esc(k.text)}</p></div></article>`).join("")}</div>
+        ${signature.length ? `<div class="pf-heroes"><span class="muted small">绝活英雄墙</span><div>${signature.slice(0, 24).map((h) => {
+          const hero = p.heroes[h.hero_id]; return hero ? `<img src="${API.heroIcon(hero)}" alt="" title="${esc(hero.localized_name)} · ${h.games}局 胜率${pct(h.win, h.games)}%">` : ""; }).join("")}</div></div>` : ""}
+      </section>`;
   }
 
   // GIF di 大金神 che scala i ranghi (creata ogni giorno da scripts/jin_meme.py via GitHub Actions)

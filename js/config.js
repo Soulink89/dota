@@ -11,6 +11,7 @@
 //    mode:        "praise" = modalità elogio: solo partite vinte, solo complimenti, manifesto 表彰令
 //                 "legend" = monumento (纪念碑) per chi non gioca più: carriera, medaglia, 群聊冒泡; rival = chi viene "commentato"
 //    alsoPraise:  true = oltre alle prese in giro, sezione "本庭也得承认" con elogi dalle vittorie
+//    praiseFirst: true = in cima alla pagina un blocco di lodi (吹爆专区) dai dati veri:胜率, 连胜, 1-5号位, 绝活英雄
 //    inventory:   true = scansione dell'inventario Dota 2 (至宝仓库); l'inventario Steam deve essere pubblico
 //    friendsScan: true = partite nascoste: lo script le ricostruisce dalle partite in gruppo con gli altri giocatori
 //    meter:      indice al posto del voto: "brag" (吹牛/甩锅指数), "drunk" (上头指数), "babysit" (minuti di 保姆), "axes" (三板斧浓度), "allNighter" (通宵兑现率: ore a sera / 8), "wifeAway" (ore di 放风), "fish" (小鱼人浓度); assente = voto su 100
@@ -96,6 +97,22 @@ window.TRIBUNALE_CONFIG = {
       },
     },
     {
+      steam64: "76561198092667598",
+      alias: "蜗牛大神",
+      accusa: "喊通宵的男人",
+      bio: "随便虐过大金神的“无敌中单”",
+      note: "哎，实在没啥好黑的，打得没问题啊。",
+      color: "#93c5fd",
+      bounty: "通宵诈骗罪",
+      persona: {
+        meter: "allNighter",
+        victim: "大金神",
+        alsoPraise: true,
+        praiseFirst: true, // in cima alla pagina: 吹爆专区 (prima le lodi, poi le battute su 干干干)
+        traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
+      },
+    },
+    {
       steam64: "76561198110591464",
       alias: "Ping大神",
       accusa: "DC首席理论家",
@@ -131,21 +148,6 @@ window.TRIBUNALE_CONFIG = {
         alsoPraise: true,
         inventory: true, // scansione dell'inventario Dota 2 (至宝仓库)
         traits: ["threeAxes", "drowArcana", "drow15", "noSupport", "pingStudent", "hardToRoast"],
-      },
-    },
-    {
-      steam64: "76561198092667598",
-      alias: "蜗牛大神",
-      accusa: "喊通宵的男人",
-      bio: "随便虐过大金神的“无敌中单”",
-      note: "哎，实在没啥好黑的，打得没问题啊。",
-      color: "#93c5fd",
-      bounty: "通宵诈骗罪",
-      persona: {
-        meter: "allNighter",
-        victim: "大金神",
-        alsoPraise: true,
-        traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
       },
     },
     {

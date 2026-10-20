@@ -846,3 +846,10 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
   .meme.daily figcaption { padding-bottom: 30px; }
   .daily-info { padding: 4px 6px; font-size: 9.5px; line-height: 1.3; }
 }
+
+/* 吹爆专区 (蜗牛大神) */
+.praise-first .kudos { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.praise-first .block-head h2 { background: linear-gradient(90deg, #fde047, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pf-heroes { margin-top: 14px; }
+.pf-heroes > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pf-heroes img { width: 34px; height: 34px; border-radius: 8px; background: rgba(250,204,21,.12); border: 1px solid rgba(250,204,21,.4); padding: 2px; }
