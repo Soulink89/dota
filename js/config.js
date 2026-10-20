@@ -73,6 +73,7 @@
 //      jinHates   大金神 non lo sopporta
 //      teletubby  conosciuto come "天线宝宝": giocarci insieme abbassa la media MMR della squadra
 //      lowLevelGood nelle partite di basso livello se la cava
+//      humbleBrag i "罪状" sono lodi travestite (colpevole di essere troppo forte)
 //    arenaFarm:   true = nel 刀塔乱斗 è lui che farma i creep (gli altri li ignorano)
 //    arenaHero:   id dell'eroe con cui appare nel 刀塔乱斗 (altrimenti il più giocato della settimana)
 //    heatTitle:   titolo personalizzato della tabella oraria
@@ -110,7 +111,7 @@ window.TRIBUNALE_CONFIG = {
         alsoPraise: true,
         praiseFirst: true, // in cima alla pagina: 吹爆专区 (prima le lodi, poi le battute su 干干干)
         signatureExtra: [82], // 绝活 sempre nel muro: 地卜师 (Meepo / Geomancer)
-        traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller"],
+        traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller", "humbleBrag"],
       },
     },
     {

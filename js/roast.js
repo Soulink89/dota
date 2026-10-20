@@ -518,6 +518,23 @@
         ["{n}场{distinct}个英雄。英雄池深到Yoki大神的三板斧扔进去，都听不到回声。", "{n}场{distinct}个英雄", "三板斧：自愧不如"]] },
       { id: "s-loud", hero: () => 2, when: () => T("loud"), weight: 86, icon: "📢", title: "人形扩音器", v: [
         ["嗓门是全队最大的。对面没开麦，也知道他今晚要“干”。", "对面没开麦", "也听见他在喊干"]] },
+      // 罪状 che in realtà sono lodi (trait humbleBrag): "colpevole di essere troppo forte"
+      { id: "hb-support", hero: () => 85, when: () => T("humbleBrag"), weight: 99, icon: "🩹", title: "故意打辅助罪", v: [
+        ["明明一个人20分钟就能带走对面，偏偏要选辅助，给队友留点游戏体验。本周{sup}局辅助，局局都是教科书。", "能20分钟带走对面", "偏要打辅助"]] },
+      { id: "hb-mercy", hero: () => 74, when: () => T("humbleBrag") && s.wins >= 1, weight: 97, icon: "🕊️", title: "手下留情罪", v: [
+        ["本周赢了{w}局。本来每局都能速推，他偏要拖到大后期，就怕对面心态崩了卸载游戏。", "能20分钟结束", "怕对面卸载游戏"]] },
+      { id: "hb-mvp", hero: () => s.bestGame?.hero_id, when: () => T("humbleBrag") && s.bestGame, weight: 95, icon: "🏅", title: "抢走MVP罪", v: [
+        ["{bkHero}打出{bk}，硬生生把MVP从队友手里抢走。队友：我们是来干嘛的？", "{bkHero} {bk}", "队友：我们是来干嘛的"]] },
+      { id: "hb-gold", hero: () => 73, when: () => T("humbleBrag") && s.avgGpm >= 450, weight: 93, icon: "💰", title: "经济垄断罪", v: [
+        ["场均{gpm} GPM。地图上的钱都被他赚走了，对面只能喝西北风。", "场均{gpm} GPM", "对面：喝西北风"]] },
+      { id: "hb-ban", hero: () => s.heroes[2]?.hero_id, when: () => T("humbleBrag") && s.n >= 3, weight: 91, icon: "🚫", title: "让对面ban不过来罪", v: [
+        ["{n}场用了{distinct}个英雄。对面ban了五个，他换第六个照样打，ban位根本不够用。", "对面ban了五个", "他换第六个照样打"]] },
+      { id: "hb-kills", hero: () => 44, when: () => T("humbleBrag") && s.n >= 1, weight: 89, icon: "⚔️", title: "人头太多罪", v: [
+        ["场均{avgK}个人头。对面在泉水里等复活的时间，比在地图上的时间还长。", "场均{avgK}杀", "对面住在泉水"]] },
+      { id: "hb-jin", hero: () => 11, when: () => T("humbleBrag") && T("jinMidKiller"), weight: 87, icon: "👑", title: "伤害大金神自尊罪", v: [
+        ["随手在中路虐了大金神，从此“中单之王”四个字，大金神只敢在群里小声说。", "随手虐了大金神", "中单之王：易主"]] },
+      { id: "hb-blame", hero: () => 2, when: () => T("humbleBrag"), weight: 85, icon: "🛡️", title: "从不甩锅罪", v: [
+        ["队友送了，他翻盘；队友挂机，他一打五。他从来不甩锅——因为根本不需要。", "队友送了", "他：我来"]] },
 
       // ----- Yoki大神 -----
       { id: "y-night", hero: () => DROW, when: () => T("drowArcana") && s.lateN >= 3, weight: 78, icon: "🌌", title: "凌晨的至宝", v: [

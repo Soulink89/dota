@@ -55,7 +55,9 @@
         }
         const quotes = R.quotes(stats, ctx, heroes);
         ctx.usedMatches = quotes.usedMatches; // le partite citate nei 语录 non vengono ripetute
-        const roasts = R.buildRoasts(stats, name, heroes, ctx);
+        let roasts = R.buildRoasts(stats, name, heroes, ctx);
+        // pagina da lodare: 罪状 solo "colpevole di essere troppo forte" (hb-) più le battute leggere su 通宵/干干干 (s-)
+        if (cfg.persona?.praiseFirst) roasts = roasts.filter((r) => /^(hb|s)-/.test(r.id || ""));
         return { id, cfg, data, rawMatches, heroes, name, steamName: p.personaname, stats, ctx, praise, legend: cfg.persona?.mode === "legend",
           verdict: R.verdict(stats, ctx), roasts, quotes, special: R.specials(stats, ctx),
           split: splitRoasts(roasts), kudos: alsoPraise(cfg, data, heroes, ctx, quotes, roasts) };
