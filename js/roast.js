@@ -337,7 +337,7 @@
       t1: ctx.inventory ? H(ctx.inventory.top3[0]) : "", t2: ctx.inventory ? H(ctx.inventory.top3[1]) : "", t3: ctx.inventory ? H(ctx.inventory.top3[2]) : "", t3a: ctx.inventory?.top3WithArcana,
       invTotal: ctx.inventory?.total, invArc: ctx.inventory?.rarity?.["至宝"] ?? ctx.inventory?.arcana?.length, invImm: ctx.inventory?.rarity?.["不朽"] ?? 0,
       lastTime: s.lastStart ? new Date(s.lastStart.start_time * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "",
-      perNight: (s.n / Math.max(1, s.sessions)).toFixed(1), nights: s.sessions,
+      perNight: (s.n / Math.max(1, s.sessions)).toFixed(1), nights: s.sessions, nh: s.nightHours.toFixed(1),
       dwr: (() => { const d = s.matches.filter((m) => m.hero_id === DROW); return d.length ? Math.round((d.filter((m) => m.win).length / d.length) * 100) : 0; })(),
       hours: s.hours.toFixed(1), hours2: (s.hours * 2).toFixed(0), deaths: s.deaths, avgD: s.avgDeaths.toFixed(1), kda: s.avgKda.toFixed(2),
       streak: s.streak, worst: s.worstRun,
@@ -510,9 +510,11 @@
         ["给队友买眼、买雾、买绷带，花钱眼都不眨；给自己换电脑，十年都下不了决心。", "给队友买眼：舍得", "给自己换电脑：舍不得"]] },
 
       // ----- 蜗牛大神 -----
-      { id: "s-run", hero: () => 63, when: () => T("allNighter"), weight: 92, icon: "🏃", title: "通宵跑路王", v: [
+      { id: "s-realnight", hero: () => 17, when: () => T("allNighter") && s.nightHours >= 5, weight: 93, icon: "🦉", title: "真·通宵王", v: [
+        ["本周{nights}个晚上，每晚平均{nh}小时，半夜开局{late}局。通宵是真的，上分是假的：天亮了，段位还在原地。", "通宵：说到做到", "上分：说说而已"]] },
+      { id: "s-run", hero: () => 63, when: () => T("allNighter") && s.nightHours < 5, weight: 92, icon: "🏃", title: "通宵跑路王", v: [
         ["每次喊“通宵”喊得最响的是他，两三把之后第一个跑的也是他。剩下四个人面面相觑：说好的通宵呢？", "今晚通宵！", "剩下四个人：？"]] },
-      { id: "s-snail", hero: () => 53, when: () => T("allNighter"), weight: 88, icon: "🐌", title: "蜗牛的速度", v: [
+      { id: "s-snail", hero: () => 53, when: () => T("allNighter") && name.includes("蜗牛"), weight: 88, icon: "🐌", title: "蜗牛的速度", v: [
         ["外号蜗牛大神。喊通宵的速度像火箭，下线的速度——也像火箭。只有“蜗牛”两个字跟他不沾边。", "喊通宵：火箭", "下线：也是火箭"]] },
       { id: "s-pool", hero: () => s.heroes[1]?.hero_id, when: () => T("allHeroes") && s.n >= 5 && s.distinctHeroes / s.n >= 0.5, weight: 84, icon: "🌊", title: "英雄池深不见底", v: [
         ["{n}场{distinct}个英雄。英雄池深到Yoki大神的三板斧扔进去，都听不到回声。", "{n}场{distinct}个英雄", "三板斧：自愧不如"]] },
@@ -700,9 +702,10 @@
           : pr.wr < 50 ? `本周帕吉${pr.n}场，胜率${pr.wr}%。闭眼是真的闭眼了。`
           : `本周帕吉${pr.n}场，胜率${pr.wr}%。职业辅助拿屠夫，对面到死都没想明白他是几号位。` }); }
     // ----- 蜗牛大神 -----
-    if (t.has("allNighter")) q.push({ quote: "今晚通宵！不通宵不下线！", stamp: "跑路",
+    if (t.has("allNighter")) q.push({ quote: "今晚通宵！不通宵不下线！", stamp: s.nightHours >= 5 ? "属实" : "跑路",
       reply: s.n && s.n / Math.max(1, s.sessions) <= 3.5
         ? `本周平均每晚${(s.n / Math.max(1, s.sessions)).toFixed(1)}把，然后人就没了。“不下线”的意思，原来是不在线。`
+        : s.nightHours >= 5 ? "这句是真的，他说通宵就真通宵。天亮了，太阳出来了，分没出来。"
         : "喊完这句没多久，DC里只剩一个灰色的头像。说好的不下线，结果只有头像留了下来。" });
     if (t.has("loud")) q.push({ quote: "干干干！！！", stamp: "扰民",
       reply: "每局开始前的固定口号。喊得最响，DC里其他人的耳机音量统一调到了10%。" });
@@ -730,6 +733,10 @@
     if (traits.has("drowArcana")) { const dw = s.matches.filter((m) => m.hero_id === DROW); cards.push({ icon: "💎", label: "至宝小黑出场", value: `${dw.length}场`, sub: dw.length ? `胜率 ${Math.round((dw.filter((m) => m.win).length / dw.length) * 100)}%` : "本周没拿出来炫" }); }
     if (traits.has("noSupport")) cards.push({ icon: "🚫", label: "纯辅助场次", value: String(s.pureSup), sub: `本周共${s.n}场` });
     if (traits.has("allNighter") && s.sessions) cards.push({ icon: "🌃", label: "平均每晚在线", value: `${s.nightHours.toFixed(1)} 小时`, sub: "通宵按8小时计算", cls: "neg" });
+    if (traits.has("allNighter") && s.sessions) {  // 通宵数据
+      cards.push({ icon: "🌙", label: "通宵兑现率", value: `${Math.min(99, Math.round((s.nightHours / 8) * 100))}%`, sub: `本周${s.sessions}个晚上开黑`, cls: "neg" });
+      cards.push({ icon: "🦉", label: "半夜开局", value: `${s.lateN}局`, sub: s.lateNight[0] ? `最晚一局 ${new Date(s.lateNight[0].start_time * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })} 开打` : "本周没熬夜" });
+    }
     if (traits.has("allHeroes")) cards.push({ icon: "🌊", label: "本周用过的英雄", value: `${s.distinctHeroes} 个`, sub: `${s.n}场比赛` });
     if (traits.has("pcOld")) cards.push({ icon: "🖥️", label: "电脑服役年限", value: "10年", sub: "据群友证词", cls: "neg" });
     if (traits.has("pudgeGod")) { const pr = heroRecord(s, PUDGE); cards.push({ icon: "🪝", label: "帕吉出场", value: `${pr.n}场`, sub: pr.n ? `胜率 ${pr.wr}%` : "本周没出钩" }); }

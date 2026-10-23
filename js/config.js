@@ -94,24 +94,24 @@ window.TRIBUNALE_CONFIG = {
         meter: "brag",
         claimedRank: "超凡入圣",
         rival: "呆逼",
-        traits: ["brag", "midKing", "kdaBrag", "blameTeam", "rigged", "selfMvp", "targeted", "lastPick", "trashTalk"],
+        traits: ["brag", "midKing", "kdaBrag", "blameTeam", "rigged", "selfMvp", "targeted", "lastPick", "trashTalk", "allNighter"],
       },
     },
     {
       steam64: "76561198092667598",
       alias: "蜗牛大神",
-      accusa: "喊通宵的男人",
+      accusa: "1-5号位全能大神",
       bio: "随便虐过大金神的“无敌中单”",
       note: "哎，实在没啥好黑的，打得没问题啊。",
       color: "#93c5fd",
-      bounty: "通宵诈骗罪",
+      bounty: "太强罪",
       persona: {
-        meter: "allNighter",
+        meter: "praise",
         victim: "大金神",
         alsoPraise: true,
         praiseFirst: true, // in cima alla pagina: 吹爆专区 (prima le lodi, poi le battute su 干干干)
         signatureExtra: [82], // 绝活 sempre nel muro: 地卜师 (Meepo / Geomancer)
-        traits: ["allNighter", "loud", "allHeroes", "tooGood", "jinMidKiller", "humbleBrag"],
+        traits: ["allHeroes", "tooGood", "jinMidKiller", "humbleBrag"],
       },
     },
     {

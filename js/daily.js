@@ -46,7 +46,7 @@
     const ms = (p.data.matches || []).filter((m) => m.start_time >= range.start && m.start_time < range.end)
       .sort((a, b) => a.start_time - b.start_time).map((m) => ({ ...m, win: isWin(m), kda: kdaOf(m) }));
     if (!ms.length) return [];
-    if (p.praise) return praiseMoments(ms, H);
+    if (p.praise || p.cfg?.persona?.praiseFirst) return praiseMoments(ms, H); // pagine da lodare: solo momenti belli
     const exclude = p.exclude || new Set();
     const free = ms.filter((m) => !exclude.has(m.match_id));
     const out = [];
