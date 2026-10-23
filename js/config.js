@@ -110,7 +110,7 @@ window.TRIBUNALE_CONFIG = {
         victim: "大金神",
         alsoPraise: true,
         praiseFirst: true, // in cima alla pagina: 吹爆专区 (prima le lodi, poi le battute su 干干干)
-        signatureExtra: [82], // 绝活 sempre nel muro: 地卜师 (Meepo / Geomancer)
+        signatureExtra: [82, 11], // 绝活 sempre nel muro: 地卜师 (Meepo / Geomancer), 影魔 (Shadow Fiend)
         traits: ["allHeroes", "tooGood", "jinMidKiller", "humbleBrag"],
       },
     },
