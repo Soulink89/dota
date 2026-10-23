@@ -26,5 +26,5 @@ jobs:
         run: |
           git config user.name "tribunale-bot"
           git config user.email "tribunale-bot@users.noreply.github.com"
-          git add data/jin-meme.gif data/jin-meme.json
+          git add data/jin-meme.gif data/jin-meme.json data/jin-memes
           git diff --cached --quiet || (git commit -m "GIF di 大金神" && git pull --rebase && git push)

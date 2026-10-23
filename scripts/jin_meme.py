@@ -177,6 +177,7 @@ if __name__ == "__main__":
                       "a": x["assists"], "win": (x["player_slot"] < 128) == x["radiant_win"]})
     today = (datetime.datetime.utcnow() + datetime.timedelta(hours=2)).strftime("%Y-%m-%d")  # giornata di gioco in corso (06:00 Pechino)
     last2 = sorted({g["day"] for g in games if g["day"] < today})[-2:]  # solo giornate già finite
+    if "--days" in sys.argv: last2 = sys.argv[sys.argv.index("--days") + 1].split(",")  # per rifare un periodo passato
     games = [g for g in games if g["day"] in last2]
     # arrivo = rango attuale vero (OpenDota), a metà della stella; si risale al punto di partenza ±25 a partita
     prof = json.loads(base.urllib.request.urlopen(base.urllib.request.Request(f"https://api.opendota.com/api/players/{base.ACCOUNT}", headers={"User-Agent": "Mozilla/5.0"}), timeout=60).read())
@@ -184,6 +185,7 @@ if __name__ == "__main__":
     names = {4: "中军", 5: "传奇", 6: "万古流芳"}
     rk = next((r for r in RANKS if r[1] == names.get(tier // 10) and r[2] == tier % 10), (3234, "传奇", 2))
     end = rk[0] + 77
+    if "--end" in sys.argv: end = int(sys.argv[sys.argv.index("--end") + 1])  # MMR stimato a fine periodo (per i periodi passati)
     start = end - sum(25 if g["win"] else -25 for g in games)
     if "--site" in sys.argv:
         DEST = os.path.join(base.ROOT, "data", "jin-meme.gif")
@@ -191,4 +193,19 @@ if __name__ == "__main__":
                    "from": f"{rank_of(start)[1]}{rank_of(start)[2]}", "to": f"{rank_of(end)[1]}{rank_of(end)[2]}",
                    "updatedAt": int(datetime.datetime.now().timestamp() * 1000)},
                   open(os.path.join(base.ROOT, "data", "jin-meme.json"), "w", encoding="utf8"), ensure_ascii=False)
-    print(make("-".join(d[5:] for d in last2), games, start))
+    print(make("-".join(d[5:] for d in last2), games, start), "start", start)
+    if "--site" in sys.argv:
+        # archivio: una GIF per ogni giorno, le ultime 14 restano sul sito
+        import shutil
+        arch = os.path.join(base.ROOT, "data", "jin-memes"); os.makedirs(arch, exist_ok=True)
+        meta = json.load(open(os.path.join(base.ROOT, "data", "jin-meme.json"), encoding="utf8"))
+        name = f"{last2[0]}_{last2[1]}.gif"
+        shutil.copy(DEST, os.path.join(arch, name))
+        ip = os.path.join(arch, "index.json")
+        idx = json.load(open(ip, encoding="utf8")) if os.path.exists(ip) else []
+        idx = [x for x in idx if x["file"] != name] + [{**meta, "file": name}]
+        idx = sorted(idx, key=lambda x: x["days"])[-14:]
+        keep = {x["file"] for x in idx}
+        for fn in os.listdir(arch):
+            if fn.endswith(".gif") and fn not in keep: os.remove(os.path.join(arch, fn))
+        json.dump(idx, open(ip, "w", encoding="utf8"), ensure_ascii=False)

@@ -635,12 +635,27 @@
 
   // GIF di 大金神 che scala i ranghi (creata ogni giorno da scripts/jin_meme.py via GitHub Actions)
   async function jinMemeBlock() {
-    let m;
-    try { m = await (await fetch(`data/jin-meme.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch { return ""; }
+    let list;
+    try { list = await (await fetch(`data/jin-memes/index.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch { list = []; }
+    if (!list.length) {  // archivio non ancora creato: solo la GIF del giorno
+      try { const m = await (await fetch(`data/jin-meme.json?t=${Date.now()}`, { cache: "no-store" })).json(); list = [{ ...m, file: null }]; } catch { return ""; }
+    }
+    list = [...list].reverse(); // più recente prima
     const d = (s) => s.slice(5).replace("-", "/");
+    const src = (m) => (m.file ? `data/jin-memes/${m.file}?v=${m.updatedAt}` : `data/jin-meme.gif?v=${m.updatedAt}`);
+    const cap = (m) => `${m.days.map(d).join("–")} · ${m.games}局 ${m.wins}胜${m.losses}负 · ${esc(m.from)} → ${esc(m.to)}`;
+    const m = list[0];
+    setTimeout(() => document.querySelectorAll(".jm-thumb").forEach((b) => b.addEventListener("click", () => {
+      const box = b.closest(".jin-meme"), x = list[Number(b.dataset.i)];
+      box.querySelector(".jm-main").src = src(x);
+      box.querySelector(".jm-cap").textContent = cap(x).replace(/&[^;]+;/g, "");
+      box.querySelectorAll(".jm-thumb").forEach((t) => t.classList.toggle("on", t === b));
+    })), 0);
     return `<section class="block jin-meme">
-        <div class="block-head"><h2>金神超凡之旅</h2><span class="muted small">${m.days.map(d).join("–")} · ${m.games}局 ${m.wins}胜${m.losses}负 · ${esc(m.from)} → ${esc(m.to)} · 每天自动更新</span></div>
-        <div class="jin-meme-wrap"><img src="data/jin-meme.gif?v=${m.updatedAt}" alt="金神超凡之旅" loading="lazy" width="240" height="240"></div>
+        <div class="block-head"><h2>金神超凡之旅</h2><span class="muted small"><span class="jm-cap">${cap(m)}</span> · 每天自动更新</span></div>
+        <div class="jin-meme-wrap"><img class="jm-main" src="${src(m)}" alt="金神超凡之旅" loading="lazy" width="240" height="240"></div>
+        ${list.length > 1 ? `<div class="jm-archive"><span class="muted small">往期（点一下看）</span><div>${list.map((x, i) => `
+          <button class="jm-thumb ${i ? "" : "on"}" data-i="${i}" title="${cap(x)}"><img src="${src(x)}" alt="" loading="lazy"><b>${x.days.map(d).join("–")}</b><i class="${x.wins >= x.losses ? "up" : "down"}">${x.wins}胜${x.losses}负</i></button>`).join("")}</div></div>` : ""}
       </section>`;
   }
 

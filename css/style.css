@@ -853,3 +853,11 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .pf-heroes { margin-top: 14px; }
 .pf-heroes > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .pf-heroes img { width: 34px; height: 34px; border-radius: 8px; background: rgba(250,204,21,.12); border: 1px solid rgba(250,204,21,.4); padding: 2px; }
+.jm-archive { margin-top: 12px; }
+.jm-archive > div { display: flex; gap: 8px; overflow-x: auto; padding: 6px 2px; }
+.jm-thumb { flex: none; width: 92px; padding: 4px; border-radius: 10px; background: var(--panel, rgba(20,23,33,.72)); border: 1px solid var(--line-2, rgba(255,255,255,.12)); color: inherit; cursor: pointer; text-align: center; }
+.jm-thumb.on { border-color: var(--gold, #f2b632); box-shadow: 0 0 0 1px var(--gold, #f2b632); }
+.jm-thumb img { width: 82px; height: 82px; border-radius: 6px; display: block; }
+.jm-thumb b { display: block; font-size: 11px; margin-top: 3px; }
+.jm-thumb i { font-style: normal; font-size: 10.5px; }
+.jm-thumb i.up { color: #4ade80; } .jm-thumb i.down { color: #f87171; }
