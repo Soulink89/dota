@@ -861,3 +861,25 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .jm-thumb b { display: block; font-size: 11px; margin-top: 3px; }
 .jm-thumb i { font-style: normal; font-size: 10.5px; }
 .jm-thumb i.up { color: #4ade80; } .jm-thumb i.down { color: #f87171; }
+
+/* 投票: 谁先上万古 */
+.poll { margin: 6px 0 16px; padding: 14px 16px; border-radius: 16px; text-align: center;
+  background: linear-gradient(135deg, rgba(242,182,50,.14), rgba(147,197,253,.08)), var(--panel, rgba(20,23,33,.72)); border: 1px solid rgba(242,182,50,.35); }
+.poll-title { font-size: 15px; margin-bottom: 10px; } .poll-title b { font-family: var(--f-meme, sans-serif); font-size: 22px; color: var(--gold, #f2b632); }
+.poll-sides { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.poll-vs { font: 400 26px var(--f-meme, sans-serif); color: #f87171; text-shadow: 0 2px 0 #000; }
+.poll-side { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 14px; cursor: pointer; color: inherit;
+  background: rgba(0,0,0,.25); border: 2px solid color-mix(in srgb, var(--pc) 50%, transparent); transition: transform .15s, box-shadow .15s; font: inherit; }
+.poll-side:not([disabled]):hover { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--pc); }
+.poll-side[disabled] { cursor: default; }
+.poll-side.mine { box-shadow: 0 0 0 2px var(--pc), 0 0 18px color-mix(in srgb, var(--pc) 50%, transparent); }
+.poll-side img { width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--pc); }
+.poll-name { font-weight: 800; font-size: 16px; color: var(--pc); }
+.poll-rank { font-size: 12px; color: var(--muted, #94a3b8); }
+.poll-bar { width: 100%; height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+.poll-bar i { display: block; height: 100%; background: var(--pc); transition: width .5s; }
+.poll-pc { font: 700 13px var(--f-data, sans-serif); }
+.poll-cta { font-size: 12px; padding: 2px 10px; border-radius: 99px; background: var(--pc); color: #111; font-weight: 800; }
+.poll-mine { font-size: 12px; color: #4ade80; font-weight: 700; }
+.poll-note { margin: 8px 0 0; }
+@media (max-width: 680px) { .poll-side img { width: 42px; height: 42px; } .poll-name { font-size: 14px; } .poll-rank { font-size: 10.5px; } .poll-vs { font-size: 20px; } }

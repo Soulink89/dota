@@ -198,6 +198,7 @@
   async function renderHome() {
     document.title = "刀塔法庭";
     app.innerHTML = `
+      <div id="poll-home"></div>
       <div id="arena-home"></div>
       <section class="hero-intro">
         <div class="hero-intro-text">
@@ -251,6 +252,7 @@
     animateCounters(document.getElementById("court-stats"));
     renderDailyHome();
     jinMemeBlock().then((h) => { const e = document.getElementById("jin-meme-home"); if (e) e.innerHTML = h; });
+    renderPoll(loaded);
     if (window.TribunaleArena) window.TribunaleArena.mount(document.getElementById("arena-home"), loaded.slice().sort((a, b) => a.ctx.index - b.ctx.index));
     renderHomeExtras(loaded.sort((a, b) => a.ctx.index - b.ctx.index));
     allHeadlines().then(setTicker);
@@ -634,6 +636,50 @@
   }
 
   // GIF di 大金神 che scala i ranghi (creata ogni giorno da scripts/jin_meme.py via GitHub Actions)
+  // 投票: 蜗牛大神 vs 大金神, chi arriva prima a 万古流芳. Voti condivisi (abacus), uno per browser.
+  const POLL = (op, k) => `https://abacus.jasoncameron.dev/${op}/soulink89-dota-poll/wangu-${k}`;
+  async function renderPoll(players) {
+    const el = document.getElementById("poll-home");
+    if (!el) return;
+    const pick = (alias) => players.find((p) => p.name === alias);
+    const A = pick("蜗牛大神"), B = pick("大金神");
+    if (!A || !B) return;
+    const sides = [{ k: "woniu", p: A }, { k: "jin", p: B }];
+    const get = (k) => fetch(POLL("get", k)).then((r) => (r.ok ? r.json() : { value: 0 })).then((j) => j.value || 0).catch(() => 0);
+    let votes = await Promise.all(sides.map((x) => get(x.k)));
+    let mine = null;
+    try { mine = localStorage.getItem("tribunale:poll:wangu"); } catch {}
+    // quanto manca a 万古流芳 (rank_tier 61): stelle di distanza
+    const starsTo = (t) => { if (!t) return "?"; const tier = Math.floor(t / 10), st = t % 10; return tier >= 6 ? 0 : (5 - tier) * 5 + (5 - st) + 1; };
+    const draw = () => {
+      const tot = votes[0] + votes[1];
+      el.innerHTML = `
+        <section class="poll">
+          <div class="poll-title">🗳️ 全民投票 · <b>谁先上万古？</b></div>
+          <div class="poll-sides">${sides.map((x, i) => {
+            const t = x.p.data.profile?.rank_tier, pc = tot ? Math.round((votes[i] / tot) * 100) : 50;
+            return `<button class="poll-side ${mine === x.k ? "mine" : ""}" data-k="${x.k}" style="--pc:${x.p.cfg.color}" ${mine ? "disabled" : ""}>
+              <img src="${esc(x.p.data.profile?.profile?.avatarfull || "")}" alt="">
+              <span class="poll-name">${esc(x.p.name)}</span>
+              <span class="poll-rank">${esc(R.medalName(t))} · 距万古还差 ${starsTo(t)} 颗星</span>
+              <span class="poll-bar"><i style="width:${pc}%"></i></span>
+              <span class="poll-pc">${pc}% · ${votes[i]} 票</span>
+              ${mine === x.k ? `<span class="poll-mine">✔ 你投了他</span>` : mine ? "" : `<span class="poll-cta">投他一票</span>`}
+            </button>`; }).join(`<div class="poll-vs">VS</div>`)}</div>
+          <p class="muted small poll-note">${mine ? "已投票，每人一票。" : "每人一票，票数所有访客共享。"}</p>
+        </section>`;
+      el.querySelectorAll(".poll-side:not([disabled])").forEach((b) => b.addEventListener("click", async () => {
+        if (mine) return;
+        const k = b.dataset.k, i = sides.findIndex((x) => x.k === k);
+        mine = k; votes[i]++;
+        try { localStorage.setItem("tribunale:poll:wangu", k); } catch {}
+        draw();
+        try { const j = await (await fetch(POLL("hit", k))).json(); if (j.value) { votes[i] = j.value; draw(); } } catch {}
+      }));
+    };
+    draw();
+  }
+
   async function jinMemeBlock() {
     let list;
     try { list = await (await fetch(`data/jin-memes/index.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch { list = []; }
