@@ -668,6 +668,16 @@
               <span class="poll-pc">${pc}% · ${votes[i]} 票</span>
               ${mine === x.k ? `<span class="poll-mine">✔ 你投了他</span>` : mine ? "" : `<span class="poll-cta">投他一票</span>`}
             </button>`; }).join(`<div class="poll-vs">VS</div>`)}</div>
+          ${(() => {  // pista: 传奇1 → 传奇5 → 万古流芳, con le due facce alla loro stella
+            const steps = [51, 52, 53, 54, 55, 61];
+            const pos = (t) => { if (!t) return null; const i = steps.indexOf(t); if (i >= 0) return i / (steps.length - 1); return t >= 61 ? 1 : t < 51 ? 0 : null; };
+            return `<div class="race">
+              <div class="race-line"></div>
+              ${steps.map((t, i) => `<div class="race-step ${t === 61 ? "goal" : ""}" style="left:${(i / (steps.length - 1)) * 100}%">${medal(t)}<span>${t === 61 ? "万古流芳" : "传奇" + (t % 10)}</span></div>`).join("")}
+              ${sides.map((x, i) => { const t = x.p.data.profile?.rank_tier, ps = pos(t); if (ps == null) return "";
+                const av = x.p.data.profile?.profile?.avatarfull;
+                return `<div class="race-runner ${i ? "b" : "a"}" style="left:${ps * 100}%;--pc:${x.p.cfg.color}">${av ? `<img src="${esc(av)}" alt="">` : ""}<b>${esc(x.p.name)}</b></div>`; }).join("")}
+            </div>`; })()}
           <p class="muted small poll-note">${mine ? "已投票，每人一票。" : "每人一票，票数所有访客共享。"}</p>
         </section>`;
       el.querySelectorAll(".poll-side:not([disabled])").forEach((b) => b.addEventListener("click", async () => {
