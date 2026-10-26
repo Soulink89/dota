@@ -230,6 +230,7 @@
     const arenaEl = document.getElementById("arena-home");
     window.TribunaleArena?.loader(arenaEl);
     let nLoaded = 0;
+    renderPoll([]); // il sondaggio compare subito, senza aspettare OpenDota
     const cards = document.querySelectorAll("#cards .wanted.skeleton");
     const loaded = [];
     await Promise.all(CFG.players.map(async (cfg, i) => {
@@ -641,9 +642,9 @@
   async function renderPoll(players) {
     const el = document.getElementById("poll-home");
     if (!el) return;
-    const pick = (alias) => players.find((p) => p.name === alias);
+    // compare subito con i dati di config.js; rango e foto arrivano quando OpenDota risponde
+    const pick = (alias) => players.find((p) => p.name === alias) || { name: alias, cfg: CFG.players.find((c) => c.alias === alias) || {}, data: {} };
     const A = pick("蜗牛大神"), B = pick("大金神");
-    if (!A || !B) return;
     const sides = [{ k: "woniu", p: A }, { k: "jin", p: B }];
     const get = (k) => fetch(POLL("get", k)).then((r) => (r.ok ? r.json() : { value: 0 })).then((j) => j.value || 0).catch(() => 0);
     let votes = await Promise.all(sides.map((x) => get(x.k)));
@@ -659,9 +660,10 @@
           <div class="poll-sides">${sides.map((x, i) => {
             const t = x.p.data.profile?.rank_tier, pc = tot ? Math.round((votes[i] / tot) * 100) : 50;
             return `<button class="poll-side ${mine === x.k ? "mine" : ""}" data-k="${x.k}" style="--pc:${x.p.cfg.color}" ${mine ? "disabled" : ""}>
-              <img src="${esc(x.p.data.profile?.profile?.avatarfull || "")}" alt="">
+              ${x.p.data.profile?.profile?.avatarfull ? `<img src="${esc(x.p.data.profile.profile.avatarfull)}" alt="">` : `<span class="poll-av">${esc(x.p.name.slice(0, 1))}</span>`}
               <span class="poll-name">${esc(x.p.name)}</span>
-              <span class="poll-rank">${esc(R.medalName(t))} · 距万古还差 ${starsTo(t)} 颗星</span>
+              ${t ? `<span class="poll-medal">${medal(t)}</span>` : ""}
+              <span class="poll-rank">${t ? `${esc(R.medalName(t))} · 距万古还差 ${starsTo(t)} 颗星` : "段位读取中…"}</span>
               <span class="poll-bar"><i style="width:${pc}%"></i></span>
               <span class="poll-pc">${pc}% · ${votes[i]} 票</span>
               ${mine === x.k ? `<span class="poll-mine">✔ 你投了他</span>` : mine ? "" : `<span class="poll-cta">投他一票</span>`}
