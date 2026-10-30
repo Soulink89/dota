@@ -899,3 +899,14 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .race-runner img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--pc); display: block; margin: 0 auto; box-shadow: 0 0 10px var(--pc); }
 .race-runner b { display: block; font-size: 10.5px; color: var(--pc); white-space: nowrap; }
 @media (max-width: 680px) { .race { margin: 14px 18px 0; } .race-step .medal { width: 34px; height: 34px; } .race-step.goal .medal { width: 42px; height: 42px; } .race-step span { font-size: 9px; } .race-runner img { width: 26px; height: 26px; } }
+
+/* 万古计时 + tabella ranghi */
+.wg-timer { display: flex; justify-content: center; gap: 10px; margin: 6px 0; }
+.wg-timer span { min-width: 62px; padding: 8px 6px; border-radius: 12px; background: rgba(0,0,0,.35); border: 1px solid rgba(167,139,250,.5); font-size: 12px; }
+.wg-timer b { display: block; font: 700 30px var(--f-data, sans-serif); color: #c4b5fd; }
+.wg-medal .medal { margin: 6px auto 0; }
+.rank-table { width: 100%; max-width: 520px; margin: 12px auto 0; border-collapse: collapse; text-align: left; font-size: 14px; }
+.rank-table th { font-size: 12px; color: var(--muted, #94a3b8); padding: 4px 8px; }
+.rank-table td { padding: 4px 8px; border-top: 1px solid rgba(255,255,255,.08); }
+.rt-rank { display: flex; align-items: center; gap: 8px; }
+.rt-rank .medal { width: 34px; height: 34px; }

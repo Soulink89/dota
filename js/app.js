@@ -637,59 +637,34 @@
   }
 
   // GIF di 大金神 che scala i ranghi (creata ogni giorno da scripts/jin_meme.py via GitHub Actions)
-  // 投票: 蜗牛大神 vs 大金神, chi arriva prima a 万古流芳. Voti condivisi (abacus), uno per browser.
-  const POLL = (op, k) => `https://abacus.jasoncameron.dev/${op}/soulink89-dota-poll/wangu-${k}`;
+  // 大金神能在万古呆多久: timer dal giorno in cui è arrivato a 万古 (data/wangu.json), poi la tabella dei ranghi
+  let wanguTick = null;
   async function renderPoll(players) {
     const el = document.getElementById("poll-home");
     if (!el) return;
-    // compare subito con i dati di config.js; rango e foto arrivano quando OpenDota risponde
-    const pick = (alias) => players.find((p) => p.name === alias) || { name: alias, cfg: CFG.players.find((c) => c.alias === alias) || {}, data: {} };
-    const A = pick("蜗牛大神"), B = pick("大金神");
-    const sides = [{ k: "woniu", p: A }, { k: "jin", p: B }];
-    const get = (k) => fetch(POLL("get", k)).then((r) => (r.ok ? r.json() : { value: 0 })).then((j) => j.value || 0).catch(() => 0);
-    let votes = await Promise.all(sides.map((x) => get(x.k)));
-    let mine = null;
-    try { mine = localStorage.getItem("tribunale:poll:wangu"); } catch {}
-    // quanto manca a 万古流芳 (rank_tier 61): stelle di distanza
-    const starsTo = (t) => { if (!t) return "?"; const tier = Math.floor(t / 10), st = t % 10; return tier >= 6 ? 0 : (5 - tier) * 5 + (5 - st) + 1; };
-    const draw = () => {
-      const tot = votes[0] + votes[1];
-      el.innerHTML = `
-        <section class="poll">
-          <div class="poll-title">🗳️ 全民投票 · <b>谁先上万古？</b></div>
-          <div class="poll-sides">${sides.map((x, i) => {
-            const t = x.p.data.profile?.rank_tier, pc = tot ? Math.round((votes[i] / tot) * 100) : 50;
-            return `<button class="poll-side ${mine === x.k ? "mine" : ""}" data-k="${x.k}" style="--pc:${x.p.cfg.color}" ${mine ? "disabled" : ""}>
-              ${x.p.data.profile?.profile?.avatarfull ? `<img src="${esc(x.p.data.profile.profile.avatarfull)}" alt="">` : `<span class="poll-av">${esc(x.p.name.slice(0, 1))}</span>`}
-              <span class="poll-name">${esc(x.p.name)}</span>
-              ${t ? `<span class="poll-medal">${medal(t)}</span>` : ""}
-              <span class="poll-rank">${t ? `${esc(R.medalName(t))} · 距万古还差 ${starsTo(t)} 颗星` : "段位读取中…"}</span>
-              <span class="poll-bar"><i style="width:${pc}%"></i></span>
-              <span class="poll-pc">${pc}% · ${votes[i]} 票</span>
-              ${mine === x.k ? `<span class="poll-mine">✔ 你投了他</span>` : mine ? "" : `<span class="poll-cta">投他一票</span>`}
-            </button>`; }).join(`<div class="poll-vs">VS</div>`)}</div>
-          ${(() => {  // pista: 传奇1 → 传奇5 → 万古流芳, con le due facce alla loro stella
-            const steps = [51, 52, 53, 54, 55, 61];
-            const pos = (t) => { if (!t) return null; const i = steps.indexOf(t); if (i >= 0) return i / (steps.length - 1); return t >= 61 ? 1 : t < 51 ? 0 : null; };
-            return `<div class="race">
-              <div class="race-line"></div>
-              ${steps.map((t, i) => `<div class="race-step ${t === 61 ? "goal" : ""}" style="left:${(i / (steps.length - 1)) * 100}%">${medal(t)}<span>${t === 61 ? "万古流芳" : "传奇" + (t % 10)}</span></div>`).join("")}
-              ${sides.map((x, i) => { const t = x.p.data.profile?.rank_tier, ps = pos(t); if (ps == null) return "";
-                const av = x.p.data.profile?.profile?.avatarfull;
-                return `<div class="race-runner ${i ? "b" : "a"}" style="left:${ps * 100}%;--pc:${x.p.cfg.color}">${av ? `<img src="${esc(av)}" alt="">` : ""}<b>${esc(x.p.name)}</b></div>`; }).join("")}
-            </div>`; })()}
-          <p class="muted small poll-note">${mine ? "已投票，每人一票。" : "每人一票，票数所有访客共享。"}</p>
-        </section>`;
-      el.querySelectorAll(".poll-side:not([disabled])").forEach((b) => b.addEventListener("click", async () => {
-        if (mine) return;
-        const k = b.dataset.k, i = sides.findIndex((x) => x.k === k);
-        mine = k; votes[i]++;
-        try { localStorage.setItem("tribunale:poll:wangu", k); } catch {}
-        draw();
-        try { const j = await (await fetch(POLL("hit", k))).json(); if (j.value) { votes[i] = j.value; draw(); } } catch {}
-      }));
+    let w = {};
+    try { w = await (await fetch(`data/wangu.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch {}
+    const tierOf = (p) => p.cfg.persona?.rankOverride || p.data.profile?.rank_tier || 0;
+    const rows = [...players].sort((a, b) => tierOf(b) - tierOf(a));
+    const jin = players.find((p) => p.name === "大金神");
+    el.innerHTML = `<section class="poll">
+      <div class="poll-title">⏱️ <b>大金神能在万古呆多久？</b></div>
+      ${w.since ? `<div class="wg-timer" id="wg-timer"></div><p class="muted small poll-note">掉出万古，计时清零${w.bestDays ? ` · 历史最长 ${w.bestDays.toFixed(1)} 天` : ""}</p>`
+        : `<div class="wg-timer"><span><b>0</b>天</span></div><p class="muted small poll-note">已掉出万古，等他回来</p>`}
+      ${jin ? `<div class="wg-medal">${medal(tierOf(jin))}</div>` : ""}
+      ${rows.length ? `<table class="rank-table"><thead><tr><th>#</th><th>玩家</th><th>段位</th></tr></thead><tbody>${rows.map((p, i) => {
+        const t = tierOf(p);
+        return `<tr><td>${i + 1}</td><td><a href="#/p/${p.id}" style="color:${p.cfg.color || "inherit"}">${esc(p.name)}</a></td><td class="rt-rank">${t ? medal(t) : ""}<span>${t ? esc(medalName(t)) : "未知"}</span></td></tr>`; }).join("")}</tbody></table>` : ""}
+    </section>`;
+    clearInterval(wanguTick);
+    const box = document.getElementById("wg-timer");
+    if (!box) return;
+    const tick = () => {
+      if (!box.isConnected) return clearInterval(wanguTick);
+      const s = Math.max(0, Math.floor((Date.now() - w.since) / 1000));
+      box.innerHTML = [[Math.floor(s / 86400), "天"], [Math.floor(s / 3600) % 24, "时"], [Math.floor(s / 60) % 60, "分"], [s % 60, "秒"]].map(([n, u]) => `<span><b>${n}</b>${u}</span>`).join("");
     };
-    draw();
+    tick(); wanguTick = setInterval(tick, 1000);
   }
 
   async function jinMemeBlock() {

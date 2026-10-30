@@ -161,5 +161,17 @@ if (targets.length) {
   }
   arena.updatedAt = Date.now();
   await writeFile(arenaUrl, JSON.stringify(arena));
+  // da quando 大金神 è 万古: il timer riparte se scende e torna su
+  try {
+    const url = new URL("../data/wangu.json", import.meta.url);
+    const w = JSON.parse(await readFile(url, "utf8"));
+    const snap = JSON.parse(await readFile(new URL("../data/113456657.json", import.meta.url), "utf8"));
+    const t = snap.profile?.rank_tier;
+    if (t) {
+      if (t >= 60 && !w.since) w.since = Date.now();
+      if (t < 60 && w.since) { w.lostAt = Date.now(); w.bestDays = Math.max(w.bestDays || 0, (Date.now() - w.since) / 86400000); w.since = null; }
+      await writeFile(url, JSON.stringify(w));
+    }
+  } catch {}
   console.log("⚔ arena.json aggiornato");
 }
