@@ -76,6 +76,7 @@
 //      humbleBrag i "罪状" sono lodi travestite (colpevole di essere troppo forte)
 //    arenaFarm:   true = nel 刀塔乱斗 è lui che farma i creep (gli altri li ignorano)
 //    rankOverride: rank_tier mostrato al posto di quello di OpenDota
+//    rankUnknown: true = nella tabella il rango è 未知
 //    rankNote:    nota accanto al rango nella tabella (es. 小号)
 //    arenaHero:   id dell'eroe con cui appare nel 刀塔乱斗 (altrimenti il più giocato della settimana)
 //    heatTitle:   titolo personalizzato della tabella oraria
@@ -212,11 +213,11 @@ window.TRIBUNALE_CONFIG = {
     {
       steam64: "76561198425331672",
       alias: "金神大腿",
-      accusa: "冠绝实力，开小号",
+      accusa: "段位未知，开小号",
       bio: "大金神的大腿，金神一半的分都是靠他带上去的",
       color: "#f0abfc",
       bounty: "带飞大金神罪",
-      persona: { rankNote: "小号 · 冠绝实力", friendsScan: true, traits: ["threeAxes", "allNighter"] },
+      persona: { rankUnknown: true, rankNote: "小号", friendsScan: true, traits: ["threeAxes", "allNighter"] },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },
   ],

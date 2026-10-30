@@ -644,7 +644,7 @@
     if (!el) return;
     let w = {};
     try { w = await (await fetch(`data/wangu.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch {}
-    const tierOf = (p) => p.cfg.persona?.rankOverride || p.data.profile?.rank_tier || 0;
+    const tierOf = (p) => (p.cfg.persona?.rankUnknown ? 0 : p.cfg.persona?.rankOverride || p.data.profile?.rank_tier || 0);
     const rows = [...players].sort((a, b) => tierOf(b) - tierOf(a));
     const jin = players.find((p) => p.name === "大金神");
     el.innerHTML = `<section class="poll">
