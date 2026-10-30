@@ -654,7 +654,7 @@
       ${jin ? `<div class="wg-medal">${medal(tierOf(jin))}</div>` : ""}
       ${rows.length ? `<table class="rank-table"><thead><tr><th>#</th><th>玩家</th><th>段位</th></tr></thead><tbody>${rows.map((p, i) => {
         const t = tierOf(p);
-        return `<tr><td>${i + 1}</td><td><a href="#/p/${p.id}" style="color:${p.cfg.color || "inherit"}">${esc(p.name)}</a></td><td class="rt-rank">${t ? medal(t) : ""}<span>${t ? esc(medalName(t)) : "未知"}</span></td></tr>`; }).join("")}</tbody></table>` : ""}
+        return `<tr><td>${i + 1}</td><td><a href="#/p/${p.id}" style="color:${p.cfg.color || "inherit"}">${esc(p.name)}</a></td><td class="rt-rank">${t ? medal(t) : ""}<span>${t ? esc(medalName(t)) : "未知"}${p.cfg.persona?.rankNote ? ` · ${esc(p.cfg.persona.rankNote)}` : ""}</span></td></tr>`; }).join("")}</tbody></table>` : ""}
     </section>`;
     clearInterval(wanguTick);
     const box = document.getElementById("wg-timer");
