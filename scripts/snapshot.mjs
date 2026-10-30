@@ -95,7 +95,8 @@ if (targets.length) {
   try { cache = JSON.parse(await readFile(cacheUrl, "utf8")); } catch {}
   const cutoff = Date.now() / 1000 - days * 86400;
   const candidates = [...new Map(friendMatches.filter((m) => m.start_time >= cutoff).map((m) => [m.match_id, m])).values()]
-    .filter((m) => !cache[m.match_id]).sort((a, b) => b.start_time - a.start_time);
+    // riaperta anche se un giocatore "nascosto" è stato aggiunto dopo l'ultima scansione
+    .filter((m) => !cache[m.match_id] || targets.some((t) => !(cache[m.match_id].scanned || []).includes(t.id))).sort((a, b) => b.start_time - a.start_time);
   const MAX_PER_RUN = 40; // resta sotto il limite di 60 richieste al minuto di OpenDota
   let opened = 0;
   for (const m of candidates.slice(0, MAX_PER_RUN)) {
@@ -114,7 +115,7 @@ if (targets.length) {
           leaver_status: pl.leaver_status, lane_role: pl.lane_role ?? null, party_size: partySize, rank_tier: pl.rank_tier ?? null,
         };
       }
-      cache[m.match_id] = { t: d.start_time, found };
+      cache[m.match_id] = { t: d.start_time, found, scanned: targets.map((t) => t.id) };
       opened++;
     } catch (e) {
       console.error(`✘ partita ${m.match_id}: ${e.message}`);
