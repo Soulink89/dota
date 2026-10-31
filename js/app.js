@@ -642,7 +642,7 @@
     const el = document.getElementById("poll-home");
     if (!el) return;
     const tierOf = (p) => (p.cfg.persona?.rankUnknown ? 0 : p.cfg.persona?.rankOverride || p.data.profile?.rank_tier || 0);
-    const rows = players.filter((p) => !p.legend).sort((a, b) => tierOf(b) - tierOf(a));
+    const rows = players.filter((p) => !p.legend && !p.cfg.persona?.rankUnknown).sort((a, b) => tierOf(b) - tierOf(a));
     el.innerHTML = `<section class="poll">
       <div class="poll-title">🏁 <b>谁先到万古</b></div>
       ${rows.length ? `<table class="rank-table"><thead><tr><th>#</th><th>玩家</th><th>段位</th></tr></thead><tbody>${rows.map((p, i) => {
