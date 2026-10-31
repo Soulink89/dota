@@ -910,3 +910,4 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .rank-table td { padding: 4px 8px; border-top: 1px solid rgba(255,255,255,.08); }
 .rt-rank { display: flex; align-items: center; gap: 8px; }
 .rt-rank .medal { width: 34px; height: 34px; }
+.wg-meme { display: block; width: min(480px, 100%); margin: 14px auto 0; border-radius: 12px; }

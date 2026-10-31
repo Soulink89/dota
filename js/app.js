@@ -637,34 +637,19 @@
   }
 
   // GIF di 大金神 che scala i ranghi (creata ogni giorno da scripts/jin_meme.py via GitHub Actions)
-  // 大金神能在万古呆多久: timer dal giorno in cui è arrivato a 万古 (data/wangu.json), poi la tabella dei ranghi
-  let wanguTick = null;
+  // 谁先到万古: tabella dei ranghi con sotto il meme 万古一日游
   async function renderPoll(players) {
     const el = document.getElementById("poll-home");
     if (!el) return;
-    let w = {};
-    try { w = await (await fetch(`data/wangu.json?t=${Date.now()}`, { cache: "no-store" })).json(); } catch {}
     const tierOf = (p) => (p.cfg.persona?.rankUnknown ? 0 : p.cfg.persona?.rankOverride || p.data.profile?.rank_tier || 0);
-    const rows = [...players].sort((a, b) => tierOf(b) - tierOf(a));
-    const jin = players.find((p) => p.name === "大金神");
+    const rows = players.filter((p) => !p.legend).sort((a, b) => tierOf(b) - tierOf(a));
     el.innerHTML = `<section class="poll">
-      <div class="poll-title">⏱️ <b>大金神能在万古呆多久？</b></div>
-      ${w.since ? `<div class="wg-timer" id="wg-timer"></div><p class="muted small poll-note">掉出万古，计时清零${w.bestDays ? ` · 历史最长 ${w.bestDays.toFixed(1)} 天` : ""}</p>`
-        : `<div class="wg-timer"><span><b>0</b>天</span></div><p class="muted small poll-note">已掉出万古，等他回来</p>`}
-      ${jin ? `<div class="wg-medal">${medal(tierOf(jin))}</div>` : ""}
+      <div class="poll-title">🏁 <b>谁先到万古</b></div>
       ${rows.length ? `<table class="rank-table"><thead><tr><th>#</th><th>玩家</th><th>段位</th></tr></thead><tbody>${rows.map((p, i) => {
         const t = tierOf(p);
         return `<tr><td>${i + 1}</td><td><a href="#/p/${p.id}" style="color:${p.cfg.color || "inherit"}">${esc(p.name)}</a></td><td class="rt-rank">${t ? medal(t) : ""}<span>${t ? esc(medalName(t)) : "未知"}${p.cfg.persona?.rankNote ? ` · ${esc(p.cfg.persona.rankNote)}` : ""}</span></td></tr>`; }).join("")}</tbody></table>` : ""}
+      <img class="wg-meme" src="assets/jin-wangu-1day.jpg" alt="大金神 万古一日游" loading="lazy">
     </section>`;
-    clearInterval(wanguTick);
-    const box = document.getElementById("wg-timer");
-    if (!box) return;
-    const tick = () => {
-      if (!box.isConnected) return clearInterval(wanguTick);
-      const s = Math.max(0, Math.floor((Date.now() - w.since) / 1000));
-      box.innerHTML = [[Math.floor(s / 86400), "天"], [Math.floor(s / 3600) % 24, "时"], [Math.floor(s / 60) % 60, "分"], [s % 60, "秒"]].map(([n, u]) => `<span><b>${n}</b>${u}</span>`).join("");
-    };
-    tick(); wanguTick = setInterval(tick, 1000);
   }
 
   async function jinMemeBlock() {

@@ -95,6 +95,7 @@ window.TRIBUNALE_CONFIG = {
       bounty: "吹牛罪",
       persona: {
         meter: "brag",
+        rankOverride: 53, // OpenDota è in ritardo (dice ancora 万古): togliere quando si aggiorna
         claimedRank: "超凡入圣",
         rival: "呆逼",
         traits: ["brag", "midKing", "kdaBrag", "blameTeam", "rigged", "selfMvp", "targeted", "lastPick", "trashTalk", "allNighter"],
