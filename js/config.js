@@ -95,7 +95,6 @@ window.TRIBUNALE_CONFIG = {
       bounty: "吹牛罪",
       persona: {
         meter: "brag",
-        rankOverride: 53, // OpenDota è in ritardo (dice ancora 万古): togliere quando si aggiorna
         claimedRank: "超凡入圣",
         rival: "呆逼",
         traits: ["brag", "midKing", "kdaBrag", "blameTeam", "rigged", "selfMvp", "targeted", "lastPick", "trashTalk", "allNighter"],
@@ -214,11 +213,11 @@ window.TRIBUNALE_CONFIG = {
     {
       steam64: "76561198425331672",
       alias: "金神大腿",
-      accusa: "段位未知，开小号",
+      accusa: "开小号",
       bio: "大金神的大腿，金神一半的分都是靠他带上去的",
       color: "#f0abfc",
       bounty: "带飞大金神罪",
-      persona: { rankUnknown: true, rankNote: "小号", friendsScan: true, traits: ["threeAxes", "allNighter"] },
+      persona: { rankNote: "小号", friendsScan: true, traits: ["threeAxes", "allNighter"] },
     },
     // { steam64: "7656119XXXXXXXXXX", alias: "Nome", accusa: "帕吉惯犯" },
   ],
