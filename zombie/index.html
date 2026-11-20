@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>僵尸围城</title>
+<meta name="description" content="像素风僵尸塔防：建墙、架机枪、埋地雷，守住你的地堡。" />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@500;900&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #0b0a12; --panel: #17141f; --line: #2c2638; --gold: #f7c84a; --red: #e23b3b; --green: #5fd068; --text: #ece3d0; --muted: #9a90a8; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Noto Sans SC", system-ui, sans-serif; overscroll-behavior: none; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 8px 8px 16px; user-select: none; }
+  .px { font-family: "Press Start 2P", monospace; }
+  /* barra superiore */
+  .hud { width: 100%; max-width: 1400px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; margin-bottom: 8px;
+    background: var(--panel); border: 3px solid var(--line); border-radius: 4px; box-shadow: inset 0 -3px 0 #0d0b13; }
+  .title { font: 900 18px "Noto Sans SC"; color: var(--gold); letter-spacing: 2px; text-shadow: 2px 2px 0 #5a2a0a; margin-right: 6px; }
+  .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .stat b { font: 12px "Press Start 2P"; color: var(--text); }
+  .stat.gold b { color: var(--gold); }
+  .meter { position: relative; width: 120px; height: 14px; background: #2a0f12; border: 2px solid #0d0b13; }
+  .meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#ff6a5a, #c8262a); transition: width .2s; }
+  .meter.hp i { background: linear-gradient(#8ef08a, #2e9a3c); }
+  .meter span { position: absolute; inset: 0; display: grid; place-items: center; font: 8px "Press Start 2P"; color: #fff; text-shadow: 1px 1px 0 #000; }
+  .status { margin-left: auto; font-size: 13px; color: var(--text); }
+  .btn { font: 900 13px "Noto Sans SC"; padding: 6px 12px; background: var(--gold); color: #1a1208; border: 0; border-radius: 3px; cursor: pointer; box-shadow: inset 0 -3px 0 #a87814; }
+  .btn.ghost { background: #2a2536; color: var(--text); box-shadow: inset 0 -3px 0 #15121c; }
+  /* palco */
+  .stage { position: relative; line-height: 0; border: 4px solid #2c2638; border-radius: 4px; box-shadow: 0 0 0 4px #0d0b13, 0 20px 50px rgba(0,0,0,.6); touch-action: none; }
+  canvas#cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; cursor: crosshair; }
+  .banner { position: absolute; left: 50%; top: 18%; transform: translate(-50%, -10px); font: 900 clamp(18px, 4vw, 36px) "Noto Sans SC"; color: var(--gold); white-space: nowrap;
+    text-shadow: 3px 3px 0 #000, 0 0 18px rgba(247,200,74,.5); opacity: 0; transition: .3s; pointer-events: none; line-height: 1.2; }
+  .banner.show { opacity: 1; transform: translate(-50%, 0); }
+  .joy { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); background: rgba(0,0,0,.2); pointer-events: none; }
+  .joy i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px; border-radius: 50%; background: rgba(255,255,255,.4); }
+  /* barra costruzioni */
+  .tools { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+  .tool { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 74px; padding: 6px 4px 5px; cursor: pointer;
+    background: var(--panel); color: var(--text); border: 3px solid var(--line); border-radius: 4px; box-shadow: inset 0 -3px 0 #0d0b13; font: inherit; }
+  .tool canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+  .tool span { font-size: 12px; font-weight: 900; }
+  .tool b { font: 9px "Press Start 2P"; color: var(--gold); }
+  .tool i { position: absolute; left: 4px; top: 3px; font: 7px "Press Start 2P"; font-style: normal; color: var(--muted); }
+  .tool.on { border-color: var(--gold); background: #2a2210; }
+  .tool.poor { opacity: .5; }
+  .help { max-width: 760px; margin-top: 10px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.7; }
+  /* overlay */
+  .ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; line-height: 1.6;
+    background: radial-gradient(ellipse at center, rgba(10,8,16,.75), rgba(5,4,8,.95)); }
+  .ov[hidden] { display: none; }
+  .ov h1 { margin: 0; font: 900 clamp(28px, 6vw, 54px) "Noto Sans SC"; color: var(--gold); letter-spacing: 4px; text-shadow: 4px 4px 0 #5a2a0a, 0 0 30px rgba(247,200,74,.35); }
+  .ov p { margin: 0; max-width: 560px; font-size: 14px; color: var(--muted); }
+  .ov b { color: var(--gold); }
+  .ov .btn { font-size: 18px; padding: 10px 28px; }
+  .back { position: fixed; right: 10px; bottom: 8px; font-size: 12px; color: var(--muted); }
+  @media (max-width: 700px) { .hud { gap: 6px 10px; padding: 6px 8px; } .meter { width: 80px; } .status { margin-left: 0; width: 100%; } .tool { width: 62px; } .help { display: none; } }
+</style>
+</head>
+<body>
+  <div class="hud">
+    <span class="title">僵尸围城</span>
+    <span class="stat">波次 <b class="px" id="h-wave">0</b></span>
+    <span class="stat gold">金币 <b class="px" id="h-gold">0</b></span>
+    <span class="stat">地堡 <span class="meter"><i id="h-base"></i><span id="h-base-t"></span></span></span>
+    <span class="stat">生命 <span class="meter hp"><i id="h-hp"></i><span id="h-hp-t"></span></span></span>
+    <span class="status" id="status"></span>
+    <button class="btn" id="next">开始下一波 ▶</button>
+    <button class="btn ghost" id="mute" title="声音">🔊</button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="banner" id="banner"></div>
+    <div class="joy" id="joy" hidden><i></i></div>
+    <div class="ov" id="intro">
+      <h1>僵尸围城</h1>
+      <p>夜幕降临，尸潮来袭。守住你的<b>地堡</b>！<br>你会自动朝最近的僵尸开枪。用金币修<b>木墙</b>、<b>石墙</b>，架<b>机枪</b>，埋<b>地雷</b>。<br>僵尸会绕路，绕不过去就砸墙。</p>
+      <p id="intro-best"></p>
+      <button class="btn" id="start">开始守城</button>
+      <p style="font-size:12px">电脑：WASD / 方向键移动 · 数字键 1-5 选建筑 · 点击放置 · 右键取消 · 空格开始下一波<br>手机：左手拖动 = 移动 · 先选建筑再点地面放置</p>
+    </div>
+    <div class="ov" id="over" hidden>
+      <h1>地堡失守</h1>
+      <p id="over-text"></p>
+      <button class="btn" id="again">再守一次</button>
+    </div>
+  </div>
+  <div class="tools" id="tools"></div>
+  <div class="help">击杀僵尸得金币，每波结束有奖励。机枪自动扫射范围内的僵尸；地雷踩到就炸。选“拆除”再点建筑可以返还一半金币。</div>
+  <a class="back" href="../">← 刀塔法庭</a>
+  <script src="art.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

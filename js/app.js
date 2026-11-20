@@ -198,7 +198,6 @@
   async function renderHome() {
     document.title = "刀塔法庭";
     app.innerHTML = `
-      <a class="lh-link" href="lasthit.html">🎯 <b>补刀练习</b> · 两分钟能补几刀？不服来战 →</a>
       <div id="poll-home"></div>
       <div id="arena-home"></div>
       <section class="hero-intro">
