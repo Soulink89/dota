@@ -198,7 +198,7 @@
   async function renderHome() {
     document.title = "刀塔法庭";
     app.innerHTML = `
-      <a class="game-link" href="game2/">🏰 <b>守护遗迹</b> <sup>BETA</sup> · 横版刀塔塔防：大金神守天辉遗迹，召唤小兵、买装备、叫蜗牛大神 →</a>
+      <a class="game-link" href="game2/">🏰 <b>守护遗迹</b> <sup>BETA</sup> · 横版刀塔塔防 · 大金神直播守遗迹：三种难度（负冲统帅/冲击万古/冲击超凡），合成装备、升级防御塔，叫大B神、Yoki大神、蜗牛大神从天而降 →</a>
       <a class="game-link" href="zombie/">🔥 <b>篝火守卫</b> <sup>BETA</sup> · 刀塔像素生存塔防：选你的大神，砍树造塔，夜里守住篝火 →</a>
       <div id="poll-home"></div>
       <div id="arena-home"></div>
