@@ -198,6 +198,7 @@
   async function renderHome() {
     document.title = "刀塔法庭";
     app.innerHTML = `
+      <a class="game-link" href="game2/">🏰 <b>守护遗迹</b> <sup>BETA</sup> · 横版刀塔塔防：大金神守天辉遗迹，召唤小兵、买装备、叫蜗牛大神 →</a>
       <a class="game-link" href="zombie/">🔥 <b>篝火守卫</b> <sup>BETA</sup> · 刀塔像素生存塔防：选你的大神，砍树造塔，夜里守住篝火 →</a>
       <div id="poll-home"></div>
       <div id="arena-home"></div>
