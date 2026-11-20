@@ -20,6 +20,8 @@
   .meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#b8ffd0, #2e9a5c); transition: width .2s; }
   .meter.hp i { background: linear-gradient(#8ef08a, #2e9a3c); } .meter.xp { height: 6px; width: 70px; } .meter.xp i { background: #8a6aff; }
   .meter span { position: absolute; inset: 0; display: grid; place-items: center; font: 7px "Press Start 2P"; color: #fff; text-shadow: 1px 1px 0 #000; }
+  .medal { position: relative; width: 30px; height: 30px; display: inline-block; } .medal img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .stat.mmr #rank { color: var(--gold); font-weight: 900; }
   .stage { position: relative; line-height: 0; border: 4px solid #2c2638; border-radius: 4px; box-shadow: 0 0 0 4px #0d0b13, 0 20px 50px rgba(0,0,0,.6); touch-action: none; }
   canvas#cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
   .banner { position: absolute; left: 50%; top: 10%; transform: translate(-50%, -10px); text-align: center; font: 900 clamp(18px, 3.6vw, 34px) "Noto Sans SC"; color: var(--gold); white-space: nowrap; text-shadow: 3px 3px 0 #000; opacity: 0; transition: .3s; pointer-events: none; line-height: 1.25; }
@@ -69,7 +71,8 @@
     <span class="stat">波次 <b id="wave">0</b> · 下一波 <b id="next">0</b>s</span>
     <span class="stat gold">金币 <b id="gold">0</b></span>
     <span class="stat">遗迹 <span class="meter"><i id="anc"></i><span id="anc-t"></span></span></span>
-    <span class="stat">大金神 Lv<b id="lvl">1</b> <span class="meter hp"><i id="hp"></i><span id="hp-t"></span></span> <span class="meter xp"><i id="xp"></i></span></span>
+    <span class="stat mmr"><span class="medal"><img id="medal" alt=""><img id="star" alt=""></span>大金神 <b id="mmr">3150</b> MMR · <span id="rank"></span></span>
+    <span class="stat"><span class="meter hp"><i id="hp"></i><span id="hp-t"></span></span></span>
   </div>
   <div class="stage">
     <canvas id="cv"></canvas>
@@ -77,7 +80,7 @@
     <div class="move"><button id="left">◀</button><button id="right">▶</button></div>
     <div class="ov" id="intro">
       <h1>守护遗迹 <sup class="beta">BETA</sup></h1>
-      <p><b>大金神</b>要守住左边山坡上的<b>天辉遗迹</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵），钱够了还能叫<b>蜗牛大神</b>来帮忙45秒。</p>
+      <p><b>大金神</b>要守住左边山坡上的<b>天辉遗迹</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵），钱够了还能叫<b>蜗牛大神</b>（影魔）来帮忙45秒。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
       <p id="best"></p>
       <p><b>大金神今天玩哪个英雄？</b></p>
       <div class="pick" id="pick"></div>
