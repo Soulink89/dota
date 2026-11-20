@@ -56,6 +56,11 @@
   .slot small { font-size: 9.5px; color: var(--muted); text-align: center; line-height: 1.3; }
   .slot img { width: 44px; height: 33px; }
   .slot .pic canvas { height: 44px; image-rendering: pixelated; }
+  .shop-h { width: 100%; font-size: 11px; color: var(--muted); margin: 4px 0 0; border-bottom: 1px solid var(--line); }
+  .slot em s { color: var(--muted); font-size: 7px; margin-left: 3px; }
+  .slot.big { width: 116px; } .parts { display: flex; align-items: center; gap: 1px; font-size: 9px; color: var(--muted); }
+  .parts img { width: 22px; height: 16px; opacity: .55; border: 1px solid #000; } .parts img.have { opacity: 1; outline: 1px solid var(--green); }
+  .inv img { cursor: pointer; }
   .slot.poor { opacity: .45; } .slot.own { border-color: var(--green); opacity: .7; }
   .slot.snail { border-color: #93c5fd; width: 110px; } .slot b small { color: var(--muted); font-weight: 500; }
   .ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; text-align: center; line-height: 1.5; background: radial-gradient(ellipse at center, rgba(10,8,16,.82), rgba(5,4,8,.96)); overflow: auto; }
@@ -89,11 +94,11 @@
     <div class="move"><button id="left">◀</button><button id="right">▶</button></div>
     <div class="ov" id="intro">
       <h1>守护遗迹 <sup class="beta">BETA</sup></h1>
-      <p><b>大金神</b>（风行者）要守住左边山坡上的<b>天辉遗迹</b>，遗迹前面还有一座<b>防御塔</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵）。<br>钱够了就叫兄弟从天而降：<b>大B神</b>（幻影刺客，闪烁暴击）、<b>Yoki大神</b>（撼地者，砸下来直接回音击）、<b>蜗牛大神</b>（卡尔，十个技能全放）。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
+      <p><b>大金神</b>（风行者）要守住左边山坡上的<b>天辉遗迹</b>，遗迹前面还有一座<b>防御塔</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵）。<br>钱够了就叫兄弟从天而降：<b>大B神</b>（幻影刺客，闪烁暴击）、<b>Yoki大神</b>（撼地者，砸下来直接回音击）、<b>蜗牛大神</b>（卡尔，落地先放熔炉精灵、超震声波、灵动迅捷，再用飓风、陨石、天火、冰墙轰炸）。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
       <p id="best"></p>
       <p><b>选择难度</b> · 守住 20 波就算赢</p>
       <div class="pick" id="pick"></div>
-      <p style="font-size:11.5px">电脑：A/D 或 ←/→ 移动 · Q W E R 技能 · 1 近战兵 · 2 远程兵 · 3 大B神 · 4 Yoki大神 · 5 蜗牛大神 · U 升级兵营<br>手机：屏幕下方按钮移动 · 点技能和按钮</p>
+      <p style="font-size:11.5px">电脑：A/D 或 ←/→ 移动 · Q W E R 技能 · 1 近战兵 · 2 远程兵 · 3 大B神 · 4 Yoki大神 · 5 蜗牛大神 · U 升级兵营 · T 升级防御塔<br>手机：屏幕下方按钮移动 · 点技能和按钮</p>
     </div>
     <div class="ov" id="win" hidden><img id="win-medal" alt="" style="width:96px;height:96px"><h1 id="win-title"></h1><p id="win-text"></p><div style="display:flex;gap:10px"><button class="btn" id="win-end">结束游戏</button><button class="btn" id="win-go" style="background:#5fd068">继续守（无尽模式）</button></div></div>
     <div class="ov" id="over" hidden><h1>遗迹被摧毁了</h1><p id="over-text"></p><button class="btn" id="again">再来一局</button></div>
@@ -106,6 +111,6 @@
   </div>
   <a class="back" href="../">← 回到刀塔法庭（所有内容）</a>
   <script src="art.js?v=4"></script>
-  <script src="game.js?v=11"></script>
+  <script src="game.js?v=13"></script>
 </body>
 </html>

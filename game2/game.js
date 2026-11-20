@@ -69,34 +69,53 @@
     yoki: { name: "Yoki大神", hero: "撼地者", look: "hero_earthshaker", col: "#fcd34d", key: "4", cost: 280, cd: 45, life: 9, hp: 1600, dmg: 70, rate: 0.8, range: 22, spd: 40, arm: 7, aggro: 160,
       desc: "大吼着砸下来，直接回音击", hi: "啊啊啊啊啊——！！！", lines: ["看我至宝！", "至宝特效懂不懂", "这就是至宝的力量", "跳刀回音，一波五个"], bye: "至宝展示完毕，收工" },
     snail: { name: "蜗牛大神", hero: "祈求者", look: "hero_invoker", col: "#93c5fd", key: "5", cost: 600, cd: 75, life: 16, hp: 1300, dmg: 55, rate: 1.1, range: 110, spd: 45, arm: 5, proj: "magic", aggro: 260,
-      desc: "卡尔十个技能全部放一遍", hi: "QWE随便按，全是大招", lines: ["干干干！", "今晚通宵！", "这把我来带", "十个技能，手速拉满"], bye: "我先下了，明天还要上班……" },
+      desc: "落地：熔炉精灵+超震声波+灵动迅捷，然后飓风、陨石、天火、冰墙轮流轰炸", hi: "飓风陨石天火冰墙，一套带走", lines: ["干干干！", "今晚通宵！", "这把我来带", "飓风接陨石，懂？"], bye: "我先下了，明天还要上班……" },
   };
   const TOWER = { name: "一塔", hp: 3000, dmg: 110, arm: 14, rate: 0.9, range: 128, spd: 0, proj: "tower", tower: true, aggro: 128 };
   const FORGE = { name: "熔炉精灵", hp: 320, dmg: 34, arm: 0, rate: 1, range: 96, spd: 40, proj: "fire" };
-  const INVOKE = [["invoker_cold_snap", "急速冷却"], ["invoker_tornado", "强袭飓风"], ["invoker_chaos_meteor", "混沌陨石"], ["invoker_emp", "电磁脉冲"], ["invoker_alacrity", "灵动迅捷"],
-    ["invoker_sun_strike", "阳炎冲击"], ["invoker_forge_spirit", "熔炉精灵"], ["invoker_ice_wall", "寒冰之墙"], ["invoker_deafening_blast", "超震声波"], ["invoker_ghost_walk", "幽灵漫步"]];
+  const INVOKE = [["invoker_forge_spirit", "熔炉精灵"], ["invoker_deafening_blast", "超震声波"], ["invoker_alacrity", "灵动迅捷"], ["invoker_tornado", "强袭飓风"], ["invoker_chaos_meteor", "混沌陨石"], ["invoker_sun_strike", "天火·灾难"], ["invoker_ice_wall", "寒冰之墙"]];
+  // negozio come in Dota 2: componenti base + oggetti assemblati (parts + ricetta)
   const ITEMS = {
     boots: { name: "速度之靴", cost: 100, desc: "移速+25%", ms: 0.25 },
     blades_of_attack: { name: "攻击之爪", cost: 150, desc: "攻击力+12", dmg: 12 },
-    chainmail: { name: "锁子甲", cost: 180, desc: "护甲+6", arm: 6 },
-    gloves: { name: "加速手套", cost: 200, desc: "攻速+25%", as: 0.25 },
-    headdress: { name: "恢复头巾", cost: 220, desc: "光环：友军每秒回血4", aura: { hpr: 4 } },
-    buckler: { name: "玄冥盾牌", cost: 260, desc: "光环：友军护甲+3", aura: { arm: 3 } },
-    ancient_janggo: { name: "韧鼓", cost: 450, desc: "光环：友军攻速+15%、移速+15%", aura: { as: 0.15, ms: 0.15 } },
-    vladmir: { name: "祭品", cost: 600, desc: "光环：友军攻击+20%、吸血15%", aura: { dmgp: 0.2, ls: 0.15 } },
-    maelstrom: { name: "漩涡", cost: 1000, desc: "25%几率闪电链，弹4个敌人", chain: 0.25 },
-    pipe: { name: "洞察烟斗", cost: 1100, desc: "光环：友军受到伤害-15%", aura: { dr: 0.15 } },
-    greater_crit: { name: "代达罗斯之殇", cost: 1300, desc: "30%几率2.25倍暴击", crit: 0.3 },
-    assault: { name: "强袭胸甲", cost: 1400, desc: "自身护甲+10；光环：友军护甲+5、攻速+20%", arm: 10, aura: { arm: 5, as: 0.2 } },
-    heart: { name: "恐鳌之心", cost: 1500, desc: "生命+600，每秒回复2%", hp: 600, regen: 0.02 },
-    desolator: { name: "黯灭", cost: 1600, desc: "攻击力+40，攻击降低敌人6点护甲", dmg: 40, deso: true },
-    black_king_bar: { name: "黑皇杖", cost: 1700, desc: "攻击力+20，免疫眩晕和减速", dmg: 20, bkb: true },
-    monkey_king_bar: { name: "金箍棒", cost: 1800, desc: "攻击力+40，35%几率额外70点伤害", dmg: 40, mkb: true },
-    shivas_guard: { name: "希瓦的守护", cost: 2100, desc: "护甲+12；光环：敌人攻速-25%", arm: 12, shiva: true },
-    butterfly: { name: "蝴蝶", cost: 2300, desc: "攻击+30、攻速+30%、闪避35%", dmg: 30, as: 0.3, evade: 0.35 },
-    satanic: { name: "撒旦之邪力", cost: 2500, desc: "生命+300，吸血30%", hp: 300, ls: 0.3 },
-    radiance: { name: "辉耀", cost: 2600, desc: "攻击+50，灼烧周围敌人每秒45", dmg: 50, burn: 45 },
+    ring_of_regen: { name: "回复戒指", cost: 175, desc: "每秒回血5", hpReg: 5 },
+    chainmail: { name: "锁子甲", cost: 180, desc: "护甲+5", arm: 5 },
+    gloves: { name: "加速手套", cost: 200, desc: "攻速+20%", as: 0.2 },
+    headdress: { name: "恢复头巾", cost: 220, desc: "光环：友军每秒回血3", aura: { hpr: 3 } },
+    vitality_booster: { name: "活力之球", cost: 300, desc: "生命+250", hp: 250 },
+    javelin: { name: "标枪", cost: 450, desc: "攻击+10，20%几率额外40伤害", dmg: 10, jav: true },
+    mithril_hammer: { name: "秘银锤", cost: 500, desc: "攻击力+24", dmg: 24 },
+    ogre_axe: { name: "食人魔之斧", cost: 500, desc: "生命+200", hp: 200 },
+    hyperstone: { name: "振奋宝石", cost: 900, desc: "攻速+45%", as: 0.45 },
+    demon_edge: { name: "恶魔刀锋", cost: 1100, desc: "攻击力+40", dmg: 40 },
+    reaver: { name: "掠夺者之斧", cost: 1100, desc: "生命+350", hp: 350 },
+    relic: { name: "圣者遗物", cost: 1400, desc: "攻击力+50", dmg: 50 },
+    // assemblati
+    power_treads: { name: "动力鞋", parts: ["boots", "gloves"], rc: 150, desc: "移速+25%、攻速+35%", ms: 0.25, as: 0.35 },
+    mekansm: { name: "梅肯斯姆", parts: ["headdress", "chainmail"], rc: 250, desc: "光环回血+护甲；每20秒自动治疗全体友军、小兵和塔250", aura: { hpr: 3, arm: 2 }, mek: 250, mekCd: 20 },
+    guardian_greaves: { name: "卫士胫甲", parts: ["mekansm", "boots"], rc: 450, desc: "移速+25%；更强光环；每16秒治疗全体400", ms: 0.25, aura: { hpr: 6, arm: 4 }, mek: 400, mekCd: 16 },
+    vladmir: { name: "祭品", parts: ["headdress", "blades_of_attack"], rc: 300, desc: "光环：友军攻击+20%、吸血15%", aura: { dmgp: 0.2, ls: 0.15, hpr: 3 } },
+    maelstrom: { name: "漩涡", parts: ["javelin", "mithril_hammer"], rc: 200, desc: "攻击+34，25%几率闪电链弹4个敌人", dmg: 34, chain: 0.25 },
+    desolator: { name: "黯灭", parts: ["mithril_hammer", "mithril_hammer"], rc: 300, desc: "攻击力+55，攻击降低敌人6点护甲", dmg: 55, deso: true },
+    black_king_bar: { name: "黑皇杖", parts: ["ogre_axe", "mithril_hammer"], rc: 500, desc: "生命+200、攻击+24，免疫眩晕和减速", hp: 200, dmg: 24, bkb: true },
+    assault: { name: "强袭胸甲", parts: ["hyperstone", "chainmail"], rc: 600, desc: "攻速+45%、护甲+10；光环：友军护甲+5、攻速+20%", as: 0.45, arm: 10, aura: { arm: 5, as: 0.2 } },
+    greater_crit: { name: "代达罗斯之殇", parts: ["demon_edge", "blades_of_attack"], rc: 400, desc: "攻击+60，30%几率2.25倍暴击", dmg: 60, crit: 0.3 },
+    monkey_king_bar: { name: "金箍棒", parts: ["demon_edge", "javelin"], rc: 300, desc: "攻击+55，35%几率额外70伤害", dmg: 55, mkb: true },
+    heart: { name: "恐鳌之心", parts: ["reaver", "vitality_booster"], rc: 400, desc: "生命+700，每秒回复2%", hp: 700, regen: 0.02 },
+    radiance: { name: "辉耀", parts: ["relic"], rc: 900, desc: "攻击+60，灼烧周围敌人每秒50", dmg: 60, burn: 50 },
   };
+  // prezzo totale (ricorsivo) e quanto manca considerando ciò che hai già
+  const fullCost = (k) => { const it = ITEMS[k]; return it.parts ? it.rc + it.parts.reduce((t, p) => t + fullCost(p), 0) : it.cost; };
+  function planBuy(k, inv) { // ritorna { cost, use: [indici consumati] }
+    const it = ITEMS[k]; if (!it.parts) return { cost: it.cost, use: [] };
+    let cost = it.rc; const use = [];
+    for (const p of it.parts) {
+      const idx = inv.findIndex((x, i) => x === p && !use.includes(i));
+      if (idx >= 0) use.push(idx); else { const sub = planBuy(p, inv.map((x, i) => (use.includes(i) ? null : x))); cost += sub.cost; use.push(...sub.use); }
+    }
+    return { cost, use };
+  }
+  for (const k in ITEMS) ITEMS[k].cost = ITEMS[k].cost || fullCost(k);
   const has = (k) => S.items.includes(k), itemSum = (f) => S.items.reduce((t, k) => t + (ITEMS[k][f] || 0), 0);
 
   // =====================================================================
@@ -135,7 +154,7 @@
       hero: makeUnit("hero", { ...HD, look: HD.look }, 130, 4), units: [], proj: [], parts: [], texts: [], fx: [], items: [], empower: 0,
     };
     const h = S.hero; h.mmr = 3150; h.lvl = 2; h.xp = 0; h.cds = [0, 0, 0, 0]; h.buffs = {}; h.respawn = 0; h.mx = 0;
-    S.units.push(makeUnit("ally", { ...TOWER, set: SET.tower }, 114, 0, { guard: 114, towerU: true }));
+    S.towerLv = 1; S.mekT = 5; spawnTower();
     viewers = 900 + Math.floor(Math.random() * 300); chatT = 1;
     say(h, pick(JIN.start)); renderShop(); hud(true);
   }
@@ -289,17 +308,17 @@
   const later = (sec, fn) => S.later.push({ at: S.t + sec, fn });
   // Invoker: i dieci incantesimi, uno dopo l'altro
   function invoke(u) {
-    const [icon, nm] = INVOKE[u.step++ % INVOKE.length], x = u.x, y = feetY(u) - 24, es = enemies(), ahead = es.filter((e) => e.x > x - 10).sort((a, b) => a.x - b.x);
+    const si = u.step < 3 ? u.step : 3 + ((u.step - 3) % 4); u.step++; const [icon, nm] = INVOKE[si], x = u.x, y = feetY(u) - 24, es = enemies(), ahead = es.filter((e) => e.x > x - 10).sort((a, b) => a.x - b.x);
     u.anim = "cast"; u.at = 0.35; u.face = 1; text(x, feetY(u) - 80, nm, "#93c5fd", true); u.lastSpell = icon;
     if (icon === "invoker_cold_snap") { const t = ahead[0]; if (t) { t.stun = 1.8; hurt(t, 120, u); S.fx.push({ k: "beam", x1: x, x2: t.x, y, col: "#bfe8ff", life: 0.25, w: 2 }); burst(t.x, feetY(t) - 20, ["#e0f7ff", "#7ad0ff"], 12, 40, 0); } }
-    if (icon === "invoker_tornado") { for (const e of ahead.filter((e) => e.x < x + 230)) { hurt(e, 110, u); if (!e.d.boss) { e.stun = Math.max(e.stun, 1.8); e.lift = 1.8; } } S.fx.push({ k: "beam", x1: x, x2: x + 230, y: y + 10, col: "#e8f4ff", life: 0.4, w: 6 }); }
-    if (icon === "invoker_chaos_meteor") S.fx.push({ k: "meteor", x0: x + 10, x1: x + 220, y: feetY(u) - 8, life: 1.6, max: 1.6, from: u });
+    if (icon === "invoker_tornado") { for (const e of ahead.filter((e) => e.x < x + 280)) { hurt(e, 180, u); if (!e.d.boss) { e.stun = Math.max(e.stun, 2.4); e.lift = 2.4; } else e.stun = Math.max(e.stun, 0.8); } S.fx.push({ k: "beam", x1: x, x2: x + 280, y: y + 10, col: "#e8f4ff", life: 0.5, w: 8 }); S.shake = 3; }
+    if (icon === "invoker_chaos_meteor") { S.fx.push({ k: "meteor", x0: x + 10, x1: x + 280, y: feetY(u) - 8, life: 1.8, max: 1.8, from: u, big: true }); S.shake = 4; }
     if (icon === "invoker_emp") { const c = ahead[Math.floor(ahead.length / 2)]; const cx = c ? c.x : x + 100; S.fx.push({ k: "emp", x: cx, y: feetY(u) - 20, life: 1 }); later(1, () => { for (const e of enemies()) if (Math.abs(e.x - cx) < 60) hurt(e, 230, u, { pure: true }); S.fx.push({ k: "zap", x: cx, y: feetY(u) - 20, life: 0.35, r: 60, col: "#c084fc" }); }); }
     if (icon === "invoker_alacrity") { S.alac = 7; banner("灵动迅捷！", "蜗牛大神：全体攻速拉满"); burst(x, y, ["#ffb347", "#ff6a3a"], 16, 50, 0); }
-    if (icon === "invoker_sun_strike") { const t = [...es].sort((a, b) => b.hp - a.hp)[0]; if (t) { const sx = t.x; S.fx.push({ k: "sunmark", x: sx, life: 0.9 }); later(0.9, () => { for (const e of enemies()) if (Math.abs(e.x - sx) < 22) hurt(e, 480, u, { pure: true, crit: true }); S.fx.push({ k: "sun", x: sx, life: 0.5 }); S.shake = 4; }); } }
+    if (icon === "invoker_sun_strike") { const ts = [...es].sort((a, b) => b.hp - a.hp).slice(0, 4); if (!ts.length) ts.push({ x: x + 120 }); ts.forEach((t, n) => { const sx = t.x; S.fx.push({ k: "sunmark", x: sx, life: 0.9 + n * 0.15 }); later(0.9 + n * 0.15, () => { for (const e of enemies()) if (Math.abs(e.x - sx) < 28) hurt(e, 520, u, { pure: true, crit: true }); S.fx.push({ k: "sun", x: sx, life: 0.5 }); S.shake = 5; }); }); }
     if (icon === "invoker_forge_spirit") for (let k = 0; k < 2; k++) { const f = makeUnit("ally", { ...FORGE, set: SET.rranged }, x + 8 + k * 10, 3 + k * 4, { helper: "forge", life: 10, guard: x + 20 + k * 12, drop: 0, forge: true }); S.units.push(f); burst(f.x, feetY(f) - 16, ["#ff8a2a", "#fff0a0"], 10, 40, 0); }
-    if (icon === "invoker_ice_wall") { S.fx.push({ k: "ice", x1: x + 30, x2: x + 140, life: 4 }); for (let k = 0; k < 8; k++) later(k * 0.5, () => { for (const e of enemies()) if (e.x > x + 30 && e.x < x + 140) { e.slow = 1; hurt(e, 18, u, { show: false, pure: true }); } }); }
-    if (icon === "invoker_deafening_blast") { for (const e of ahead.filter((e) => e.x < x + 180)) { hurt(e, 160, u); if (!e.d.boss) e.x = Math.min(W + 20, e.x + 40); } S.fx.push({ k: "zap", x: x + 60, y, life: 0.4, r: 120, col: "#e8f4ff" }); }
+    if (icon === "invoker_ice_wall") { S.fx.push({ k: "ice", x1: x + 25, x2: x + 190, life: 5 }); for (let k = 0; k < 10; k++) later(k * 0.5, () => { for (const e of enemies()) if (e.x > x + 25 && e.x < x + 190) { e.slow = 1; hurt(e, 45, u, { show: false, pure: true }); } }); }
+    if (icon === "invoker_deafening_blast") { for (const e of ahead.filter((e) => e.x < x + 240)) { hurt(e, 220, u); e.stun = Math.max(e.stun, 0.6); if (!e.d.boss) e.x = Math.min(W + 20, e.x + 50); } S.fx.push({ k: "zap", x: x + 60, y, life: 0.4, r: 120, col: "#e8f4ff" }); }
     if (icon === "invoker_ghost_walk") { u.ghost = 3; for (const e of es) if (Math.abs(e.x - x) < 80) e.slow = 3; say(u, "你看不见我，看不见我", 2); }
     if (Math.random() < 0.3) say(u, pick(HELP.snail.lines), 2);
   }
@@ -310,13 +329,30 @@
     for (const u of S.units) if (u.kind) { const a = ALLY[u.kind], lv = LV[S.barracks]; u.d = { ...a, hp: Math.round(a.hp * lv.hp), dmg: Math.round(a.dmg * lv.dmg), arm: a.arm + lv.arm, set: allySet(u.kind) }; u.max = u.d.hp; u.hp = u.max; }
     banner(`兵营升级：${LV[S.barracks].name}兵`, S.barracks === 2 ? "超级巨型兵出场！" : "超级兵出场！"); renderShop();
   }
+  function recalcHp() { const h = S.hero, r = h.hp / h.max; h.max = Math.round(HD.hp * (1 + (h.lvl - 1) * 0.08)) + itemSum("hp"); h.hp = Math.max(1, h.max * r); }
   function buy(k) {
-    const it = ITEMS[k]; if (S.items.includes(k)) return; if (S.items.length >= 6) return flash("物品栏满了");
-    if (S.gold < it.cost) return flash("金币不够");
-    S.gold -= it.cost; S.items.push(k);
-    if (it.hp) { S.hero.max += it.hp; S.hero.hp += it.hp; }
-    banner(`购买 ${it.name}`, it.desc); renderShop(); if (it.cost >= 400 || Math.random() < 0.4) react("buy", { i: it.name });
+    const it = ITEMS[k], plan = planBuy(k, S.items);
+    if (it.parts && S.items.includes(k)) return flash("已经有了");
+    if (S.items.length - plan.use.length + 1 > 6) return flash("物品栏满了（点物品栏可以卖）");
+    if (S.gold < plan.cost) return flash(`金币不够（还差${plan.cost - S.gold}）`);
+    S.gold -= plan.cost; S.items = S.items.filter((_, i) => !plan.use.includes(i)); S.items.push(k); recalcHp();
+    if (it.parts) { banner(`合成 ${it.name}`, it.desc); burst(S.hero.x, feetY(S.hero) - 30, ["#fde047", "#ffffff"], 16, 50, 0); } else banner(`购买 ${it.name}`, it.desc);
+    renderShop(); if (it.parts || Math.random() < 0.3) react("buy", { i: it.name });
   }
+  function sell(i) { const k = S.items[i]; if (!k) return; const v = Math.floor(ITEMS[k].cost / 2); S.items.splice(i, 1); S.gold += v; recalcHp(); text(S.hero.x, feetY(S.hero) - 52, `卖出 ${ITEMS[k].name} +${v}`, "#fde047"); renderShop(); }
+  // torre: 3 livelli
+  const TOWER_LV = [null, { hp: 3000, dmg: 110, arm: 14, multi: 1, splash: 0 }, { hp: 4500, dmg: 160, arm: 18, multi: 2, splash: 0, cost: 500 }, { hp: 6500, dmg: 220, arm: 22, multi: 3, splash: 24, cost: 1200 }];
+  const REBUILD = 600;
+  const towerUnit = () => S.units.find((u) => u.towerU && !u.dead);
+  function upgradeTower() {
+    const t = towerUnit();
+    if (!t) { if (S.gold < REBUILD) return flash("金币不够"); S.gold -= REBUILD; spawnTower(); banner("防御塔重建！", "大P神：小金金，这次守住"); renderShop(); return; }
+    if (S.towerLv >= 3) return flash("防御塔已经满级"); const L = TOWER_LV[S.towerLv + 1]; if (S.gold < L.cost) return flash("金币不够");
+    S.gold -= L.cost; S.towerLv++; const r = t.hp / t.max; t.d = towerData(); t.max = t.d.hp; t.hp = t.max; burst(t.x, feetY(t) - 50, ["#9ae8ff", "#ffffff", "#fde047"], 24, 60, 0);
+    banner(`防御塔升到 ${S.towerLv} 级`, S.towerLv === 3 ? "三连射 + 溅射" : "双连射"); chatSay(null, `塔升${S.towerLv}级了，稳`); renderShop();
+  }
+  const towerData = () => ({ ...TOWER, ...TOWER_LV[S.towerLv], set: SET.tower });
+  function spawnTower() { S.units.push(makeUnit("ally", towerData(), 114, 0, { guard: 114, towerU: true })); }
   function flash(t) { const h = S.hero; text(h.x, feetY(h) - 52, t, "#ff9a9a"); }
 
   // =====================================================================
@@ -354,7 +390,7 @@
     "Yoki大神": { col: "#5eead4", say: ["我有至宝，主播有吗💎", "三把斧了解一下", "黑弓至宝特效拉满", "Ping老师教的", "主播风行好像没至宝", "小黑1-5号位，啥都能玩", "我黑弓15连胜的时候……", "至宝不是用来打的，是用来看的", "我不玩辅助的"] },
     "疯子大神": { col: "#fb923c", say: ["老婆不在家，终于能看直播了", "我这电脑十年了，卡成PPT", "屠夫一勾一个", "OMG！", "低优先级出来了，来看看", "职业辅助给主播插个眼", "屠夫叼霸天", "老婆回来了，先撤", "主播要不要买个肉山盾"] },
     "Kaiju大神*": { col: "#38bdf8", say: ["小鱼人偷钱去了🐟", "四号位小鱼人报到", "金神又骂我", "天线宝宝向你问好", "四号位也能carry", "我等级低但我打得好", "金神别抢我的兵", "偷完钱就跑"] },
-    "蜗牛大神": { col: "#93c5fd", say: ["干干干！", "今晚通宵！", "主播中路我虐过", "叫我下来，十个技能给你看", "金神你这补刀不行啊", "这把我来带", "我随便玩玩", "影魔三连压给你看", "地卜师分身比你这兵多"] },
+    "蜗牛大神": { col: "#93c5fd", say: ["干干干！", "今晚通宵！", "主播中路我虐过", "叫我下来，飓风陨石给你看", "金神你这补刀不行啊", "这把我来带", "我随便玩玩", "影魔三连压给你看", "地卜师分身比你这兵多"] },
     "Soul大神": { col: "#facc15", say: ["稳住，能赢", "主播加油", "刀塔传奇路过", "这波可以打"] },
     "辅助大神": { col: "#86efac", say: ["辅助视角：主播站位有问题", "低分局救世主报到", "我来给主播插眼", "辅助的天花板在此", "主播你缺个好辅助"] },
     "金神大腿": { col: "#f0abfc", say: ["金神一半的分是我带的", "大腿在此，别慌", "开小号来看看", "通宵吗金神", "没我你上不了传奇"] },
@@ -373,7 +409,7 @@
     low: [[0, "遗迹快没了！！"], [0, "主播回家啊！"], [0, "GG预定"], [0, "要输了要输了"], ["蜗牛大神", "叫我啊！"]],
     bshen: [[0, "大B神不是在喂奶吗？"], [0, "呆逼下凡了"], [0, "PA一刀999"], [0, "奶瓶放下了吗"], ["大B神", "我来了我来了"], ["Yoki大神", "呆逼居然敢上"]],
     yoki: [[0, "Yoki大神至宝出场"], [0, "啊啊啊啊啊"], [0, "回音击来了！"], [0, "跳刀呢？"], ["Yoki大神", "看我至宝特效"], ["Ping大神", "我教的"]],
-    snail: [[0, "蜗牛大神降临！"], [0, "卡尔！十个技能！"], [0, "蜗牛：金神让开"], [0, "蜗牛中路虐过主播"], ["蜗牛大神", "干干干！"], [0, "手速拉满"]],
+    snail: [[0, "蜗牛大神降临！"], [0, "卡尔！飓风陨石天火！"], [0, "蜗牛：金神让开"], [0, "蜗牛中路虐过主播"], ["蜗牛大神", "干干干！"], [0, "手速拉满"]],
     echo: [[0, "回音击 {n} 个！！"], [0, "这波至宝特效"], [0, "地震了地震了"], ["Yoki大神", "一波{n}个，至宝的力量"]],
     crit: [[0, "恩赐解脱！！"], [0, "一刀999"], [0, "大B神这刀够买一个月奶粉"], ["大B神", "暴击了暴击了"]],
     buy: [[0, "买{i}了！"], [0, "{i}？主播有钱"], [0, "这装备谁教的"], ["Ping大神", "理论上应该先出{i}"], [0, "出{i}，懂哥"]],
@@ -421,9 +457,12 @@
     while (S.queue.length && S.queue[0].at <= S.t) spawnEnemy(S.queue.shift().k);
     for (const k in S.helpCd) S.helpCd[k] = Math.max(0, S.helpCd[k] - dt); S.alac = Math.max(0, S.alac - dt);
     if (S.later.length) { const due = S.later.filter((l) => l.at <= S.t); S.later = S.later.filter((l) => l.at > S.t); due.forEach((l) => l.fn()); }
-    for (const f of S.fx) if (f.k === "meteor") { const px = f.x0 + (1 - f.life / f.max) * (f.x1 - f.x0); f.tick = (f.tick || 0) - dt; if (f.tick <= 0) { f.tick = 0.2; for (const e of enemies()) if (Math.abs(e.x - px) < 22) { hurt(e, 55, f.from, { show: false, pure: true }); e.dot = Math.max(e.dot, 1.5); } } }
+    for (const f of S.fx) if (f.k === "meteor") { const px = f.x0 + (1 - f.life / f.max) * (f.x1 - f.x0); f.tick = (f.tick || 0) - dt; if (f.tick <= 0) { f.tick = 0.2; for (const e of enemies()) if (Math.abs(e.x - px) < 30) { hurt(e, 95, f.from, { show: false, pure: true }); e.dot = Math.max(e.dot, 2); } } }
     S.empower = Math.max(0, S.empower - dt); S.shake = Math.max(0, (S.shake || 0) - dt * 10);
-    S.ancient.flash = Math.max(0, S.ancient.flash - dt); chatTick(dt); S.inc += dt * 1.5; if (S.inc >= 1) { S.gold += Math.floor(S.inc); S.inc -= Math.floor(S.inc); }
+    S.ancient.flash = Math.max(0, S.ancient.flash - dt);
+    const mk = has("guardian_greaves") ? ITEMS.guardian_greaves : has("mekansm") ? ITEMS.mekansm : null;
+    S.mekT = Math.max(0, (S.mekT || 0) - dt);
+    if (mk && S.mekT <= 0 && S.hero.respawn <= 0) { const team = [S.hero, ...S.units.filter((u) => u.team === "ally" && !u.dead)]; if (team.some((u) => u.hp < u.max * 0.75)) { S.mekT = mk.mekCd; for (const u of team) { u.hp = Math.min(u.max, u.hp + mk.mek); burst(u.x, feetY(u) - 20, ["#7aff9a", "#e6ffe6"], 5, 30, 0); } S.fx.push({ k: "zap", x: S.hero.x, y: feetY(S.hero) - 10, life: 0.5, r: 90, col: "#7aff9a" }); text(S.hero.x, feetY(S.hero) - 64, (mk === ITEMS.mekansm ? "梅肯斯姆" : "卫士胫甲") + " +" + mk.mek, "#7aff9a", true); if (Math.random() < 0.3) chatSay("辅助大神", "梅肯！这才是辅助装"); } } chatTick(dt); S.inc += dt * 1.5; if (S.inc >= 1) { S.gold += Math.floor(S.inc); S.inc -= Math.floor(S.inc); }
     updateHero(dt);
     for (const u of S.units) updateUnit(u, dt);
     // separazione leggera sulla corsia
@@ -444,9 +483,10 @@
     h.cds = h.cds.map((c) => Math.max(0, c - dt)); h.flash = Math.max(0, h.flash - dt);
     if (h.respawn > 0) { h.respawn -= dt; if (h.respawn <= 0) { h.hp = h.max; h.x = ANC.front + 20; h.saidHurt = 0; say(h, "我回来了，这次认真打"); } return; }
     if (has("heart")) h.hp = Math.min(h.max, h.hp + h.max * 0.02 * dt);
+    if (itemSum("hpReg")) h.hp = Math.min(h.max, h.hp + itemSum("hpReg") * dt);
     if (auras().hpr) h.hp = Math.min(h.max, h.hp + auras().hpr * dt);
     if (has("black_king_bar")) h.stun = 0;
-    if (has("radiance")) { h.burnT = (h.burnT || 0) - dt; if (h.burnT <= 0) { h.burnT = 0.5; for (const e of enemies()) if (Math.abs(e.x - h.x) < 75) hurt(e, 45 * 0.5, h, { pure: true, show: false, noLs: true }); } }
+    if (has("radiance")) { h.burnT = (h.burnT || 0) - dt; if (h.burnT <= 0) { h.burnT = 0.5; for (const e of enemies()) if (Math.abs(e.x - h.x) < 75) hurt(e, 50 * 0.5, h, { pure: true, show: false, noLs: true }); } }
     if (h.hp > h.max * 0.5) h.saidHurt = 0;
     if (h.stun > 0) { h.stun -= dt; return; }
     const mx = (keys.d || keys.arrowright || h.mx > 0 ? 1 : 0) - (keys.a || keys.arrowleft || h.mx < 0 ? 1 : 0);
@@ -461,6 +501,7 @@
       let dmg = stat(h, "dmg"), crit = false;
       if (has("greater_crit") && Math.random() < 0.3) { dmg *= 2.25; crit = true; }
       if (has("monkey_king_bar") && Math.random() < 0.35) dmg += 70;
+      if (has("javelin") && Math.random() < 0.2) dmg += 40;
       if (has("desolator")) t.armDown = 5;
       if (has("maelstrom") && Math.random() < 0.25) { let prev = t; const hit = [t]; for (let k = 0; k < 3; k++) { const nx = enemies().filter((e) => !hit.includes(e) && Math.abs(e.x - prev.x) < 70)[0]; if (!nx) break; hit.push(nx); prev = nx; } hit.forEach((e, k) => { hurt(e, 120, h, { show: false }); if (k) S.fx.push({ k: "beam", x1: hit[k - 1].x, x2: e.x, y: feetY(e) - 22, col: "#bfe8ff", life: 0.15, w: 1 }); }); }
       if (HD.ranged) shoot(h, t, dmg, HD.proj, { crit });
@@ -480,7 +521,7 @@
       const Hp = HELP[u.helper];
       if (Hp && Math.random() < dt * 0.15) say(u, pick(Hp.lines), 2.2);
       if (u.life <= 0) { u.dead = 0.7; u.ascend = true; if (Hp) say(u, Hp.bye, 2.5); burst(u.x, feetY(u) - 20, [Hp ? Hp.col : "#ff8a2a", "#ffffff"], 16, 40, 0); return; }
-      if (u.helper === "snail") { u.castT -= dt; if (u.castT <= 0 && u.stun <= 0) { u.castT = 1.25; invoke(u); } }
+      if (u.helper === "snail") { u.castT -= dt; if (u.castT <= 0 && u.stun <= 0) { u.castT = u.step < 3 ? 0.55 : 1.7; invoke(u); } }
     }
     if (u.stun > 0) { u.stun -= dt; return; }
     u.cd -= dt;
@@ -517,7 +558,7 @@
       const tx = target === "ancient" ? ANC.front : target.x; u.face = tx >= u.x ? 1 : -1;
       let dmg = stat(u, "dmg");
       if (u.d.crit && Math.random() < u.d.crit) { dmg *= u.d.critMul; if (Math.random() < 0.3) react("crit"); text(target.x || u.x, feetY(u) - 56, "恩赐解脱 " + Math.round(dmg) + "!", "#ff3a5a", true); S.fx.push({ k: "slash", x: target.x, y: feetY(u) - 22, life: 0.25 }); S.shake = Math.max(S.shake || 0, 2); }
-      if (u.d.proj) shoot(u, target, dmg, u.d.proj);
+      if (u.d.proj) { shoot(u, target, dmg, u.d.proj, u.d.splash ? { splash: u.d.splash } : {}); if (u.d.multi > 1 && target !== "ancient") enemies().filter((e) => e !== target && Math.abs(e.x - u.x) <= range).slice(0, u.d.multi - 1).forEach((e) => shoot(u, e, dmg, u.d.proj, u.d.splash ? { splash: u.d.splash } : {})); }
       else if (target === "ancient") hurtAncient(dmg);
       else { hurt(target, dmg, u); if (u.team !== "enemy" && S.empower > 0) for (const e of enemies()) if (e !== target && Math.abs(e.x - target.x) < 24) hurt(e, dmg * 0.4, u, { show: false }); }
     } else if (target && u.at <= 0) u.anim = "idle";
@@ -628,7 +669,7 @@
       if (f.k === "zap" || f.k === "remnant") { g.strokeStyle = f.col || "#9ad8ff"; g.globalAlpha = Math.min(1, f.life * 4); g.beginPath(); g.ellipse(f.x, f.y, (f.r || 18) * (f.k === "remnant" ? 0.3 : 1 - f.life), (f.r || 18) * 0.25, 0, 0, 7); g.stroke(); g.globalAlpha = 1; if (f.k === "remnant") { g.fillStyle = "rgba(154,216,255,.5)"; g.fillRect(f.x - 4, f.y - 14, 8, 22); } }
       if (f.k === "slash") { g.strokeStyle = "rgba(255,255,255,.9)"; g.beginPath(); g.arc(f.x, f.y, 10, -1.2, 0.6); g.stroke(); }
       if (f.k === "spin") { g.strokeStyle = "rgba(255,90,58,.9)"; g.beginPath(); g.ellipse(f.x, f.y, 40 * (1 - f.life * 2), 8, 0, 0, 7); g.stroke(); }
-      if (f.k === "meteor") { const px = f.x0 + (1 - f.life / f.max) * (f.x1 - f.x0); for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? "rgba(255,138,42,.6)" : "rgba(255,220,120,.5)"; g.fillRect(Math.round(px - k * 5), f.y - 3 + (k % 3), 4, 3); } g.fillStyle = "#3a1a0a"; g.beginPath(); g.arc(px, f.y - 4, 7, 0, 7); g.fill(); g.fillStyle = "#ff8a2a"; g.beginPath(); g.arc(px + 1, f.y - 5, 4, 0, 7); g.fill(); }
+      if (f.k === "meteor") { const px = f.x0 + (1 - f.life / f.max) * (f.x1 - f.x0); for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? "rgba(255,138,42,.6)" : "rgba(255,220,120,.5)"; g.fillRect(Math.round(px - k * 5), f.y - 3 + (k % 3), 4, 3); } g.fillStyle = "#3a1a0a"; g.beginPath(); g.arc(px, f.y - 7, 11, 0, 7); g.fill(); g.fillStyle = "#ff8a2a"; g.beginPath(); g.arc(px + 1, f.y - 8, 7, 0, 7); g.fill(); g.fillStyle = "#fff0a0"; g.beginPath(); g.arc(px + 2, f.y - 9, 3, 0, 7); g.fill(); }
       if (f.k === "sunmark") { g.strokeStyle = "rgba(255,220,90,.9)"; g.beginPath(); g.ellipse(f.x, GY, 14, 3, 0, 0, 7); g.stroke(); }
       if (f.k === "sun") { g.globalAlpha = Math.min(1, f.life * 3); g.fillStyle = "#fff6b0"; g.fillRect(f.x - 9, 0, 18, GY); g.fillStyle = "#ffb703"; g.fillRect(f.x - 4, 0, 8, GY); g.globalAlpha = 1; }
       if (f.k === "emp") { g.strokeStyle = "rgba(192,132,252,.9)"; g.beginPath(); g.arc(f.x, f.y, 6 + (1 - f.life) * 50, 0, 7); g.stroke(); }
@@ -648,6 +689,7 @@
         g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(t1, bx + ms + 5, by + 10); g.fillStyle = "#ffd76a"; g.fillText(t1, bx + ms + 4, by + 9);
         g.font = "bold 7px sans-serif"; g.fillStyle = "#000"; g.fillText(t2, bx + ms + 5, by + 19); g.fillStyle = "#cfe8ff"; g.fillText(t2, bx + ms + 4, by + 18); g.textAlign = "center";
       }
+      if (u.towerU && !u.dead) { g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(`一塔 Lv${S.towerLv}`, u.x + 1, top - 7); g.fillStyle = "#9ae8ff"; g.fillText(`一塔 Lv${S.towerLv}`, u.x, top - 8); }
       const Hp = HELP[u.helper], dropY = u.drop > 0 ? (u.drop / 0.7) ** 2 * 170 : 0;
       if (Hp && !u.dead) { const t = `${Hp.name} ${Math.ceil(u.life)}s`; g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(t, u.x + 1, top - 7 - dropY); g.fillStyle = Hp.col; g.fillText(t, u.x, top - 8 - dropY); }
       if (u.bubble) bubble(u.x, top - dropY - (u.team === "hero" ? 36 : Hp ? 22 : 12), u.bubble.t, Hp ? Hp.col : u.team === "hero" ? "#f2b632" : "#ff6a3a");
@@ -689,6 +731,7 @@
     if (u.team === "hero" && u.buffs.focus > 0) glow("#7aff9a", 0.3); else if (u.team !== "enemy" && S.empower > 0) glow("#ffd06a", 0.3);
     if (u.helper && HELP[u.helper]) glow("#93c5fd", 0.12 + Math.sin(S.t * 6) * 0.06);
     if (u.forge) glow("#ffd06a", 0.45);
+    if (u.towerU && S.towerLv > 1) glow(S.towerLv === 3 ? "#ffd06a" : "#93c5fd", 0.18 + Math.sin(S.t * 3) * 0.06);
     g.restore();
     // scia dell'arma (mischia) / lampo di sparo (distanza)
     if (o.swing >= 0) {
@@ -718,7 +761,7 @@
   let lastKey = "";
   function hud(force) {
     const h = S.hero;
-    const key = [S.gold, Math.ceil(S.ancient.hp), Math.ceil(h.hp), h.max, h.mmr, S.wave, Math.ceil(S.nextWave), h.cds.map(Math.ceil).join(","), Object.values(S.helpCd).map(Math.ceil).join(","), S.barracks, h.respawn > 0 ? Math.ceil(h.respawn) : 0].join("|");
+    const key = [S.gold, Math.ceil(S.ancient.hp), S.towerLv, Math.ceil(h.hp), h.max, h.mmr, S.wave, Math.ceil(S.nextWave), h.cds.map(Math.ceil).join(","), Object.values(S.helpCd).map(Math.ceil).join(","), S.barracks, h.respawn > 0 ? Math.ceil(h.respawn) : 0].join("|");
     if (key === lastKey && !force) return; lastKey = key;
     $("gold").textContent = S.gold; $("wave").textContent = S.wave; $("next").textContent = Math.ceil(S.nextWave);
     $("anc").style.width = (S.ancient.hp / S.ancient.max) * 100 + "%"; $("anc-t").textContent = `${Math.max(0, Math.ceil(S.ancient.hp))}/${S.ancient.max}`;
@@ -726,7 +769,8 @@
     const rk = rankOf(h.mmr); $("mmr").textContent = h.mmr; $("rank").textContent = rk.name;
     $("medal").src = `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${rk.tier}.png`; $("star").src = rk.star ? `https://www.opendota.com/assets/images/dota2/rank_icons/rank_star_${rk.star}.png` : ""; $("star").hidden = !rk.star;
     document.querySelectorAll(".skill").forEach((b, i) => { const cd = h.cds[i], locked = i === 3 && h.lvl < 6; b.classList.toggle("cd", cd > 0 || locked); b.querySelector(".cdn").textContent = locked ? "传奇3" : cd > 0 ? Math.ceil(cd) : ""; });
-    document.querySelectorAll("[data-buy]").forEach((b) => { const k = b.dataset.buy, it = ITEMS[k]; b.classList.toggle("poor", S.gold < it.cost && !S.items.includes(k)); b.classList.toggle("own", S.items.includes(k)); });
+    document.querySelectorAll("[data-buy]").forEach((b) => { const k = b.dataset.buy, own = ITEMS[k].parts && S.items.includes(k); b.classList.toggle("poor", !own && S.gold < +b.dataset.price); b.classList.toggle("own", !!own); });
+    const tw = towerUnit(); $("twr").classList.toggle("poor", tw ? S.towerLv >= 3 || S.gold < TOWER_LV[S.towerLv + 1].cost : S.gold < REBUILD);
     $("sum-melee").classList.toggle("poor", S.gold < ALLY.melee.cost); $("sum-ranged").classList.toggle("poor", S.gold < ALLY.ranged.cost);
     for (const [k, Hp] of Object.entries(HELP)) { $("help-" + k).classList.toggle("poor", S.gold < Hp.cost || S.helpCd[k] > 0); $("help-cd-" + k).textContent = S.helpCd[k] > 0 ? Math.ceil(S.helpCd[k]) + "s" : Hp.cost; }
     $("upg").classList.toggle("poor", S.barracks >= 2 || S.gold < BARRACKS_COST[S.barracks + 1]);
@@ -738,12 +782,17 @@
     $("units").innerHTML = `
       <button class="slot" id="sum-melee"><i>1</i><span class="pic" data-pic="${S.barracks >= 2 ? "rmegam" : "rmelee"}"></span><b>${LV[S.barracks].name}近战兵</b><em>${ALLY.melee.cost}</em></button>
       <button class="slot" id="sum-ranged"><i>2</i><span class="pic" data-pic="${S.barracks >= 2 ? "rmegar" : "rranged"}"></span><b>${LV[S.barracks].name}远程兵</b><em>${ALLY.ranged.cost}</em></button>
+      <button class="slot" id="twr"><i>T</i><span class="pic" data-pic="tower"></span><b>${!towerUnit() ? "重建防御塔" : S.towerLv >= 3 ? "防御塔满级" : `升级防御塔 → ${S.towerLv + 1}级`}</b><em>${!towerUnit() ? REBUILD : S.towerLv >= 3 ? "3级" : TOWER_LV[S.towerLv + 1].cost}</em><small>${S.towerLv >= 3 ? "三连射+溅射" : S.towerLv === 2 ? "下一级：三连射+溅射" : "下一级：双连射"}</small></button>
       <button class="slot" id="upg"><i>U</i><span class="pic" data-pic="rmegam"></span><b>${S.barracks >= 2 ? "兵营满级" : "升级兵营 → " + LV[S.barracks + 1].name}</b><em id="upg-cost"></em></button>
       ${Object.entries(HELP).map(([k, Hp]) => `<button class="slot snail" id="help-${k}" style="border-color:${Hp.col}" title="${Hp.desc}"><i>${Hp.key}</i><span class="pic" data-pic="${Hp.look}"></span><b>${Hp.name}<br><small>${Hp.hero} · ${Hp.life}秒</small></b><em id="help-cd-${k}"></em><small>${Hp.desc}</small></button>`).join("")}`;
-    $("shop").innerHTML = Object.entries(ITEMS).sort((a, b) => a[1].cost - b[1].cost).map(([k, it]) => `<button class="slot item" data-buy="${k}" title="${it.desc}"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${k}.png" alt=""><b>${it.name}</b><em>${it.cost}</em><small>${it.desc}</small></button>`).join("");
-    $("inv").innerHTML = Array.from({ length: 6 }, (_, i) => S.items[i] ? `<img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${S.items[i]}.png" title="${ITEMS[S.items[i]].name}">` : `<span></span>`).join("");
+    const IMG = (k) => `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${k}.png`;
+    const card = ([k, it]) => { const pl = planBuy(k, S.items); return `<button class="slot item${it.parts ? " big" : ""}" data-buy="${k}" data-price="${pl.cost}" title="${it.desc}"><img src="${IMG(k)}" alt=""><b>${it.name}</b><em>${pl.cost}${pl.cost < it.cost ? `<s>${it.cost}</s>` : ""}</em>${it.parts ? `<span class="parts">${it.parts.map((p) => `<img src="${IMG(p)}" title="${ITEMS[p].name}" class="${S.items.includes(p) ? "have" : ""}">`).join("+")}+<img src="${IMG("recipe")}" title="卷轴 ${it.rc}"></span>` : ""}<small>${it.desc}</small></button>`; };
+    const all = Object.entries(ITEMS).sort((a, b) => a[1].cost - b[1].cost);
+    $("shop").innerHTML = `<div class="shop-h">基础物品</div>${all.filter(([, it]) => !it.parts).map(card).join("")}<div class="shop-h">合成物品 · 已有的零件会自动合成，只付差价</div>${all.filter(([, it]) => it.parts).map(card).join("")}`;
+    $("inv").innerHTML = Array.from({ length: 6 }, (_, i) => S.items[i] ? `<img src="${IMG(S.items[i])}" data-sell="${i}" title="${ITEMS[S.items[i]].name} · 点击卖出 +${Math.floor(ITEMS[S.items[i]].cost / 2)}">` : `<span></span>`).join("");
+    document.querySelectorAll("[data-sell]").forEach((b) => (b.onclick = () => { if (confirm(`卖出 ${ITEMS[S.items[+b.dataset.sell]].name}？`)) sell(+b.dataset.sell); }));
     document.querySelectorAll("[data-pic]").forEach((s) => { s.appendChild(iconCanvas(SET[s.dataset.pic])); });
-    $("sum-melee").onclick = () => summon("melee"); $("sum-ranged").onclick = () => summon("ranged"); for (const k in HELP) $("help-" + k).onclick = () => summonHelp(k); $("upg").onclick = upgradeBarracks;
+    $("sum-melee").onclick = () => summon("melee"); $("sum-ranged").onclick = () => summon("ranged"); for (const k in HELP) $("help-" + k).onclick = () => summonHelp(k); $("twr").onclick = upgradeTower; $("upg").onclick = upgradeBarracks;
     document.querySelectorAll("[data-buy]").forEach((b) => (b.onclick = () => buy(b.dataset.buy)));
     hud(true);
   }
@@ -758,7 +807,7 @@
   addEventListener("keydown", (e) => {
     if (!S || !running) return; const k = e.key.toLowerCase(); keys[k] = true;
     const qi = "qwer".indexOf(k); if (qi >= 0) cast(qi);
-    if (k === "1") summon("melee"); if (k === "2") summon("ranged"); for (const [hk, Hp] of Object.entries(HELP)) if (k === Hp.key) summonHelp(hk); if (k === "u") upgradeBarracks();
+    if (k === "1") summon("melee"); if (k === "2") summon("ranged"); for (const [hk, Hp] of Object.entries(HELP)) if (k === Hp.key) summonHelp(hk); if (k === "u") upgradeBarracks(); if (k === "t") upgradeTower();
     if (k.startsWith("arrow")) e.preventDefault();
   });
   addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
@@ -781,5 +830,5 @@
   function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (running && !document.hidden) { update(dt); draw(); } requestAnimationFrame(loop); }
   reset("windranger", "normal"); renderSkills(); draw(); requestAnimationFrame(loop);
   });
-  if (location.search.includes("debug")) window.__g2 = { get S() { return S; }, update, draw, startWave, summon, summonHelp, upgradeBarracks, buy, cast, spawnEnemy, reset, win };
+  if (location.search.includes("debug")) window.__g2 = { get S() { return S; }, update, draw, startWave, summon, summonHelp, upgradeBarracks, upgradeTower, sell, buy, cast, spawnEnemy, reset, win };
 })();
