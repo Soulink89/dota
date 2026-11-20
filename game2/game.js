@@ -906,12 +906,12 @@
     const card = ([k, it]) => { const pl = planBuy(k, S.items); return `<button class="slot item${it.parts ? " big" : ""}" data-buy="${k}" data-price="${pl.cost}" title="${it.desc}"><img src="${IMG(k)}" alt=""><b>${it.name}</b><em>${pl.cost}${pl.cost < it.cost ? `<s>${it.cost}</s>` : ""}</em>${it.parts ? `<span class="parts">${it.parts.map((p) => `<img src="${IMG(p)}" title="${ITEMS[p].name}" class="${S.items.includes(p) ? "have" : ""}">`).join("+")}+<img src="${IMG("recipe")}" title="卷轴 ${it.rc}"></span>` : ""}<small>${it.desc}</small></button>`; };
     const all = Object.entries(ITEMS).sort((a, b) => a[1].cost - b[1].cost);
     $("shop").innerHTML = `<div class="shop-h">基础物品</div>${all.filter(([, it]) => !it.parts).map(card).join("")}<div class="shop-h">合成物品 · 已有的零件会自动合成，只付差价</div>${all.filter(([, it]) => it.parts).map(card).join("")}`;
-    $("inv").innerHTML = Array.from({ length: 6 }, (_, i) => S.items[i] ? `<img src="${IMG(S.items[i])}" data-sell="${i}" title="${ITEMS[S.items[i]].name} · 点击卖出 +${Math.floor(ITEMS[S.items[i]].cost / 2)}">` : `<span></span>`).join("");
+    const invHtml = Array.from({ length: 6 }, (_, i) => S.items[i] ? `<img src="${IMG(S.items[i])}" data-sell="${i}" title="${ITEMS[S.items[i]].name} · 点击卖出 +${Math.floor(ITEMS[S.items[i]].cost / 2)}">` : `<span></span>`).join(""); document.querySelectorAll(".inv").forEach((el) => (el.innerHTML = invHtml));
     document.querySelectorAll("[data-sell]").forEach((b) => (b.onclick = () => { if (confirm(`卖出 ${ITEMS[S.items[+b.dataset.sell]].name}？`)) sell(+b.dataset.sell); }));
     document.querySelectorAll("[data-pic]").forEach((s) => { s.appendChild(iconCanvas(SET[s.dataset.pic])); });
     $("sum-melee").onclick = () => summon("melee"); $("sum-ranged").onclick = () => summon("ranged"); for (const k in HELP) $("help-" + k).onclick = () => summonHelp(k); $("twr").onclick = upgradeTower; $("upg").onclick = upgradeBarracks;
     document.querySelectorAll("[data-buy]").forEach((b) => (b.onclick = () => buy(b.dataset.buy)));
-    hud(true);
+    hud(true); requestAnimationFrame(fit);
   }
   function renderSkills() {
     $("skills").innerHTML = HD.sk.map((s, i) => `<button class="skill" title="${s[1]}：${s[3]}"><img src="${ICON(s[0])}" alt=""><i>${"QWER"[i]}</i><span class="cdn"></span><small>${s[1]}</small></button>`).join("");
@@ -931,7 +931,18 @@
   const muteBtn = $("mute"); if (muteBtn) { muteBtn.textContent = SFX.muted ? "🔇" : "🔊"; muteBtn.onclick = (e) => { e.stopPropagation(); muteBtn.textContent = SFX.toggle() ? "🔇" : "🔊"; }; }
   addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
   for (const [id, dir] of [["left", -1], ["right", 1]]) { const b = $(id); const on = (e) => { e.preventDefault(); if (S) S.hero.mx = dir; }, off = () => { if (S && S.hero.mx === dir) S.hero.mx = 0; }; b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off); }
-  function fit() { const maxW = Math.min(innerWidth - 16, 1500), maxH = innerHeight - 230, k = Math.min(maxW / W, maxH / H), s = k >= 2 ? Math.floor(k) : Math.max(1, k); cv.style.width = W * s + "px"; cv.style.height = H * s + "px"; }
+  const MOB = matchMedia("(max-width: 760px), (max-height: 520px)");
+  function fit() {
+    const mob = MOB.matches, bar = $("bar"), hudH = document.querySelector(".hud").offsetHeight;
+    if (mob) document.body.style.setProperty("--dockh", bar.offsetHeight + 8 + "px"); else document.body.style.removeProperty("--dockh");
+    const chat = document.querySelector(".chat"), chatH = mob && getComputedStyle(chat).position === "static" ? chat.offsetHeight : 0;
+    const maxW = Math.min(innerWidth - (mob ? 12 : 16), 1500), maxH = innerHeight - hudH - (mob ? bar.offsetHeight + chatH + 22 : 230);
+    const k = Math.min(maxW / W, Math.max(120, maxH) / H), sc = k >= 2 ? Math.floor(k) : Math.max(0.5, k); cv.style.width = Math.floor(W * sc) + "px"; cv.style.height = Math.floor(H * sc) + "px";
+    // in verticale la chat riempie lo spazio libero tra il campo e la barra comandi
+    if (mob && getComputedStyle(chat).position === "static") { const free = innerHeight - hudH - H * sc - bar.offsetHeight - 40; chat.style.height = Math.max(84, Math.min(320, free)) + "px"; } else chat.style.height = "";
+  }
+  $("shopbtn").onclick = () => { $("shoppanel").classList.add("open"); }; $("shopclose").onclick = () => $("shoppanel").classList.remove("open");
+  addEventListener("orientationchange", () => setTimeout(fit, 300));
   addEventListener("resize", fit); fit();
 
   let running = false;

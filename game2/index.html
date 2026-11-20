@@ -36,9 +36,14 @@
   .cm { color: #eee; text-shadow: 1px 1px 0 #000; word-break: break-all; animation: cm .25s; } .cm b { font-weight: 900; }
   .cm.gift { color: #fde047; } .cm.sc { margin: 2px 0; padding: 2px 5px; background: rgba(253,224,71,.16); border-left: 3px solid; border-radius: 2px; } .cm .amt { color: #fde047; font-weight: 900; } @keyframes cm { from { opacity: 0; transform: translateX(10px); } }
   @media (max-width: 760px) { .pick { grid-template-columns: repeat(2, 1fr); } .chat { position: static; width: 100%; height: 92px; border-radius: 0; } }
-  .move { position: absolute; bottom: 8px; left: 8px; display: none; gap: 8px; line-height: 1; }
-  .move button { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(255,255,255,.5); background: rgba(0,0,0,.35); color: #fff; font-size: 24px; }
+  .ctl { display: flex; align-items: flex-start; gap: 10px; }
+  .p-skills #skills { padding-bottom: 16px; }
+  .move { display: none; gap: 6px; line-height: 1; }
+  .move button { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(255,255,255,.45); background: #2a2238; color: #fff; font-size: 22px; touch-action: none; }
+  .move button:active { background: #4a3a6a; }
   @media (pointer: coarse) { .move { display: flex; } }
+  .shopbtn, .p-shop h3 .close, .inv-m { display: none; }
+  .p-shop { flex: 1; min-width: 300px; }
   .bar { width: 100%; max-width: 1500px; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: flex-start; }
   .panel { background: var(--panel); border: 3px solid var(--line); border-radius: 4px; padding: 8px; }
   .panel h3 { margin: 0 0 6px; font-size: 13px; color: var(--gold); }
@@ -77,6 +82,48 @@
   .btn { font: 900 16px "Noto Sans SC"; padding: 8px 24px; background: var(--gold); color: #1a1208; border: 0; border-radius: 3px; cursor: pointer; }
   .back { position: fixed; right: 10px; bottom: 8px; font-size: 12px; color: var(--muted); }
   @media (max-width: 760px) { .meter { width: 90px; } .slot { width: 76px; } }
+  /* ===== smartphone: barra comandi fissa in basso, negozio a comparsa ===== */
+  @media (max-width: 760px), (max-height: 520px) {
+    body { padding: 4px 4px var(--dockh, 150px); }
+    .hud { gap: 2px 10px; padding: 4px 8px; margin-bottom: 4px; border-width: 2px; }
+    .title { font-size: 14px; letter-spacing: 1px; } .beta { font-size: 7px; padding: 2px 3px; }
+    .stat { font-size: 11px; gap: 4px; } .stat b { font-size: 9px; }
+    .meter { width: 74px; height: 12px; } .medal { width: 22px; height: 22px; }
+    .mute { font-size: 14px; padding: 0 6px; margin-left: auto; }
+    .stage { border-width: 2px; box-shadow: none; }
+    .ov { position: fixed; inset: 0; z-index: 60; justify-content: flex-start; padding: 18px 12px 30px; }
+    .ov h1 { font-size: 30px; } .ov p { font-size: 12.5px; }
+    .pick { grid-template-columns: repeat(2, 1fr); gap: 6px; } .hero { padding: 6px; } .hero .pic canvas { height: 56px; } .diff img { width: 50px; height: 50px; }
+    .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; max-width: none; flex-direction: column; flex-wrap: nowrap; gap: 6px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: #120f19; border-top: 3px solid var(--line); box-shadow: 0 -8px 20px rgba(0,0,0,.5); }
+    .bar > .panel { border: 0; padding: 0; background: none; } .bar > .panel > h3 { display: none; }
+    .p-inv { display: none; }
+    .ctl { align-items: center; gap: 6px; justify-content: space-between; }
+    .move { display: flex; } .move button { width: 50px; height: 50px; font-size: 20px; }
+    .p-skills #skills { padding-bottom: 0; gap: 5px; flex-wrap: nowrap; }
+    .skill { width: 46px; height: 46px; border-width: 2px; } .skill small { display: none; } .skill .cdn { font-size: 10px; }
+    .shopbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; height: 50px; border: 2px solid var(--gold); border-radius: 6px; background: #2a2010; color: #fff; font-size: 20px; line-height: 1; }
+    .shopbtn small { font-size: 9px; color: var(--gold); margin-top: 2px; }
+    .p-units .row { flex-wrap: nowrap; overflow-x: auto; gap: 5px; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .p-units .row::-webkit-scrollbar { display: none; }
+    .p-units .slot { flex: 0 0 auto; width: 66px; padding: 3px 2px; border-width: 2px; } .p-units .slot.snail { width: 70px; }
+    .p-units .slot > small, .p-units .slot b small, .p-units .slot .meter + small { display: none; } .p-units .slot b { font-size: 10px; } .p-units .slot em { font-size: 8px; }
+    .p-units .slot .pic canvas { height: 30px; } .p-units .slot .meter.xp { width: 54px !important; height: 4px; }
+    .p-shop { display: none; }
+    .p-shop.open { display: block; position: fixed; left: 0; right: 0; bottom: 0; top: 22vh; z-index: 40; overflow-y: auto; padding: 10px 8px 30px; background: var(--panel) !important; border-top: 3px solid var(--gold) !important; border-radius: 10px 10px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.7); }
+    .p-shop.open > h3 { display: flex !important; justify-content: space-between; align-items: center; font-size: 15px; position: sticky; top: -10px; background: var(--panel); padding: 4px 0; z-index: 1; }
+    .p-shop h3 .close { display: block; font: inherit; font-size: 13px; background: #2a2238; color: #fff; border: 2px solid var(--line); border-radius: 4px; padding: 4px 10px; }
+    .inv-m { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 8px; } .inv-m img, .inv-m span { width: 100%; height: 36px; }
+    #shop .slot { width: calc(33.3% - 4px); } #shop .slot.big { width: calc(50% - 3px); }
+    .back { position: static; display: block; text-align: center; margin: 10px 0; }
+    .chat { font-size: 11px; }
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    .bar { flex-direction: row; align-items: center; gap: 8px; } .p-skills { flex: 0 0 auto; } .p-units { flex: 1; min-width: 0; }
+    .hud { padding: 2px 8px; } .p-shop.open { top: 8vh; }
+    .ov p { font-size: 11.5px; } .pick { grid-template-columns: repeat(4, 1fr); }
+  }
+  .rot { display: none; float: right; opacity: .8; }
+  @media (max-width: 760px) and (orientation: portrait) { .rot { display: inline; } }
 </style>
 </head>
 <body>
@@ -92,8 +139,7 @@
   <div class="stage">
     <canvas id="cv"></canvas>
     <div class="banner" id="banner"></div>
-    <div class="chat"><div class="chat-h"><i></i>大金神直播间 · 守护遗迹 · 👁 <span id="viewers">50.0万</span></div><div class="chat-list" id="chat-list"></div></div>
-    <div class="move"><button id="left">◀</button><button id="right">▶</button></div>
+    <div class="chat"><div class="chat-h"><i></i>大金神直播间 · 守护遗迹 · 👁 <span id="viewers">50.0万</span><span class="rot">📱↻ 横屏更爽</span></div><div class="chat-list" id="chat-list"></div></div>
     <div class="ov" id="intro">
       <h1>守护遗迹 <sup class="beta">BETA</sup></h1>
       <p><b>大金神</b>（风行者）要守住左边山坡上的<b>天辉遗迹</b>，遗迹前面还有一座<b>防御塔</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵）。<br>钱够了就叫兄弟从天而降：<b>大B神</b>（幻影刺客，闪烁暴击）、<b>Yoki大神</b>（撼地者，砸下来直接回音击）、<b>蜗牛大神</b>（卡尔，落地先放熔炉精灵、超震声波、灵动迅捷，再用飓风、陨石、天火、冰墙轰炸）。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
@@ -105,14 +151,14 @@
     <div class="ov" id="win" hidden><img id="win-medal" alt="" style="width:96px;height:96px"><h1 id="win-title"></h1><p id="win-text"></p><div style="display:flex;gap:10px"><button class="btn" id="win-end">结束游戏</button><button class="btn" id="win-go" style="background:#5fd068">继续守（无尽模式）</button></div></div>
     <div class="ov" id="over" hidden><h1>遗迹被摧毁了</h1><p id="over-text"></p><button class="btn" id="again">再来一局</button></div>
   </div>
-  <div class="bar">
-    <div class="panel"><h3>技能</h3><div class="row" id="skills" style="padding-bottom:16px"></div></div>
-    <div class="panel"><h3>物品栏</h3><div class="inv" id="inv"></div></div>
-    <div class="panel"><h3>兵营 · 召唤</h3><div class="row" id="units"></div></div>
-    <div class="panel" style="flex:1;min-width:300px"><h3>商店</h3><div class="row" id="shop"></div></div>
+  <div class="bar" id="bar">
+    <div class="panel p-skills"><h3>技能</h3><div class="ctl"><div class="move"><button id="left">◀</button><button id="right">▶</button></div><div class="row" id="skills"></div><button class="shopbtn" id="shopbtn">🛒<small>商店</small></button></div></div>
+    <div class="panel p-inv"><h3>物品栏</h3><div class="inv" id="inv"></div></div>
+    <div class="panel p-units"><h3>兵营 · 召唤</h3><div class="row" id="units"></div></div>
+    <div class="panel p-shop" id="shoppanel"><h3>商店 <button class="close" id="shopclose">✕ 关闭</button></h3><div class="inv inv-m"></div><div class="row" id="shop"></div></div>
   </div>
   <a class="back" href="../">← 回到刀塔法庭（所有内容）</a>
   <script src="art.js?v=4"></script>
-  <script src="game.js?v=18"></script>
+  <script src="game.js?v=22"></script>
 </body>
 </html>
