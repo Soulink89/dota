@@ -37,7 +37,7 @@
   // =====================================================================
   const ICON = (n) => `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${n}.png`;
   const HEROES = {
-    windranger: { name: "风行者", look: "hero_windrunner", ranged: true, proj: "arrow", hp: 620, dmg: 32, rate: 1.4, range: 110, arm: 2, spd: 62,
+    windranger: { name: "风行者", look: "hero_windrunner", ranged: true, proj: "arrow", hp: 780, dmg: 38, rate: 1.4, range: 110, arm: 2, spd: 62,
       sk: [["windrunner_shackleshot", "束缚击", 10, "击晕最近的两个敌人"], ["windrunner_powershot", "强力击", 9, "向前穿透一排敌人"], ["windrunner_windrun", "风行", 14, "加速并闪避80%伤害"], ["windrunner_focusfire", "集中火力", 40, "8秒攻速×3（6级）"]] },
   };
 
@@ -52,11 +52,11 @@
     ogre: { name: "食人魔", hp: 1150, dmg: 55, arm: 3, rate: 0.7, range: 18, spd: 24, gold: 45, minW: 4, cost: 5 },
     golem: { name: "岩石傀儡", hp: 1900, dmg: 85, arm: 6, rate: 0.55, range: 20, spd: 18, gold: 80, minW: 6, cost: 8 },
     dragon: { name: "远古黑龙", hp: 2100, dmg: 75, arm: 4, rate: 0.6, range: 100, spd: 28, gold: 110, proj: "fire", splash: 22, fly: true, minW: 7, cost: 11 },
-    roshan: { name: "肉山", hp: 9000, dmg: 170, arm: 12, rate: 0.6, range: 24, spd: 18, gold: 600, boss: true },
+    roshan: { name: "肉山", hp: 5200, dmg: 130, arm: 8, rate: 0.6, range: 24, spd: 18, gold: 600, boss: true },
   };
   // creep del Radiant evocabili (per livello della caserma)
   const ALLY = {
-    melee: { name: "近战兵", cost: 45, hp: 320, dmg: 20, arm: 2, rate: 1, range: 14, spd: 32 },
+    melee: { name: "近战兵", cost: 45, hp: 380, dmg: 20, arm: 2, rate: 1, range: 14, spd: 32 },
     ranged: { name: "远程兵", cost: 55, hp: 210, dmg: 24, arm: 0, rate: 0.9, range: 92, spd: 32, proj: "magic" },
   };
   const LV = [{ hp: 1, dmg: 1, arm: 0, name: "" }, { hp: 1.7, dmg: 1.6, arm: 3, name: "超级" }, { hp: 2.8, dmg: 2.5, arm: 6, name: "超级巨型" }];
@@ -71,7 +71,7 @@
     snail: { name: "蜗牛大神", hero: "祈求者", look: "hero_invoker", col: "#93c5fd", key: "5", cost: 600, cd: 75, life: 16, hp: 1300, dmg: 55, rate: 1.1, range: 110, spd: 45, arm: 5, proj: "magic", aggro: 260,
       desc: "卡尔十个技能全部放一遍", hi: "QWE随便按，全是大招", lines: ["干干干！", "今晚通宵！", "这把我来带", "十个技能，手速拉满"], bye: "我先下了，明天还要上班……" },
   };
-  const TOWER = { name: "一塔", hp: 2200, dmg: 110, arm: 14, rate: 0.9, range: 128, spd: 0, proj: "tower", tower: true, aggro: 128 };
+  const TOWER = { name: "一塔", hp: 3000, dmg: 110, arm: 14, rate: 0.9, range: 128, spd: 0, proj: "tower", tower: true, aggro: 128 };
   const FORGE = { name: "熔炉精灵", hp: 320, dmg: 34, arm: 0, rate: 1, range: 96, spd: 40, proj: "fire" };
   const INVOKE = [["invoker_cold_snap", "急速冷却"], ["invoker_tornado", "强袭飓风"], ["invoker_chaos_meteor", "混沌陨石"], ["invoker_emp", "电磁脉冲"], ["invoker_alacrity", "灵动迅捷"],
     ["invoker_sun_strike", "阳炎冲击"], ["invoker_forge_spirit", "熔炉精灵"], ["invoker_ice_wall", "寒冰之墙"], ["invoker_deafening_blast", "超震声波"], ["invoker_ghost_walk", "幽灵漫步"]];
@@ -118,12 +118,13 @@
   function reset(heroKey) {
     HD = HEROES[heroKey];
     S = {
-      t: 0, gold: 180, wave: 0, nextWave: 12, queue: [], kills: 0, over: false, barracks: 0, helpCd: { bshen: 0, yoki: 0, snail: 0 }, later: [], alac: 0,
-      ancient: { hp: 4000, max: 4000, arm: 12, flash: 0 },
+      t: 0, gold: 260, inc: 0, wave: 0, nextWave: 12, queue: [], kills: 0, over: false, barracks: 0, helpCd: { bshen: 0, yoki: 0, snail: 0 }, later: [], alac: 0,
+      ancient: { hp: 5000, max: 5000, arm: 12, flash: 0 },
       hero: makeUnit("hero", { ...HD, look: HD.look }, 130, 4), units: [], proj: [], parts: [], texts: [], fx: [], items: [], empower: 0,
     };
     const h = S.hero; h.mmr = 3150; h.lvl = 2; h.xp = 0; h.cds = [0, 0, 0, 0]; h.buffs = {}; h.respawn = 0; h.mx = 0;
     S.units.push(makeUnit("ally", { ...TOWER, set: SET.tower }, 114, 0, { guard: 114, towerU: true }));
+    viewers = 900 + Math.floor(Math.random() * 300); chatT = 1;
     say(h, pick(JIN.start)); renderShop(); hud(true);
   }
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -192,18 +193,18 @@
   }
   function kill(u, from) {
     if (u.team === "hero") {
-      u.respawn = 10; u.hp = 0; u.mmr = Math.max(0, u.mmr - 50); say(u, pick(JIN.die), 3); banner("大金神阵亡 · -50 MMR", "10秒后复活 · " + pick(JIN.die));
+      u.respawn = 8; u.hp = 0; u.mmr = Math.max(0, u.mmr - 50); say(u, pick(JIN.die), 3); react("die"); banner("大金神阵亡 · -50 MMR", "8秒后复活 · " + pick(JIN.die));
       return;
     }
-    if (u.towerU) { banner("一塔被推了！", "大P神：小金金，塔都守不住？"); S.shake = 6; burst(u.x, feetY(u) - 40, ["#e6fff0", "#9ae8ff", "#8a8f99"], 30, 90); }
+    if (u.towerU) { react("tower"); banner("一塔被推了！", "大P神：小金金，塔都守不住？"); S.shake = 6; burst(u.x, feetY(u) - 40, ["#e6fff0", "#9ae8ff", "#8a8f99"], 30, 90); }
     if (u.helper && HELP[u.helper]) { say(u, "我先挂了……", 2); text(u.x, feetY(u) - 50, HELP[u.helper].name + "阵亡", "#ff9a9a", true); }
     u.dead = 0.9; u.deadDir = u.hitDir || (u.team === "enemy" ? 1 : -1);
     burst(u.x, feetY(u) - 4, ["#8a7a62", "#b8a888", "#5a4a3a"], u.d.boss ? 18 : 8, 30, 60);
     if (u.team === "enemy") {
-      S.gold += u.d.gold; S.kills++; text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
+      S.gold += u.d.gold; S.kills++; if (S.kills % 30 === 0) react("streak", { k: S.kills }); text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
       burst(u.x, feetY(u) - 10, ["#fde047", "#ffb03a"], 4, 40);
       gainXp(u.d.gold * 2);
-      if (u.d.boss) { banner("击杀肉山！", "+600金 · 大P神：小金金这次没送"); S.ancient.hp = Math.min(S.ancient.max, S.ancient.hp + 1500); }
+      if (u.d.boss) { react("roshanDie"); banner("击杀肉山！", "+600金 · 大P神：小金金这次没送"); S.ancient.hp = Math.min(S.ancient.max, S.ancient.hp + 1500); }
       if (from && from.team === "hero" && Math.random() < 0.12) say(from, pick(JIN.kill));
     }
   }
@@ -212,10 +213,10 @@
   function rankOf(m) { let t = 0; RANKS.forEach((r, i) => { if (m >= r[1]) t = i; }); const star = t >= 7 ? 0 : Math.min(5, Math.floor((m - RANKS[t][1]) / 154) + 1); return { tier: t + 1, star, name: RANKS[t][0] + (star ? star : "") }; }
   const lvlOf = (m) => clamp(1 + Math.floor((m - 3000) / 100), 1, 25); // 3150 = 传奇1 (Lv2), 3500 = 传奇3 (Lv6, ultimate)
   function gainXp(x) {
-    const h = S.hero, before = rankOf(h.mmr).name; h.mmr += Math.max(1, Math.round(x / 4));
+    const h = S.hero, before = rankOf(h.mmr).name; h.mmr += Math.max(1, Math.round(x / 5));
     const nl = lvlOf(h.mmr);
     while (h.lvl < nl) { h.lvl++; const r = h.hp / h.max; h.max = Math.round(HD.hp * (1 + (h.lvl - 1) * 0.08)) + itemSum("hp"); h.hp = h.max * r; burst(h.x, feetY(h) - 20, ["#fde047", "#fff6c8"], 14); if (h.lvl === 6) banner("传奇3！大招解锁", "大金神：超凡指日可待"); }
-    const after = rankOf(h.mmr).name; if (after !== before) { text(h.x, feetY(h) - 58, "上分！" + after, "#fde047", true); if (Math.random() < 0.6) say(h, pick(JIN.lvl)); }
+    const after = rankOf(h.mmr).name; if (after !== before) { react("rank", { r: after }); text(h.x, feetY(h) - 58, "上分！" + after, "#fde047", true); if (Math.random() < 0.6) say(h, pick(JIN.lvl)); }
   }
 
   // =====================================================================
@@ -223,16 +224,17 @@
   // =====================================================================
   function startWave() {
     S.wave++; const w = S.wave;
-    let budget = 4 + w * 2.6; const list = ["dmelee", "dmelee", "dranged"];
+    let budget = 3 + w * 2.3 + Math.max(0, w - 8) ** 1.6; const list = ["dmelee", "dmelee", "dranged"];
     const pool = Object.entries(EN).filter(([, e]) => !e.boss && e.minW <= w);
     while (budget > 0) { const [k, e] = pool[Math.floor(Math.random() * pool.length)]; if (e.cost > budget + 1) { budget -= 0.5; continue; } list.push(k); budget -= e.cost; }
     if (w % 5 === 0) list.push("roshan");
     S.queue = list.map((k, i) => ({ k, at: S.t + i * 0.9 + rnd(0, 0.3) }));
-    S.nextWave = 32;
+    S.nextWave = 34;
+    react(w % 5 === 0 ? "roshan" : "wave", { w });
     banner(`第 ${w} 波`, w % 5 === 0 ? "大P神：肉山来了，小金金别送！" : pick(PDS));
   }
   function spawnEnemy(k) {
-    const e = EN[k], sc = 1 + (S.wave - 1) * 0.12, d = { ...e, hp: Math.round(e.hp * sc), dmg: Math.round(e.dmg * (1 + (S.wave - 1) * 0.06)), set: SET[k] };
+    const e = EN[k], sc = e.boss ? 1 + (S.wave / 5 - 1) * 0.35 : 1 + (S.wave - 1) * 0.1 + Math.max(0, S.wave - 8) ** 2 * 0.015, d = { ...e, hp: Math.round(e.hp * sc), dmg: Math.round(e.dmg * (e.boss ? 1 + (S.wave / 5 - 1) * 0.15 : 1 + (S.wave - 1) * 0.05)), gold: Math.round(e.gold * 1.4), set: SET[k] };
     const u = makeUnit("enemy", d, W + 30 + rnd(0, 10), e.fly ? 2 : Math.floor(rnd(0, 10)), { type: k });
     S.units.push(u);
     if (e.boss) { say(u, "吼——！！", 3); S.shake = 4; }
@@ -256,7 +258,7 @@
     const front = enemies().sort((a, b) => a.x - b.x)[0];
     const x = k === "snail" ? 175 : clamp(front ? front.x - (k === "yoki" ? 6 : 16) : 190, ANC.front + 20, W - 30);
     const u = makeUnit("ally", { ...Hp, set: SET[Hp.look] }, x, 6, { helper: k, life: Hp.life, guard: x, drop: 0.7, castT: 0.6, step: 0, blinkCd: 0 });
-    S.units.push(u); say(u, Hp.hi, 2.4); banner(`${Hp.name} 降临！`, `${Hp.hero} · 限时${Hp.life}秒 · ${Hp.hi}`); hud(true);
+    S.units.push(u); say(u, Hp.hi, 2.4); react(k); banner(`${Hp.name} 降临！`, `${Hp.hero} · 限时${Hp.life}秒 · ${Hp.hi}`); hud(true);
   }
   // atterraggio dal cielo
   function land(u) {
@@ -269,7 +271,7 @@
     const ts = enemies().filter((e) => Math.abs(e.x - u.x) < 150), n = ts.length;
     ts.forEach((e) => { hurt(e, 140 + 45 * n, u, { pure: true }); e.stun = Math.max(e.stun, 1.3); });
     S.fx.push({ k: "zap", x: u.x, y: feetY(u) - 4, life: 0.5, r: 150, col: "#fcd34d" }); S.fx.push({ k: "zap", x: u.x, y: feetY(u) - 4, life: 0.35, r: 100, col: "#ffffff" });
-    S.shake = 8; text(u.x, feetY(u) - 78, `回音击！×${n}`, "#fcd34d", true); say(u, pick(HELP.yoki.lines), 2.4);
+    react("echo", { n }); S.shake = 8; text(u.x, feetY(u) - 78, `回音击！×${n}`, "#fcd34d", true); say(u, pick(HELP.yoki.lines), 2.4);
     burst(u.x, feetY(u) - 4, ["#8a6a3a", "#c9a060", "#fcd34d"], 30, 110, 140);
   }
   const later = (sec, fn) => S.later.push({ at: S.t + sec, fn });
@@ -301,7 +303,7 @@
     if (S.gold < it.cost) return flash("金币不够");
     S.gold -= it.cost; S.items.push(k);
     if (it.hp) { S.hero.max += it.hp; S.hero.hp += it.hp; }
-    banner(`购买 ${it.name}`, it.desc); renderShop();
+    banner(`购买 ${it.name}`, it.desc); renderShop(); if (it.cost >= 400 || Math.random() < 0.4) react("buy", { i: it.name });
   }
   function flash(t) { const h = S.hero; text(h.x, feetY(h) - 52, t, "#ff9a9a"); }
 
@@ -325,10 +327,76 @@
       if (i === 0) { const t = nearestEnemy(x, 170, true); if (!t) return false; const t2 = enemies().filter((e) => e !== t && e.x > t.x && e.x - t.x < 60)[0]; for (const e of [t, t2]) if (e) { e.stun = 2.5; hurt(e, 80 + lvl * 8, h); S.fx.push({ k: "chain", x1: t.x, x2: e.x, y: feetY(e) - 20, life: 2.5 }); } S.fx.push({ k: "beam", x1: x, x2: t.x, y, col: "#d8c8a0", life: 0.15 }); }
       if (i === 1) { let dmg = 220 + lvl * 18; for (const e of enemies().filter((e) => e.x > x && e.x < x + 260).sort((a, b) => a.x - b.x)) { hurt(e, dmg, h); dmg *= 0.88; } S.fx.push({ k: "beam", x1: x, x2: x + 260, y, col: "#e8fbff", life: 0.35, w: 3 }); }
       if (i === 2) { h.buffs.windrun = 4; burst(x, y, ["#e8fbff", "#9ad8ff"], 12, 40, 0); }
-      if (i === 3) { h.buffs.focus = 8; text(x, y - 30, "集中火力!", "#9ae0a0", true); }
+      if (i === 3) { react("ult"); h.buffs.focus = 8; text(x, y - 30, "集中火力!", "#9ae0a0", true); }
     }
   }
 
+
+  // =====================================================================
+  //  DIRETTA: chat degli spettatori (lore del sito)
+  // =====================================================================
+  const VIEW = {
+    "大P神": { col: "#cbd5e1", say: ["小金金又在吹了", "锤子已备好🔨", "小金金，这波稳住", "笑死，嘴巴超凡", "真菜", "哎呀你这波操作", "我当年超凡的时候……", "小金金别看弹幕了，看小地图", "小金金你这补刀是认真的？", "这风行谁教的，退钱", "小金金今天又吹了几次超凡？", "我不玩了，但我还能锤你", "远古时代的超凡大神前来视察"] },
+    "Ping大神": { col: "#8f7bff", say: ["喝一口再看🍺", "这把我理论上能赢", "我先点根烟🚬", "从理论上讲这个塔可以不死", "DC首席理论家报到", "万古一日游，懂的都懂", "喝多了，刚才谁杀的？", "休闲局别那么认真", "理论上风行应该先出漩涡", "我掉分了，来看看金神掉不掉", "主播的走位不符合理论", "再来一瓶"] },
+    "大B神": { col: "#4fc3f7", say: ["宝宝睡了，我来看会", "喂奶中，挂机一下🍼", "主播能不能叫我下来砍几刀", "我只会玩双头龙", "刚才谁说我呆逼？", "俄罗斯指挥官上线", "看不懂但大受震撼", "黑弓又被抓了吗？哦这是风行", "我不敢上，你们先", "孩子哭了，等我两分钟", "金神你又针对我"] },
+    "Yoki大神": { col: "#5eead4", say: ["我有至宝，主播有吗💎", "三把斧了解一下", "黑弓至宝特效拉满", "Ping老师教的", "主播风行好像没至宝", "小黑1-5号位，啥都能玩", "我黑弓15连胜的时候……", "至宝不是用来打的，是用来看的", "我不玩辅助的"] },
+    "疯子大神": { col: "#fb923c", say: ["老婆不在家，终于能看直播了", "我这电脑十年了，卡成PPT", "屠夫一勾一个", "OMG！", "低优先级出来了，来看看", "职业辅助给主播插个眼", "屠夫叼霸天", "老婆回来了，先撤", "主播要不要买个肉山盾"] },
+    "Kaiju大神*": { col: "#38bdf8", say: ["小鱼人偷钱去了🐟", "四号位小鱼人报到", "金神又骂我", "天线宝宝向你问好", "四号位也能carry", "我等级低但我打得好", "金神别抢我的兵", "偷完钱就跑"] },
+    "蜗牛大神": { col: "#93c5fd", say: ["干干干！", "今晚通宵！", "主播中路我虐过", "叫我下来，十个技能给你看", "金神你这补刀不行啊", "这把我来带", "我随便玩玩", "影魔三连压给你看", "地卜师分身比你这兵多"] },
+    "Soul大神": { col: "#facc15", say: ["稳住，能赢", "主播加油", "刀塔传奇路过", "这波可以打"] },
+    "辅助大神": { col: "#86efac", say: ["辅助视角：主播站位有问题", "低分局救世主报到", "我来给主播插眼", "辅助的天花板在此", "主播你缺个好辅助"] },
+    "金神大腿": { col: "#f0abfc", say: ["金神一半的分是我带的", "大腿在此，别慌", "开小号来看看", "通宵吗金神", "没我你上不了传奇"] },
+  };
+  const RANDN = ["路人甲", "水友8848", "中单之王粉丝", "刀塔老玩家", "白嫖党", "夜魇间谍", "肉山本山", "补刀机器", "天辉守护者", "老卡尔", "一塔守护者", "萌新求带", "超凡观众", "弹幕护体", "小金金后援会", "风行老婆", "通宵党", "反补大师", "系统局受害者", "大P神粉丝团"];
+  const RCOL = ["#a3e635", "#fca5a5", "#c4b5fd", "#fdba74", "#67e8f9", "#f9a8d4", "#d9f99d", "#e5e7eb"];
+  const RSAY = ["666", "主播真猛", "这就是超凡？", "前面的别吹了", "主播几分？", "风行还得是金神", "主播又在吹", "老铁们刷波礼物", "这塔能守住吗", "+1", "哈哈哈哈哈", "主播开个大", "系统局预警", "建议改名大吹神", "主播别说话专心打", "这操作我奶奶都会", "赌五毛这波塔没了", "主播传奇几？", "求主播出辉耀", "风行大招呢？", "前方高能", "名场面", "下一波肉山吗", "kda战神", "主播今天通宵吗", "嘴巴超凡，手传奇", "又是我MVP（主播语录）", "补刀60是真的吗", "叫蜗牛大神下来啊", "叫大B神，便宜", "Yoki至宝出场费多少", "截图发群里了", "主播别吹了，看兵", "这风行箭法可以", "金神yyds", "说好的超凡入圣呢"];
+  const GIFT = [["大P神", "🔨锤子"], ["Yoki大神", "💎至宝"], ["蜗牛大神", "🐌蜗牛"], ["大B神", "🍼奶瓶"], ["Ping大神", "🍺啤酒"], ["疯子大神", "🪝肉钩"], ["Kaiju大神*", "🐟小鱼干"], ["金神大腿", "🦵大腿"], ["Soul大神", "👑皇冠"]];
+  const REACT = {
+    die: [["大P神", "小金金又送了，锤！"], [0, "又系统局？"], [0, "金神送了"], [0, "笑死"], [0, "这就是超凡中单？"], [0, "-50分哈哈哈"], [0, "网卡了是吧"], [0, "战术性死亡懂不懂"], ["蜗牛大神", "我中路虐过的人"], [0, "队友呢？哦没有队友"], ["Ping大神", "理论上他不该死"], ["Kaiju大神*", "这次不能怪我了吧"]],
+    rank: [[0, "上分了！{r}"], [0, "恭喜金神 {r}"], ["大P神", "{r}？虚胖分"], [0, "主播起飞"], [0, "嘴巴超凡，分也快超凡了"], [0, "赶紧截图发群里"], ["金神大腿", "这分有我一半"], ["Ping大神", "我理论上早就{r}了"]],
+    wave: [[0, "第{w}波来了"], [0, "这波稳吗"], [0, "兄弟们坐好"], [0, "{w}波了还没死，可以"], ["大P神", "小金金，第{w}波别送"]],
+    roshan: [[0, "肉山来了！！"], [0, "金神别送盾"], [0, "肉山：我来拿分"], ["大P神", "小金金，肉山都比你会打"], [0, "刷礼物给肉山"], ["疯子大神", "肉山也要老婆不在家才敢出来"]],
+    roshanDie: [[0, "肉山没了！"], [0, "金神打肉山了？截图！"], ["大P神", "这次居然没送"]],
+    tower: [[0, "一塔没了"], [0, "塔都守不住？"], [0, "主播在干嘛"], [0, "塔：我尽力了"], ["大P神", "小金金，塔都守不住？"]],
+    low: [[0, "遗迹快没了！！"], [0, "主播回家啊！"], [0, "GG预定"], [0, "要输了要输了"], ["蜗牛大神", "叫我啊！"]],
+    bshen: [[0, "大B神不是在喂奶吗？"], [0, "呆逼下凡了"], [0, "PA一刀999"], [0, "奶瓶放下了吗"], ["大B神", "我来了我来了"], ["Yoki大神", "呆逼居然敢上"]],
+    yoki: [[0, "Yoki大神至宝出场"], [0, "啊啊啊啊啊"], [0, "回音击来了！"], [0, "跳刀呢？"], ["Yoki大神", "看我至宝特效"], ["Ping大神", "我教的"]],
+    snail: [[0, "蜗牛大神降临！"], [0, "卡尔！十个技能！"], [0, "蜗牛：金神让开"], [0, "蜗牛中路虐过主播"], ["蜗牛大神", "干干干！"], [0, "手速拉满"]],
+    echo: [[0, "回音击 {n} 个！！"], [0, "这波至宝特效"], [0, "地震了地震了"], ["Yoki大神", "一波{n}个，至宝的力量"]],
+    crit: [[0, "恩赐解脱！！"], [0, "一刀999"], [0, "大B神这刀够买一个月奶粉"], ["大B神", "暴击了暴击了"]],
+    buy: [[0, "买{i}了！"], [0, "{i}？主播有钱"], [0, "这装备谁教的"], ["Ping大神", "理论上应该先出{i}"], [0, "出{i}，懂哥"]],
+    streak: [[0, "主播杀疯了"], [0, "{k}杀了"], [0, "这才像超凡"], [0, "金神今天开挂了？"], ["大P神", "{k}杀？小金金今天吃药了"]],
+    ult: [[0, "风行大招！"], [0, "集中火力！！"], [0, "射爆！"], [0, "这攻速谁顶得住"]],
+    over: [[0, "GG"], [0, "系统局！"], [0, "主播又要说：这把不算"], [0, "下播吧"], ["大P神", "锤！🔨"], [0, "第{w}波，还行吧"], ["蜗牛大神", "叫我我就守住了"]],
+    start: [[0, "开播了！"], [0, "金神今天玩风行"], ["大P神", "小金金，守住遗迹"], [0, "来了来了"], [0, "主播今天几分？"]],
+  };
+  let chatT = 2, viewers = 900;
+  function chatMsg(name, col, text, gift) {
+    const box = $("chat-list"); if (!box) return;
+    const d = document.createElement("div"); d.className = "cm" + (gift ? " gift" : "");
+    d.innerHTML = `<b style="color:${col}">${name}</b>${gift ? " " : "："}${text}`;
+    box.appendChild(d); while (box.children.length > 40) box.firstChild.remove();
+  }
+  function chatSay(who, text) {
+    if (!who) { const n = pick(RANDN); chatMsg(n, RCOL[n.length % RCOL.length], text); }
+    else chatMsg(who, (VIEW[who] || {}).col || "#fff", text);
+  }
+  function react(ev, vars = {}) {
+    const pool = REACT[ev]; if (!pool) return;
+    const n = 2 + Math.floor(Math.random() * 3), used = new Set();
+    for (let i = 0; i < n; i++) { const [who, t] = pick(pool); if (used.has(t)) continue; used.add(t); const txt = t.replace(/\{(\w)\}/g, (_, k) => vars[k] ?? ""); setTimeout(() => chatSay(who || null, txt), 250 + i * rnd(350, 900)); }
+    viewers += 10 + Math.floor(Math.random() * 40);
+  }
+  function chatTick(dt) {
+    chatT -= dt; if (chatT > 0) return;
+    chatT = rnd(1.1, 2.6);
+    const r = Math.random();
+    if (r < 0.04) { const [who, gft] = pick(GIFT); chatMsg(who, VIEW[who].col, `送出 ${gft} ×${pick([1, 1, 2, 5, 10, 66])}`, true); }
+    else if (r < 0.55) { const who = pick(Object.keys(VIEW)); chatSay(who, pick(VIEW[who].say)); }
+    else chatSay(null, pick(RSAY));
+    viewers = Math.max(300, viewers + Math.floor(rnd(-25, 30)) + S.wave * 2); $("viewers").textContent = viewers;
+    if (Math.random() < 0.05 && S.hero.respawn <= 0 && !S.hero.bubble) say(S.hero, pick(["弹幕别带节奏", "谢谢老铁的礼物", "弹幕说我菜的，你上你也不行", "大P神别刷锤子了", "看好了，超凡操作"]));
+  }
   // =====================================================================
   //  UPDATE
   // =====================================================================
@@ -341,7 +409,7 @@
     if (S.later.length) { const due = S.later.filter((l) => l.at <= S.t); S.later = S.later.filter((l) => l.at > S.t); due.forEach((l) => l.fn()); }
     for (const f of S.fx) if (f.k === "meteor") { const px = f.x0 + (1 - f.life / f.max) * (f.x1 - f.x0); f.tick = (f.tick || 0) - dt; if (f.tick <= 0) { f.tick = 0.2; for (const e of enemies()) if (Math.abs(e.x - px) < 22) { hurt(e, 55, f.from, { show: false, pure: true }); e.dot = Math.max(e.dot, 1.5); } } }
     S.empower = Math.max(0, S.empower - dt); S.shake = Math.max(0, (S.shake || 0) - dt * 10);
-    S.ancient.flash = Math.max(0, S.ancient.flash - dt);
+    S.ancient.flash = Math.max(0, S.ancient.flash - dt); chatTick(dt); S.inc += dt * 1.5; if (S.inc >= 1) { S.gold += Math.floor(S.inc); S.inc -= Math.floor(S.inc); }
     updateHero(dt);
     for (const u of S.units) updateUnit(u, dt);
     // separazione leggera sulla corsia
@@ -434,7 +502,7 @@
       u.cd = 1 / stat(u, "rate"); u.anim = "atk"; u.at = 0.35;
       const tx = target === "ancient" ? ANC.front : target.x; u.face = tx >= u.x ? 1 : -1;
       let dmg = stat(u, "dmg");
-      if (u.d.crit && Math.random() < u.d.crit) { dmg *= u.d.critMul; text(target.x || u.x, feetY(u) - 56, "恩赐解脱 " + Math.round(dmg) + "!", "#ff3a5a", true); S.fx.push({ k: "slash", x: target.x, y: feetY(u) - 22, life: 0.25 }); S.shake = Math.max(S.shake || 0, 2); }
+      if (u.d.crit && Math.random() < u.d.crit) { dmg *= u.d.critMul; if (Math.random() < 0.3) react("crit"); text(target.x || u.x, feetY(u) - 56, "恩赐解脱 " + Math.round(dmg) + "!", "#ff3a5a", true); S.fx.push({ k: "slash", x: target.x, y: feetY(u) - 22, life: 0.25 }); S.shake = Math.max(S.shake || 0, 2); }
       if (u.d.proj) shoot(u, target, dmg, u.d.proj);
       else if (target === "ancient") hurtAncient(dmg);
       else { hurt(target, dmg, u); if (u.team !== "enemy" && S.empower > 0) for (const e of enemies()) if (e !== target && Math.abs(e.x - target.x) < 24) hurt(e, dmg * 0.4, u, { show: false }); }
@@ -442,7 +510,7 @@
   }
   function hurtAncient(dmg) {
     const a = S.ancient, real = Math.max(1, Math.round(dmg * armorMul(a.arm)));
-    a.hp -= real; a.flash = 0.1; burst(ANC.x + 10, ANC.y - 40, ["#e6fff0", "#7ae0a0"], 3, 50);
+    const was = a.hp / a.max; a.hp -= real; a.flash = 0.1; if ((was > 0.5 && a.hp / a.max <= 0.5) || (was > 0.2 && a.hp / a.max <= 0.2)) react("low"); burst(ANC.x + 10, ANC.y - 40, ["#e6fff0", "#7ae0a0"], 3, 50);
     if (a.hp <= 0 && !S.over) gameOver();
   }
 
@@ -473,6 +541,7 @@
     else burst(x, y, [PROJ[p.kind].core || "#fff", PROJ[p.kind].col], 4, 30, 0);
   }
   function gameOver() {
+    react("over", { w: S.wave });
     S.over = true; S.ancient.hp = 0;
     let best = 0; try { best = Math.max(+localStorage.getItem("g2:best") || 0, S.wave); localStorage.setItem("g2:best", best); } catch {}
     $("over-text").innerHTML = `大金神（${HD.name}）守到第 <b>${S.wave}</b> 波 · 击杀 <b>${S.kills}</b><br>最佳纪录：第 ${best} 波<br><span style="color:#ff9a6a">大金神：系统局！这把不算！</span>`;
@@ -677,7 +746,7 @@
   Promise.all([ready, ancP]).then(() => {
   $("pick").innerHTML = Object.entries(HEROES).map(([k, h]) => `<button class="hero" data-h="${k}"><span class="pic" data-hp="${h.look}"></span><b>${h.name}</b><small>${h.ranged ? "远程" : "近战"} · 生命${h.hp} · 攻击${h.dmg}</small><span class="abil">${h.sk.map((s) => `<img src="${ICON(s[0])}" title="${s[1]}：${s[3]}">`).join("")}</span></button>`).join("");
   document.querySelectorAll("[data-hp]").forEach((s) => s.appendChild(iconCanvas(SET[s.dataset.hp])));
-  document.querySelectorAll(".hero").forEach((b) => (b.onclick = () => { $("intro").hidden = true; reset(b.dataset.h); renderSkills(); running = true; banner("大金神 · " + HD.name, "大P神：小金金，守住遗迹！"); }));
+  document.querySelectorAll(".hero").forEach((b) => (b.onclick = () => { $("intro").hidden = true; reset(b.dataset.h); renderSkills(); running = true; banner("大金神 · " + HD.name, "大P神：小金金，守住遗迹！"); $("chat-list").innerHTML = ""; chatMsg("系统", "#ff6a3a", "大金神开播了 · 守护遗迹", true); react("start"); }));
   $("again").onclick = () => { $("over").hidden = true; $("intro").hidden = false; running = false; };
   try { const b = +localStorage.getItem("g2:best"); if (b) $("best").textContent = `最佳纪录：第 ${b} 波`; } catch {}
 
