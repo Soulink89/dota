@@ -911,3 +911,8 @@ a.wanted:hover { transform: rotate(0deg) scale(1.03) translateY(-6px); box-shado
 .rt-rank { display: flex; align-items: center; gap: 8px; }
 .rt-rank .medal { width: 34px; height: 34px; }
 .wg-meme { display: block; width: min(480px, 100%); margin: 14px auto 0; border-radius: 12px; }
+.game-link { display: block; margin: 6px 0 12px; padding: 12px 16px; border-radius: 14px; text-decoration: none; color: var(--text, #e8e2d4); text-align: center; font-size: 14.5px;
+  background: linear-gradient(90deg, rgba(255,120,40,.18), rgba(242,182,50,.12)); border: 1px solid rgba(255,140,60,.5); }
+.game-link b { color: #ffb03a; font-size: 18px; }
+.game-link sup { font-size: 10px; font-weight: 900; background: #ff6a3a; color: #111; padding: 1px 5px; border-radius: 3px; }
+.game-link:hover { border-color: #ffb03a; }
