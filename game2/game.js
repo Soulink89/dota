@@ -137,7 +137,7 @@
   // difficoltà: 负冲统帅 (facile) · 冲击万古 (normale) · 冲击超凡 (difficile)
   const DIFF = {
     easy: { name: "负冲统帅", tier: 4, hp: 0.7, dmg: 0.75, gold: 1.2, budget: 0.8, desc: "最简单 · 适合大金神的真实水平",
-      winT: "恭喜大金神……成功负冲到统帅！", winS: ["大P神：小金金，统帅守住了，这就是你的真实水平", "大金神：我是故意掉分的，战术性负冲", "蜗牛大神：统帅局守20波，牛逼（棒读）"],
+      winT: "负冲成功！欢迎大金神回到统帅老家", winS: ["大P神：小金金，统帅才是你的家，别出去乱跑了", "大金神：这把不算，统帅局的队友太菜带不动", "蜗牛大神：负冲也是一种实力（棒读）"],
       chat: [[0, "统帅守住了哈哈哈哈"], ["大P神", "小金金，统帅才是你的家"], [0, "负冲成功！"], [0, "这难度我奶奶都能过"], ["Ping大神", "理论上统帅不该这么难"], [0, "主播：这把不算"]] },
     normal: { name: "冲击万古", tier: 6, hp: 1, dmg: 1, gold: 1, budget: 1, desc: "正常难度",
       winT: "恭喜大金神达到万古！", winS: ["大金神：万古只是开始，超凡指日可待", "大P神：小金金，这次没送，奖励一锤", "金神大腿：这分有我一半"],
@@ -818,7 +818,7 @@
   let running = false;
   Promise.all([ready, ancP]).then(() => {
   $("pick").innerHTML = `<div class="hero" style="cursor:default"><span class="pic" data-hp="hero_windrunner"></span><b>风行者</b><small>远程 · 束缚击 · 强力击 · 风行 · 集中火力</small></div>` +
-    Object.entries(DIFF).map(([k, d]) => `<button class="hero diff" data-d="${k}"><img src="https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${d.tier}.png" alt=""><b>${d.name}</b><small>${d.desc}</small></button>`).join("");
+    Object.entries(DIFF).map(([k, d]) => `<button class="hero diff" data-d="${k}"><img src="https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${d.tier}.png" alt=""><b>${d.name}</b></button>`).join("");
   document.querySelectorAll("[data-hp]").forEach((s) => s.appendChild(iconCanvas(SET[s.dataset.hp])));
   document.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => { $("intro").hidden = true; reset("windranger", b.dataset.d); renderSkills(); running = true; banner("大金神 · " + S.diff.name, "大P神：小金金，守住遗迹！守20波就算你赢"); $("chat-list").innerHTML = ""; chatMsg("系统", "#ff6a3a", `大金神开播了 · 守护遗迹 · ${S.diff.name}`, true); react("start"); }));
   $("win-end").onclick = () => { $("win").hidden = true; $("intro").hidden = false; running = false; };
