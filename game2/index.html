@@ -14,6 +14,7 @@
   .hud { width: 100%; max-width: 1500px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; margin-bottom: 8px; background: var(--panel); border: 3px solid var(--line); border-radius: 4px; }
   .title { font: 900 18px "Noto Sans SC"; color: var(--gold); letter-spacing: 2px; text-shadow: 2px 2px 0 #5a2a0a; }
   .beta { font: 9px "Press Start 2P"; color: #111; background: #ff6a3a; padding: 3px 5px; border-radius: 3px; vertical-align: super; letter-spacing: 0; text-shadow: none; }
+  .mute { font-size: 18px; background: #1d1926; border: 2px solid var(--line); border-radius: 4px; color: #fff; cursor: pointer; padding: 2px 8px; }
   .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
   .stat b { font: 11px "Press Start 2P"; color: var(--text); } .stat.gold b { color: var(--gold); }
   .meter { position: relative; width: 130px; height: 14px; background: #2a0f12; border: 2px solid #0d0b13; }
@@ -33,7 +34,7 @@
   @keyframes live { to { opacity: .3; } }
   .chat-list { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 3px 7px; -webkit-mask-image: linear-gradient(transparent, #000 35%); mask-image: linear-gradient(transparent, #000 35%); }
   .cm { color: #eee; text-shadow: 1px 1px 0 #000; word-break: break-all; animation: cm .25s; } .cm b { font-weight: 900; }
-  .cm.gift { color: #fde047; } @keyframes cm { from { opacity: 0; transform: translateX(10px); } }
+  .cm.gift { color: #fde047; } .cm.sc { margin: 2px 0; padding: 2px 5px; background: rgba(253,224,71,.16); border-left: 3px solid; border-radius: 2px; } .cm .amt { color: #fde047; font-weight: 900; } @keyframes cm { from { opacity: 0; transform: translateX(10px); } }
   @media (max-width: 760px) { .pick { grid-template-columns: repeat(2, 1fr); } .chat { position: static; width: 100%; height: 92px; border-radius: 0; } }
   .move { position: absolute; bottom: 8px; left: 8px; display: none; gap: 8px; line-height: 1; }
   .move button { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(255,255,255,.5); background: rgba(0,0,0,.35); color: #fff; font-size: 24px; }
@@ -81,6 +82,7 @@
 <body>
   <div class="hud">
     <span class="title">守护遗迹 <sup class="beta">BETA</sup></span>
+    <button id="mute" class="mute" title="声音开关">🔊</button>
     <span class="stat">波次 <b id="wave">0</b> · 下一波 <b id="next">0</b>s</span>
     <span class="stat gold">金币 <b id="gold">0</b></span>
     <span class="stat">遗迹 <span class="meter"><i id="anc"></i><span id="anc-t"></span></span></span>
@@ -90,7 +92,7 @@
   <div class="stage">
     <canvas id="cv"></canvas>
     <div class="banner" id="banner"></div>
-    <div class="chat"><div class="chat-h"><i></i>大金神直播间 · 守护遗迹 · 👁 <span id="viewers">900</span></div><div class="chat-list" id="chat-list"></div></div>
+    <div class="chat"><div class="chat-h"><i></i>大金神直播间 · 守护遗迹 · 👁 <span id="viewers">50.0万</span></div><div class="chat-list" id="chat-list"></div></div>
     <div class="move"><button id="left">◀</button><button id="right">▶</button></div>
     <div class="ov" id="intro">
       <h1>守护遗迹 <sup class="beta">BETA</sup></h1>
@@ -111,6 +113,6 @@
   </div>
   <a class="back" href="../">← 回到刀塔法庭（所有内容）</a>
   <script src="art.js?v=4"></script>
-  <script src="game.js?v=15"></script>
+  <script src="game.js?v=18"></script>
 </body>
 </html>

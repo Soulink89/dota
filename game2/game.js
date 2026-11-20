@@ -118,6 +118,73 @@
   for (const k in ITEMS) ITEMS[k].cost = ITEMS[k].cost || fullCost(k);
   const has = (k) => S.items.includes(k), itemSum = (f) => S.items.reduce((t, k) => t + (ITEMS[k][f] || 0), 0);
 
+
+  // =====================================================================
+  //  SUONI (sintetizzati con Web Audio, nessun file esterno)
+  // =====================================================================
+  const SFX = (() => {
+    let ac = null, master = null, nbuf = null, muted = false; const last = {};
+    try { muted = localStorage.getItem("g2:mute") === "1"; } catch {}
+    function init() {
+      if (ac) { if (ac.state === "suspended") ac.resume(); return; }
+      try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.32; master.connect(ac.destination);
+        nbuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } catch { ac = null; }
+    }
+    function tone(f, dur, type = "square", vol = 0.2, slide = 0, delay = 0) {
+      const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, f * slide), t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    }
+    function noise(dur, vol = 0.2, freq = 1000, type = "bandpass", q = 1, sweep = 0, delay = 0) {
+      const t = ac.currentTime + delay, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = nbuf;
+      f.type = type; f.frequency.setValueAtTime(freq, t); if (sweep) f.frequency.exponentialRampToValueAtTime(freq * sweep, t + dur); f.Q.value = q;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
+    }
+    const arp = (fs, step, type = "triangle", vol = 0.15, dur = 0.18) => fs.forEach((f, i) => tone(f, dur, type, vol, 0, i * step));
+    const P = {
+      arrow: () => { noise(0.08, 0.12, 3500, "highpass"); tone(1100, 0.05, "triangle", 0.04, 0.6); },
+      hit: () => noise(0.07, 0.14, 380, "lowpass"),
+      die: () => { tone(200, 0.16, "square", 0.06, 0.45); noise(0.12, 0.08, 600, "lowpass"); },
+      gold: () => { tone(1318, 0.06, "square", 0.05); tone(1976, 0.12, "square", 0.05, 0, 0.05); },
+      rank: () => arp([523, 659, 784, 1046, 1318], 0.08, "triangle", 0.16, 0.25),
+      wave: () => { tone(196, 0.7, "sawtooth", 0.09); tone(147, 0.7, "sawtooth", 0.08); tone(294, 0.5, "sawtooth", 0.05, 0, 0.35); },
+      roshan: () => { tone(110, 1.1, "sawtooth", 0.22, 0.45); noise(1.0, 0.25, 280, "lowpass"); },
+      echo: () => { tone(70, 1.0, "sine", 0.55, 0.35); noise(0.9, 0.45, 220, "lowpass"); tone(140, 0.5, "square", 0.08, 0.4, 0.15); },
+      meteorFall: () => { noise(0.5, 0.25, 2000, "bandpass", 1, 0.2); tone(500, 0.5, "sawtooth", 0.05, 0.2); },
+      meteor: () => { tone(60, 1.2, "sine", 0.5, 0.5); noise(1.6, 0.35, 450, "lowpass", 1, 0.4); },
+      sunCharge: () => tone(300, 0.7, "triangle", 0.08, 3),
+      sun: () => { noise(0.35, 0.3, 900, "lowpass"); tone(130, 0.3, "sine", 0.3, 0.5); tone(1800, 0.15, "sine", 0.06, 0.5); },
+      cyclone: () => { noise(1.4, 0.3, 500, "bandpass", 4, 4); noise(1.4, 0.15, 1500, "bandpass", 6, 0.5); },
+      blast: () => { tone(220, 0.45, "sawtooth", 0.1, 5); tone(330, 0.45, "sawtooth", 0.08, 5); noise(0.45, 0.2, 800, "bandpass", 2, 4); },
+      tp: () => { tone(330, 1.6, "sine", 0.1, 3); tone(495, 1.6, "triangle", 0.06, 3); noise(1.6, 0.05, 3000, "bandpass", 8, 1.5); },
+      tpEnd: () => { arp([1046, 1568], 0.06, "sine", 0.12, 0.3); noise(0.25, 0.12, 2500, "highpass"); },
+      drop: () => noise(0.7, 0.18, 400, "bandpass", 2, 6),
+      land: () => { tone(80, 0.35, "sine", 0.4, 0.5); noise(0.3, 0.3, 300, "lowpass"); },
+      crit: () => { noise(0.14, 0.28, 2600, "highpass"); tone(1600, 0.14, "sawtooth", 0.07, 0.3); },
+      tower: () => tone(880, 0.13, "square", 0.05, 0.45),
+      heal: () => arp([784, 988, 1175, 1568], 0.07, "sine", 0.12, 0.3),
+      buy: () => { tone(1318, 0.06, "square", 0.06); tone(1760, 0.14, "square", 0.06, 0, 0.06); },
+      craft: () => arp([659, 880, 1046, 1318], 0.06, "square", 0.07, 0.2),
+      summon: () => { tone(660, 0.08, "square", 0.06); tone(990, 0.12, "square", 0.06, 0, 0.07); },
+      shackle: () => { tone(420, 0.25, "square", 0.08, 0.6); noise(0.2, 0.12, 1200, "bandpass", 3); },
+      powershot: () => { noise(0.45, 0.3, 2500, "bandpass", 2, 0.25); tone(900, 0.4, "sawtooth", 0.06, 0.3); },
+      windrun: () => noise(0.6, 0.22, 700, "bandpass", 2, 3),
+      focus: () => arp([660, 880, 1100], 0.05, "square", 0.08, 0.15),
+      heroDie: () => { tone(392, 0.6, "triangle", 0.18, 0.5); tone(311, 0.7, "triangle", 0.14, 0.5, 0.18); },
+      totem: () => { tone(65, 0.4, "sine", 0.5, 0.5); noise(0.35, 0.4, 260, "lowpass"); },
+      ancient: () => tone(160, 0.12, "sine", 0.12, 0.7),
+      sc: () => arp([1046, 1318, 1568], 0.06, "sine", 0.08, 0.25),
+      win: () => arp([523, 659, 784, 1046, 784, 1046, 1318], 0.13, "square", 0.12, 0.3),
+      lose: () => arp([392, 349, 311, 262, 196], 0.22, "triangle", 0.16, 0.45),
+      upgrade: () => arp([392, 523, 659, 784, 1046], 0.07, "square", 0.08, 0.2),
+    };
+    const GAP = { hit: 0.06, arrow: 0.05, die: 0.05, gold: 0.08, tower: 0.08, sun: 0.07, ancient: 0.35, crit: 0.1 };
+    function play(k) { if (muted || !ac || !P[k]) return; const now = ac.currentTime; if (last[k] && now - last[k] < (GAP[k] || 0.03)) return; last[k] = now; try { P[k](); } catch {} }
+    return { init, play, toggle() { muted = !muted; try { localStorage.setItem("g2:mute", muted ? "1" : "0"); } catch {} if (!muted) init(); return muted; }, get muted() { return muted; } };
+  })();
+  const sfx = (k) => SFX.play(k);
   // =====================================================================
   //  BATTUTE (dal sito)
   // =====================================================================
@@ -155,7 +222,7 @@
     };
     const h = S.hero; h.mmr = 3150; h.lvl = 2; h.xp = 0; h.cds = [0, 0, 0, 0]; h.buffs = {}; h.respawn = 0; h.mx = 0;
     S.towerLv = 1; S.towerXp = 0; S.mekT = 5; spawnTower();
-    viewers = 900 + Math.floor(Math.random() * 300); chatT = 1;
+    viewers = 480000 + Math.floor(Math.random() * 60000); chatT = 1;
     say(h, pick(JIN.start)); renderShop(); hud(true);
   }
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -208,10 +275,10 @@
     if (!u || u.dead || u.hp <= 0) return 0;
     if (u.team === "hero" && u.buffs.windrun > 0 && Math.random() < 0.8) { text(u.x, feetY(u) - 40, "闪避", "#9ad8ff"); return 0; }
     if (u.team === "hero" && has("butterfly") && !opts.pure && Math.random() < 0.35) { text(u.x, feetY(u) - 40, "闪避", "#9ad8ff"); return 0; }
-    if (u.drop > 0) return 0;
+    if (u.drop > 0 || u.tp > 0) return 0;
     const dr = u.team !== "enemy" ? auras().dr || 0 : 0;
     const real = Math.max(1, Math.round(dmg * (1 - dr) * (opts.pure ? 1 : armorMul(stat(u, "arm")))));
-    u.hp -= real; u.flash = 0.08; u.hitT = S.t; u.hitDir = from ? (Math.sign(u.x - from.x) || 1) : (u.team === "enemy" ? 1 : -1);
+    u.hp -= real; u.flash = 0.08; sfx("hit"); u.hitT = S.t; u.hitDir = from ? (Math.sign(u.x - from.x) || 1) : (u.team === "enemy" ? 1 : -1);
     if (opts.show !== false && (u.team === "enemy" ? real >= 40 : u.team === "hero")) text(u.x, feetY(u) - (u.d.boss ? 70 : 38), "-" + real, u.team === "enemy" ? "#ffd06a" : "#ff6a5a", opts.crit);
     burst(u.x, feetY(u) - 14, u.team === "enemy" && (u.type === "golem") ? ["#8a8f99"] : ["#9a1414", "#c02424"], 3, 40);
     // lifesteal (祭品)
@@ -224,7 +291,7 @@
   }
   function kill(u, from) {
     if (u.team === "hero") {
-      u.respawn = 8; u.hp = 0; u.mmr = Math.max(0, u.mmr - 50); say(u, pick(JIN.die), 3); react("die"); banner("大金神阵亡 · -50 MMR", "8秒后复活 · " + pick(JIN.die));
+      u.respawn = 8; u.hp = 0; u.mmr = Math.max(0, u.mmr - 50); say(u, pick(JIN.die), 3); react("die"); sfx("heroDie"); banner("大金神阵亡 · -50 MMR", "8秒后复活 · " + pick(JIN.die));
       return;
     }
     if (u.towerU) { react("tower"); banner("一塔被推了！", "大P神：小金金，塔都守不住？"); S.shake = 6; burst(u.x, feetY(u) - 40, ["#e6fff0", "#9ae8ff", "#8a8f99"], 30, 90); }
@@ -233,7 +300,7 @@
     burst(u.x, feetY(u) - 4, ["#8a7a62", "#b8a888", "#5a4a3a"], u.d.boss ? 18 : 8, 30, 60);
     if (u.team === "enemy") {
       const tw = towerUnit(); if (tw && S.towerLv < 3 && Math.abs(u.x - tw.x) < 190) S.towerXp += u.d.gold * (from === tw ? 2 : 1);
-      S.gold += u.d.gold; S.kills++; if (S.kills % 30 === 0) react("streak", { k: S.kills }); text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
+      S.gold += u.d.gold; S.kills++; sfx("die"); sfx("gold"); if (S.kills % 30 === 0) react("streak", { k: S.kills }); text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
       burst(u.x, feetY(u) - 10, ["#fde047", "#ffb03a"], 4, 40);
       gainXp(u.d.gold * 2);
       if (u.d.boss) { react("roshanDie"); banner("击杀肉山！", "+600金 · 大P神：小金金这次没送"); S.ancient.hp = Math.min(S.ancient.max, S.ancient.hp + 1500); }
@@ -248,7 +315,7 @@
     const h = S.hero, before = rankOf(h.mmr).name; h.mmr += Math.max(1, Math.round(x / 5));
     const nl = lvlOf(h.mmr);
     while (h.lvl < nl) { h.lvl++; const r = h.hp / h.max; h.max = Math.round(HD.hp * (1 + (h.lvl - 1) * 0.08)) + itemSum("hp"); h.hp = h.max * r; burst(h.x, feetY(h) - 20, ["#fde047", "#fff6c8"], 14); if (h.lvl === 6) banner("传奇3！大招解锁", "大金神：超凡指日可待"); }
-    const after = rankOf(h.mmr).name; if (after !== before) { react("rank", { r: after }); text(h.x, feetY(h) - 58, "上分！" + after, "#fde047", true); if (Math.random() < 0.6) say(h, pick(JIN.lvl)); }
+    const after = rankOf(h.mmr).name; if (after !== before) { react("rank", { r: after }); sfx("rank"); text(h.x, feetY(h) - 58, "上分！" + after, "#fde047", true); if (Math.random() < 0.6) say(h, pick(JIN.lvl)); }
   }
 
   // =====================================================================
@@ -262,14 +329,14 @@
     if (w % 5 === 0) list.push("roshan");
     S.queue = list.map((k, i) => ({ k, at: S.t + i * 0.9 + rnd(0, 0.3) }));
     S.nextWave = 34;
-    react(w % 5 === 0 ? "roshan" : "wave", { w });
+    react(w % 5 === 0 ? "roshan" : "wave", { w }); sfx("wave");
     banner(`第 ${w} 波`, w % 5 === 0 ? "大P神：肉山来了，小金金别送！" : pick(PDS));
   }
   function spawnEnemy(k) {
     const e = EN[k], sc = e.boss ? 1 + (S.wave / 5 - 1) * 0.25 : 1 + (S.wave - 1) * 0.1 + Math.max(0, S.wave - 8) ** 2 * 0.006, d = { ...e, hp: Math.round(e.hp * sc * S.diff.hp), dmg: Math.round(S.diff.dmg * e.dmg * (e.boss ? 1 + (S.wave / 5 - 1) * 0.15 : 1 + (S.wave - 1) * 0.05)), gold: Math.round(e.gold * 1.4 * S.diff.gold), set: SET[k] };
     const u = makeUnit("enemy", d, W + 30 + rnd(0, 10), e.fly ? 2 : Math.floor(rnd(0, 10)), { type: k });
     S.units.push(u);
-    if (e.boss) { say(u, "吼——！！", 3); S.shake = 4; }
+    if (e.boss) { say(u, "吼——！！", 3); S.shake = 4; sfx("roshan"); }
   }
   function summon(kind) {
     const a = ALLY[kind], lv = LV[S.barracks];
@@ -279,7 +346,7 @@
     const d = { ...a, hp: Math.round(a.hp * lv.hp), dmg: Math.round(a.dmg * lv.dmg), arm: a.arm + lv.arm, set: allySet(kind) };
     const guard = kind === "melee" ? rnd(122, 150) : rnd(100, 116);
     const u = makeUnit("ally", d, ANC.front - 6, Math.floor(rnd(0, 10)), { kind, guard });
-    S.units.push(u); burst(u.x, feetY(u) - 20, ["#fff6c8", "#7ae0a0"], 10, 30, 0); hud(true);
+    S.units.push(u); burst(u.x, feetY(u) - 20, ["#fff6c8", "#7ae0a0"], 10, 30, 0); hud(true); sfx("summon");
   }
   function summonHelp(k) {
     const Hp = HELP[k];
@@ -289,21 +356,29 @@
     S.gold -= Hp.cost; S.helpCd[k] = Hp.cd;
     const front = enemies().sort((a, b) => a.x - b.x)[0];
     const x = k === "snail" ? 175 : clamp(front ? front.x - (k === "yoki" ? 6 : 16) : 190, ANC.front + 20, W - 30);
-    const u = makeUnit("ally", { ...Hp, set: SET[Hp.look] }, x, 6, { helper: k, life: Hp.life, guard: x, drop: 0.7, castT: 0.6, step: 0, blinkCd: 0 });
-    S.units.push(u); say(u, Hp.hi, 2.4); react(k); banner(`${Hp.name} 降临！`, `${Hp.hero} · 限时${Hp.life}秒 · ${Hp.hi}`); hud(true);
+    const u = makeUnit("ally", { ...Hp, set: SET[Hp.look] }, x, 6, { helper: k, life: Hp.life, guard: x, drop: k === "bshen" ? 0 : 0.7, tp: k === "bshen" ? 1.6 : 0, castT: 0.6, step: 0, blinkCd: 0 });
+    S.units.push(u); say(u, Hp.hi, 2.4); react(k); sfx(k === "bshen" ? "tp" : "drop"); if (k === "bshen") react("tp"); banner(`${Hp.name} 降临！`, `${Hp.hero} · 限时${Hp.life}秒 · ${Hp.hi}`); hud(true);
   }
   // atterraggio dal cielo
   function land(u) {
-    S.shake = Math.max(S.shake || 0, u.helper === "yoki" ? 7 : 3); burst(u.x, feetY(u) - 2, ["#b8a888", "#8a7a62", "#fff6c8"], 18, 70, 120);
+    if (u.helper === "bshen") { burst(u.x, feetY(u) - 20, ["#9ad8ff", "#c084fc", "#ffffff"], 22, 60, 0); text(u.x, feetY(u) - 84, "TP到达！", "#9ad8ff", true); sfx("tpEnd"); }
+    else { sfx("land"); S.shake = Math.max(S.shake || 0, u.helper === "yoki" ? 7 : 3); burst(u.x, feetY(u) - 2, ["#b8a888", "#8a7a62", "#fff6c8"], 18, 70, 120); }
     if (u.helper === "bshen") { const t = nearestEnemy(u.x, 260, false); if (t) { t.slow = 3; hurt(t, 60, u); S.fx.push({ k: "beam", x1: u.x, x2: t.x, y: feetY(t) - 20, col: "#c084fc", life: 0.2, w: 2 }); text(u.x, feetY(u) - 70, "窒息之刃", "#f9a8d4", true); } }
-    if (u.helper === "yoki") later(0.25, () => echoSlam(u));
+    if (u.helper === "yoki") { later(0.25, () => echoSlam(u)); later(1.1, () => totem(u)); }
+  }
+  // 强化图腾: il colpo dopo fa danno ×4 in area e stordisce
+  function totem(u) {
+    if (u.dead) return; u.anim = "cast"; u.at = 0.35; u.totem = true;
+    text(u.x, feetY(u) - 80, "强化图腾！", "#fcd34d", true); S.fx.push({ k: "zap", x: u.x, y: feetY(u) - 30, life: 0.4, r: 26, col: "#ff6a3a" }); burst(u.x, feetY(u) - 40, ["#ff6a3a", "#fcd34d"], 12, 40, 0);
+    if (Math.random() < 0.5) say(u, pick(["图腾砸下去！", "这一锤至宝特效", "强化图腾，一锤一个"]), 2);
+    later(3, () => { if (!u.dead && u.life > 0.5) totem(u); });
   }
   function echoSlam(u) {
     if (u.dead) return; u.anim = "cast"; u.at = 0.35;
     const ts = enemies().filter((e) => Math.abs(e.x - u.x) < 150), n = ts.length;
     ts.forEach((e) => { hurt(e, 140 + 45 * n, u, { pure: true }); e.stun = Math.max(e.stun, 1.3); });
     S.fx.push({ k: "zap", x: u.x, y: feetY(u) - 4, life: 0.5, r: 150, col: "#fcd34d" }); S.fx.push({ k: "zap", x: u.x, y: feetY(u) - 4, life: 0.35, r: 100, col: "#ffffff" });
-    react("echo", { n }); S.shake = 8; text(u.x, feetY(u) - 78, `回音击！×${n}`, "#fcd34d", true); say(u, pick(HELP.yoki.lines), 2.4);
+    react("echo", { n }); sfx("echo"); S.shake = 8; text(u.x, feetY(u) - 78, `回音击！×${n}`, "#fcd34d", true); say(u, pick(HELP.yoki.lines), 2.4);
     burst(u.x, feetY(u) - 4, ["#8a6a3a", "#c9a060", "#fcd34d"], 30, 110, 140);
   }
   const later = (sec, fn) => S.later.push({ at: S.t + sec, fn });
@@ -312,14 +387,14 @@
     const si = u.step < 3 ? u.step : 3 + ((u.step - 3) % 4); u.step++; const [icon, nm] = INVOKE[si], x = u.x, y = feetY(u) - 24, es = enemies(), ahead = es.filter((e) => e.x > x - 10).sort((a, b) => a.x - b.x);
     u.anim = "cast"; u.at = 0.35; u.face = 1; text(x, feetY(u) - 80, nm, "#93c5fd", true); u.lastSpell = icon;
     if (icon === "invoker_cold_snap") { const t = ahead[0]; if (t) { t.stun = 1.8; hurt(t, 120, u); S.fx.push({ k: "beam", x1: x, x2: t.x, y, col: "#bfe8ff", life: 0.25, w: 2 }); burst(t.x, feetY(t) - 20, ["#e0f7ff", "#7ad0ff"], 12, 40, 0); } }
-    if (icon === "invoker_tornado") { S.fx.push({ k: "cyclone", x: x + 10, y: feetY(u), v: 210, life: 1.5, max: 1.5, hit: [], from: u }); }
-    if (icon === "invoker_chaos_meteor") { S.fx.push({ k: "meteor", x0: x + 30, x1: x + 300, y: feetY(u) - 14, life: 2.4, max: 2.4, fall: 0.5, from: u }); }
+    if (icon === "invoker_tornado") { sfx("cyclone"); S.fx.push({ k: "cyclone", x: x + 10, y: feetY(u), v: 210, life: 1.5, max: 1.5, hit: [], from: u }); }
+    if (icon === "invoker_chaos_meteor") { sfx("meteorFall"); S.fx.push({ k: "meteor", x0: x + 30, x1: x + 300, y: feetY(u) - 14, life: 2.4, max: 2.4, fall: 0.5, from: u }); }
     if (icon === "invoker_emp") { const c = ahead[Math.floor(ahead.length / 2)]; const cx = c ? c.x : x + 100; S.fx.push({ k: "emp", x: cx, y: feetY(u) - 20, life: 1 }); later(1, () => { for (const e of enemies()) if (Math.abs(e.x - cx) < 60) hurt(e, 230, u, { pure: true }); S.fx.push({ k: "zap", x: cx, y: feetY(u) - 20, life: 0.35, r: 60, col: "#c084fc" }); }); }
     if (icon === "invoker_alacrity") { S.alac = 7; banner("灵动迅捷！", "蜗牛大神：全体攻速拉满"); burst(x, y, ["#ffb347", "#ff6a3a"], 16, 50, 0); }
-    if (icon === "invoker_sun_strike") { const pts = [...es].sort((a, b) => b.hp - a.hp).slice(0, 6).map((e) => e.x); while (pts.length < 10) pts.push(rnd(x + 40, Math.min(W - 10, x + 320))); text(x, feetY(u) - 92, "天火·灾难（神杖）", "#ffb703", true); pts.forEach((sx, n) => { const d = 0.8 + n * 0.12; S.fx.push({ k: "sunmark", x: sx, life: d }); later(d, () => { for (const e of enemies()) if (Math.abs(e.x - sx) < 26) hurt(e, 420, u, { pure: true }); S.fx.push({ k: "sun", x: sx, life: 0.55 }); burst(sx, GY - 4, ["#fff6b0", "#ffb703", "#ff6a00"], 10, 70, 100); S.shake = Math.max(S.shake || 0, 3); }); }); }
+    if (icon === "invoker_sun_strike") { const pts = [...es].sort((a, b) => b.hp - a.hp).slice(0, 6).map((e) => e.x); while (pts.length < 10) pts.push(rnd(x + 40, Math.min(W - 10, x + 320))); text(x, feetY(u) - 92, "天火·灾难（神杖）", "#ffb703", true); sfx("sunCharge"); pts.forEach((sx, n) => { const d = 0.8 + n * 0.12; S.fx.push({ k: "sunmark", x: sx, life: d }); later(d, () => { for (const e of enemies()) if (Math.abs(e.x - sx) < 26) hurt(e, 420, u, { pure: true }); S.fx.push({ k: "sun", x: sx, life: 0.55 }); sfx("sun"); burst(sx, GY - 4, ["#fff6b0", "#ffb703", "#ff6a00"], 10, 70, 100); S.shake = Math.max(S.shake || 0, 3); }); }); }
     if (icon === "invoker_forge_spirit") for (let k = 0; k < 2; k++) { const f = makeUnit("ally", { ...FORGE, set: SET.rranged }, x + 8 + k * 10, 3 + k * 4, { helper: "forge", life: 10, guard: x + 20 + k * 12, drop: 0, forge: true }); S.units.push(f); burst(f.x, feetY(f) - 16, ["#ff8a2a", "#fff0a0"], 10, 40, 0); }
     if (icon === "invoker_ice_wall") { S.fx.push({ k: "ice", x1: x + 25, x2: x + 190, life: 5 }); for (let k = 0; k < 10; k++) later(k * 0.5, () => { for (const e of enemies()) if (e.x > x + 25 && e.x < x + 190) { e.slow = 1; hurt(e, 45, u, { show: false, pure: true }); } }); }
-    if (icon === "invoker_deafening_blast") { S.fx.push({ k: "blast", x: x + 12, y: feetY(u) - 24, v: 260, life: 1.1, max: 1.1, hit: [], from: u }); }
+    if (icon === "invoker_deafening_blast") { sfx("blast"); S.fx.push({ k: "blast", x: x + 12, y: feetY(u) - 24, v: 260, life: 1.1, max: 1.1, hit: [], from: u }); }
     if (icon === "invoker_ghost_walk") { u.ghost = 3; for (const e of es) if (Math.abs(e.x - x) < 80) e.slow = 3; say(u, "你看不见我，看不见我", 2); }
     if (Math.random() < 0.3) say(u, pick(HELP.snail.lines), 2);
   }
@@ -337,6 +412,7 @@
     if (S.items.length - plan.use.length + 1 > 6) return flash("物品栏满了（点物品栏可以卖）");
     if (S.gold < plan.cost) return flash(`金币不够（还差${plan.cost - S.gold}）`);
     S.gold -= plan.cost; S.items = S.items.filter((_, i) => !plan.use.includes(i)); S.items.push(k); recalcHp();
+    sfx(it.parts ? "craft" : "buy");
     if (it.parts) { banner(`合成 ${it.name}`, it.desc); burst(S.hero.x, feetY(S.hero) - 30, ["#fde047", "#ffffff"], 16, 50, 0); } else banner(`购买 ${it.name}`, it.desc);
     renderShop(); if (it.parts || Math.random() < 0.3) react("buy", { i: it.name });
   }
@@ -351,7 +427,7 @@
     if (S.towerLv >= 3) return flash("防御塔已经满级"); const L = TOWER_LV[S.towerLv + 1];
     if (S.towerXp < L.xp) return flash(`防御塔经验不够（${Math.floor(S.towerXp)}/${L.xp}）`); if (S.gold < L.cost) return flash("金币不够");
     S.gold -= L.cost; S.towerXp -= L.xp; S.towerLv++; const r = t.hp / t.max; t.d = towerData(); t.max = t.d.hp; t.hp = t.max; burst(t.x, feetY(t) - 50, ["#9ae8ff", "#ffffff", "#fde047"], 24, 60, 0);
-    banner(`防御塔升到 ${S.towerLv} 级`, S.towerLv === 3 ? "三连射 + 溅射" : "双连射"); chatSay(null, `塔升${S.towerLv}级了，稳`); renderShop();
+    banner(`防御塔升到 ${S.towerLv} 级`, S.towerLv === 3 ? "三连射 + 溅射" : "双连射"); react("towerUp"); sfx("upgrade"); renderShop();
   }
   const towerData = () => ({ ...TOWER, ...TOWER_LV[S.towerLv], set: SET.tower });
   function spawnTower() { S.units.push(makeUnit("ally", towerData(), 114, 0, { guard: 114, towerU: true })); }
@@ -367,7 +443,7 @@
     const sk = HD.sk[i]; if (!sk[2]) return flash("被动技能");
     if (i === 3 && h.lvl < 6) return flash("MMR 3500（传奇3）解锁大招");
     if (h.cds[i] > 0) return;
-    const ok = doSkill(i);
+    const ok = doSkill(i); if (ok !== false) sfx(["shackle", "powershot", "windrun", "focus"][i]);
     if (ok === false) return flash("附近没有目标");
     h.cds[i] = sk[2]; h.anim = "cast"; h.at = 0.35;
   }
@@ -386,20 +462,30 @@
   //  DIRETTA: chat degli spettatori (lore del sito)
   // =====================================================================
   const VIEW = {
-    "大P神": { col: "#cbd5e1", say: ["小金金又在吹了", "锤子已备好🔨", "小金金，这波稳住", "笑死，嘴巴超凡", "真菜", "哎呀你这波操作", "我当年超凡的时候……", "小金金别看弹幕了，看小地图", "小金金你这补刀是认真的？", "这风行谁教的，退钱", "小金金今天又吹了几次超凡？", "我不玩了，但我还能锤你", "远古时代的超凡大神前来视察"] },
-    "Ping大神": { col: "#8f7bff", say: ["喝一口再看🍺", "这把我理论上能赢", "我先点根烟🚬", "从理论上讲这个塔可以不死", "DC首席理论家报到", "万古一日游，懂的都懂", "喝多了，刚才谁杀的？", "休闲局别那么认真", "理论上风行应该先出漩涡", "我掉分了，来看看金神掉不掉", "主播的走位不符合理论", "再来一瓶"] },
-    "大B神": { col: "#4fc3f7", say: ["宝宝睡了，我来看会", "喂奶中，挂机一下🍼", "主播能不能叫我下来砍几刀", "我只会玩双头龙", "刚才谁说我呆逼？", "俄罗斯指挥官上线", "看不懂但大受震撼", "黑弓又被抓了吗？哦这是风行", "我不敢上，你们先", "孩子哭了，等我两分钟", "金神你又针对我"] },
-    "Yoki大神": { col: "#5eead4", say: ["我有至宝，主播有吗💎", "三把斧了解一下", "黑弓至宝特效拉满", "Ping老师教的", "主播风行好像没至宝", "小黑1-5号位，啥都能玩", "我黑弓15连胜的时候……", "至宝不是用来打的，是用来看的", "我不玩辅助的"] },
-    "疯子大神": { col: "#fb923c", say: ["老婆不在家，终于能看直播了", "我这电脑十年了，卡成PPT", "屠夫一勾一个", "OMG！", "低优先级出来了，来看看", "职业辅助给主播插个眼", "屠夫叼霸天", "老婆回来了，先撤", "主播要不要买个肉山盾"] },
-    "Kaiju大神*": { col: "#38bdf8", say: ["小鱼人偷钱去了🐟", "四号位小鱼人报到", "金神又骂我", "天线宝宝向你问好", "四号位也能carry", "我等级低但我打得好", "金神别抢我的兵", "偷完钱就跑"] },
-    "蜗牛大神": { col: "#93c5fd", say: ["干干干！", "今晚通宵！", "主播中路我虐过", "叫我下来，飓风陨石给你看", "金神你这补刀不行啊", "这把我来带", "我随便玩玩", "影魔三连压给你看", "地卜师分身比你这兵多"] },
+    "大P神": { col: "#cbd5e1", say: ["小金金，你的弹幕比你的操作好看", "今天锤了小金金几次？我数不过来", "小金金又在跟弹幕吵架", "小金金又在吹了", "锤子已备好🔨", "小金金，这波稳住", "笑死，嘴巴超凡", "真菜", "哎呀你这波操作", "我当年超凡的时候……", "小金金别看弹幕了，看小地图", "小金金你这补刀是认真的？", "这风行谁教的，退钱", "小金金今天又吹了几次超凡？", "我不玩了，但我还能锤你", "远古时代的超凡大神前来视察"] },
+    "Ping大神": { col: "#8f7bff", say: ["这波我在理论上已经赢了三次", "烟抽完了，下一根", "万古那一天我记得很清楚", "喝一口再看🍺", "这把我理论上能赢", "我先点根烟🚬", "从理论上讲这个塔可以不死", "DC首席理论家报到", "万古一日游，懂的都懂", "喝多了，刚才谁杀的？", "休闲局别那么认真", "理论上风行应该先出漩涡", "我掉分了，来看看金神掉不掉", "主播的走位不符合理论", "再来一瓶"] },
+    "大B神": { col: "#4fc3f7", say: ["老婆让我去洗碗，等我", "我TP很快的", "金神别针对我了", "宝宝睡了，我来看会", "喂奶中，挂机一下🍼", "主播能不能叫我下来砍几刀", "我只会玩双头龙", "刚才谁说我呆逼？", "俄罗斯指挥官上线", "看不懂但大受震撼", "黑弓又被抓了吗？哦这是风行", "我不敢上，你们先", "孩子哭了，等我两分钟", "金神你又针对我"] },
+    "Yoki大神": { col: "#5eead4", say: ["主播要不要借我的至宝", "跳刀回音一波五个，主播学着点", "我有至宝，主播有吗💎", "三把斧了解一下", "黑弓至宝特效拉满", "Ping老师教的", "主播风行好像没至宝", "小黑1-5号位，啥都能玩", "我黑弓15连胜的时候……", "至宝不是用来打的，是用来看的", "我不玩辅助的"] },
+    "疯子大神": { col: "#fb923c", say: ["老婆在看电视，我小声看", "这直播把我电脑卡死了", "老婆不在家，终于能看直播了", "我这电脑十年了，卡成PPT", "屠夫一勾一个", "OMG！", "低优先级出来了，来看看", "职业辅助给主播插个眼", "屠夫叼霸天", "老婆回来了，先撤", "主播要不要买个肉山盾"] },
+    "Kaiju大神*": { col: "#38bdf8", say: ["小鱼人偷完钱来看直播", "金神你又抢我的兵", "小鱼人偷钱去了🐟", "四号位小鱼人报到", "金神又骂我", "天线宝宝向你问好", "四号位也能carry", "我等级低但我打得好", "金神别抢我的兵", "偷完钱就跑"] },
+    "蜗牛大神": { col: "#93c5fd", say: ["金神这把还行，比上次强一点", "我中路那把你还记得吗", "干干干！", "今晚通宵！", "主播中路我虐过", "叫我下来，飓风陨石给你看", "金神你这补刀不行啊", "这把我来带", "我随便玩玩", "影魔三连压给你看", "地卜师分身比你这兵多"] },
     "Soul大神": { col: "#facc15", say: ["稳住，能赢", "主播加油", "刀塔传奇路过", "这波可以打"] },
     "辅助大神": { col: "#86efac", say: ["辅助视角：主播站位有问题", "低分局救世主报到", "我来给主播插眼", "辅助的天花板在此", "主播你缺个好辅助"] },
     "金神大腿": { col: "#f0abfc", say: ["金神一半的分是我带的", "大腿在此，别慌", "开小号来看看", "通宵吗金神", "没我你上不了传奇"] },
   };
   const RANDN = ["路人甲", "水友8848", "中单之王粉丝", "刀塔老玩家", "白嫖党", "夜魇间谍", "肉山本山", "补刀机器", "天辉守护者", "老卡尔", "一塔守护者", "萌新求带", "超凡观众", "弹幕护体", "小金金后援会", "风行老婆", "通宵党", "反补大师", "系统局受害者", "大P神粉丝团"];
   const RCOL = ["#a3e635", "#fca5a5", "#c4b5fd", "#fdba74", "#67e8f9", "#f9a8d4", "#d9f99d", "#e5e7eb"];
-  const RSAY = ["666", "主播真猛", "这就是超凡？", "前面的别吹了", "主播几分？", "风行还得是金神", "主播又在吹", "老铁们刷波礼物", "这塔能守住吗", "+1", "哈哈哈哈哈", "主播开个大", "系统局预警", "建议改名大吹神", "主播别说话专心打", "这操作我奶奶都会", "赌五毛这波塔没了", "主播传奇几？", "求主播出辉耀", "风行大招呢？", "前方高能", "名场面", "下一波肉山吗", "kda战神", "主播今天通宵吗", "嘴巴超凡，手传奇", "又是我MVP（主播语录）", "补刀60是真的吗", "叫蜗牛大神下来啊", "叫大B神，便宜", "Yoki至宝出场费多少", "截图发群里了", "主播别吹了，看兵", "这风行箭法可以", "金神yyds", "说好的超凡入圣呢"];
+  const SC = {
+    "大P神": ["小金金，这钱给你买个眼，别再送了", "锤子基金，专门锤小金金", "小金金守过20波我就请吃饭"],
+    "Yoki大神": ["买个至宝吧主播，看着寒酸", "至宝赞助，别谢"],
+    "蜗牛大神": ["通宵基金，今晚别睡", "叫我下来的出场费"],
+    "Ping大神": ["啤酒钱，理论上够喝一晚", "主播理论课学费"],
+    "大B神": ["奶粉钱都给你了", "宝宝说主播加油"],
+    "疯子大神": ["老婆不知道我打赏了", "换电脑的钱先给你"],
+    "金神大腿": ["上分辛苦费", "带飞费结一下"],
+    _: ["主播加油！"],
+  };
+  const RSAY = ["前面的说得对", "这波我在第一排", "已三连", "关注了，主播下次几点播？", "从B站过来的", "刚下班，错过了什么", "这游戏哪里下载", "主播能不能露个脸", "主播声音呢？", "听说主播自称超凡？", "他风行箭都歪的", "这是天辉还是夜魇", "肉山快来了吧", "我也想被大P神锤", "大P神是谁，好凶", "蜗牛大神是什么神仙", "求大B神开播", "Yoki的至宝到底多少钱", "主播mmr是真的还是吹的", "这KDA可以发朋友圈了", "下饭直播", "妈妈问我为什么跪着看", "破防了", "绷不住了", "典", "孝", "急了急了", "主播别急", "这波是天胡开局", "有没有一种可能，主播其实很菜", "有一说一，这把打得还行", "弹幕护体！", "前方核能", "这就是刀塔的魅力吗", "看饿了，点个外卖", "凌晨三点还在看，我也是通宵党", "这直播间比比赛还好看", "666", "主播真猛", "这就是超凡？", "前面的别吹了", "主播几分？", "风行还得是金神", "主播又在吹", "老铁们刷波礼物", "这塔能守住吗", "+1", "哈哈哈哈哈", "主播开个大", "系统局预警", "建议改名大吹神", "主播别说话专心打", "这操作我奶奶都会", "赌五毛这波塔没了", "主播传奇几？", "求主播出辉耀", "风行大招呢？", "前方高能", "名场面", "下一波肉山吗", "kda战神", "主播今天通宵吗", "嘴巴超凡，手传奇", "又是我MVP（主播语录）", "补刀60是真的吗", "叫蜗牛大神下来啊", "叫大B神，便宜", "Yoki至宝出场费多少", "截图发群里了", "主播别吹了，看兵", "这风行箭法可以", "金神yyds", "说好的超凡入圣呢"];
   const GIFT = [["大P神", "🔨锤子"], ["Yoki大神", "💎至宝"], ["蜗牛大神", "🐌蜗牛"], ["大B神", "🍼奶瓶"], ["Ping大神", "🍺啤酒"], ["疯子大神", "🪝肉钩"], ["Kaiju大神*", "🐟小鱼干"], ["金神大腿", "🦵大腿"], ["Soul大神", "👑皇冠"]];
   const REACT = {
     die: [["大P神", "小金金又送了，锤！"], [0, "又系统局？"], [0, "金神送了"], [0, "笑死"], [0, "这就是超凡中单？"], [0, "-50分哈哈哈"], [0, "网卡了是吧"], [0, "战术性死亡懂不懂"], ["蜗牛大神", "我中路虐过的人"], [0, "队友呢？哦没有队友"], ["Ping大神", "理论上他不该死"], ["Kaiju大神*", "这次不能怪我了吧"]],
@@ -418,14 +504,25 @@
     streak: [[0, "主播杀疯了"], [0, "{k}杀了"], [0, "这才像超凡"], [0, "金神今天开挂了？"], ["大P神", "{k}杀？小金金今天吃药了"]],
     ult: [[0, "风行大招！"], [0, "集中火力！！"], [0, "射爆！"], [0, "这攻速谁顶得住"]],
     over: [[0, "GG"], [0, "系统局！"], [0, "主播又要说：这把不算"], [0, "下播吧"], ["大P神", "锤！🔨"], [0, "第{w}波，还行吧"], ["蜗牛大神", "叫我我就守住了"]],
+    tp: [[0, "TP来了！"], [0, "大B神TP支援！"], ["大B神", "TP到了，奶瓶先放下"], [0, "这TP速度比喂奶还快"], ["Ping大神", "理论上应该早点TP"]],
+    totem: [[0, "图腾一锤！"], [0, "Yoki这锤子比大P神的还狠"], ["大P神", "这锤子我认可"]],
+    mek: [[0, "梅肯奶了一口"], ["辅助大神", "梅肯！这才是辅助装"], [0, "主播终于会出辅助装了"]],
+    towerUp: [[0, "塔升级了，稳了"], [0, "一塔变三连射了"], ["疯子大神", "这塔比我电脑强"]],
     start: [[0, "开播了！"], [0, "金神今天玩风行"], ["大P神", "小金金，守住遗迹"], [0, "来了来了"], [0, "主播今天几分？"]],
   };
-  let chatT = 2, viewers = 900;
+  let chatT = 2, viewers = 500000;
+  const fmtV = (v) => (v >= 10000 ? (v / 10000).toFixed(1) + "万" : String(v));
   function chatMsg(name, col, text, gift) {
     const box = $("chat-list"); if (!box) return;
     const d = document.createElement("div"); d.className = "cm" + (gift ? " gift" : "");
     d.innerHTML = `<b style="color:${col}">${name}</b>${gift ? " " : "："}${text}`;
     box.appendChild(d); while (box.children.length > 40) box.firstChild.remove();
+  }
+  function chatSC(who, amt, text) {
+    const box = $("chat-list"); if (!box) return;
+    const d = document.createElement("div"); d.className = "cm sc"; d.style.borderColor = (VIEW[who] || {}).col || "#fde047";
+    d.innerHTML = `<b style="color:${(VIEW[who] || {}).col || "#fff"}">${who}</b> <span class="amt">¥${amt}</span><br>${text}`;
+    box.appendChild(d); while (box.children.length > 40) box.firstChild.remove(); viewers += 5000; sfx("sc");
   }
   function chatSay(who, text) {
     if (!who) { const n = pick(RANDN); chatMsg(n, RCOL[n.length % RCOL.length], text); }
@@ -435,16 +532,17 @@
     const pool = REACT[ev]; if (!pool) return;
     const n = 2 + Math.floor(Math.random() * 3), used = new Set();
     for (let i = 0; i < n; i++) { const [who, t] = pick(pool); if (used.has(t)) continue; used.add(t); const txt = t.replace(/\{(\w)\}/g, (_, k) => vars[k] ?? ""); setTimeout(() => chatSay(who || null, txt), 250 + i * rnd(350, 900)); }
-    viewers += 10 + Math.floor(Math.random() * 40);
+    viewers += 3000 + Math.floor(Math.random() * 12000);
   }
   function chatTick(dt) {
     chatT -= dt; if (chatT > 0) return;
     chatT = rnd(1.1, 2.6);
     const r = Math.random();
-    if (r < 0.04) { const [who, gft] = pick(GIFT); chatMsg(who, VIEW[who].col, `送出 ${gft} ×${pick([1, 1, 2, 5, 10, 66])}`, true); }
+    if (r < 0.035) { const who = pick(Object.keys(VIEW)); chatSC(who, pick([30, 50, 100, 200, 520, 1314]), pick(SC[who] || SC._)); }
+    else if (r < 0.07) { const [who, gft] = pick(GIFT); chatMsg(who, VIEW[who].col, `送出 ${gft} ×${pick([1, 1, 2, 5, 10, 66])}`, true); }
     else if (r < 0.55) { const who = pick(Object.keys(VIEW)); chatSay(who, pick(VIEW[who].say)); }
     else chatSay(null, pick(RSAY));
-    viewers = Math.max(300, viewers + Math.floor(rnd(-25, 30)) + S.wave * 2); $("viewers").textContent = viewers;
+    viewers = Math.max(300000, viewers + Math.floor(rnd(-2500, 3200)) + S.wave * 400); $("viewers").textContent = fmtV(viewers);
     if (Math.random() < 0.05 && S.hero.respawn <= 0 && !S.hero.bubble) say(S.hero, pick(["弹幕别带节奏", "谢谢老铁的礼物", "弹幕说我菜的，你上你也不行", "大P神别刷锤子了", "看好了，超凡操作"]));
   }
   // =====================================================================
@@ -459,14 +557,14 @@
     while (S.queue.length && S.queue[0].at <= S.t) spawnEnemy(S.queue.shift().k);
     for (const k in S.helpCd) S.helpCd[k] = Math.max(0, S.helpCd[k] - dt); S.alac = Math.max(0, S.alac - dt);
     if (S.later.length) { const due = S.later.filter((l) => l.at <= S.t); S.later = S.later.filter((l) => l.at > S.t); due.forEach((l) => l.fn()); }
-    for (const f of S.fx) if (f.k === "meteor") { const age = f.max - f.life; if (age < f.fall) continue; const px = f.x0 + ((age - f.fall) / (f.max - f.fall)) * (f.x1 - f.x0); if (!f.landed) { f.landed = 1; S.shake = 6; burst(f.x0, GY - 4, ["#ff8a2a", "#fff0a0", "#3a1a0a"], 24, 90, 120); for (const e of enemies()) if (Math.abs(e.x - f.x0) < 45) hurt(e, 200, f.from, { pure: true }); } f.tick = (f.tick || 0) - dt; if (f.tick <= 0) { f.tick = 0.2; for (const e of enemies()) if (Math.abs(e.x - px) < 40) { hurt(e, 110, f.from, { show: false, pure: true }); e.dot = Math.max(e.dot, 2.5); } } }
+    for (const f of S.fx) if (f.k === "meteor") { const age = f.max - f.life; if (age < f.fall) continue; const px = f.x0 + ((age - f.fall) / (f.max - f.fall)) * (f.x1 - f.x0); if (!f.landed) { f.landed = 1; S.shake = 6; sfx("meteor"); burst(f.x0, GY - 4, ["#ff8a2a", "#fff0a0", "#3a1a0a"], 24, 90, 120); for (const e of enemies()) if (Math.abs(e.x - f.x0) < 45) hurt(e, 200, f.from, { pure: true }); } f.tick = (f.tick || 0) - dt; if (f.tick <= 0) { f.tick = 0.2; for (const e of enemies()) if (Math.abs(e.x - px) < 40) { hurt(e, 110, f.from, { show: false, pure: true }); e.dot = Math.max(e.dot, 2.5); } } }
     // ciclone e onda sonora: proiettili che avanzano e colpiscono chi attraversano
     for (const f of S.fx) if (f.k === "cyclone" || f.k === "blast") { f.x += f.v * dt; for (const e of enemies()) if (!f.hit.includes(e) && Math.abs(e.x - f.x) < (f.k === "blast" ? 18 : 16)) { f.hit.push(e); if (f.k === "cyclone") { hurt(e, 180, f.from); if (!e.d.boss) { e.stun = Math.max(e.stun, 2.4); e.lift = 2.4; } else e.stun = Math.max(e.stun, 0.8); } else { hurt(e, 220, f.from); e.stun = Math.max(e.stun, 0.6); if (!e.d.boss) e.x = Math.min(W + 20, e.x + 45); burst(e.x, feetY(e) - 20, ["#ff6ad5", "#7ad0ff", "#fde047", "#7aff9a"], 8, 50, 0); } } }
     S.empower = Math.max(0, S.empower - dt); S.shake = Math.max(0, (S.shake || 0) - dt * 10);
     S.ancient.flash = Math.max(0, S.ancient.flash - dt);
     const mk = has("guardian_greaves") ? ITEMS.guardian_greaves : has("mekansm") ? ITEMS.mekansm : null;
     S.mekT = Math.max(0, (S.mekT || 0) - dt);
-    if (mk && S.mekT <= 0 && S.hero.respawn <= 0) { const team = [S.hero, ...S.units.filter((u) => u.team === "ally" && !u.dead)]; if (team.some((u) => u.hp < u.max * 0.75)) { S.mekT = mk.mekCd; for (const u of team) { u.hp = Math.min(u.max, u.hp + mk.mek); burst(u.x, feetY(u) - 20, ["#7aff9a", "#e6ffe6"], 5, 30, 0); } S.fx.push({ k: "zap", x: S.hero.x, y: feetY(S.hero) - 10, life: 0.5, r: 90, col: "#7aff9a" }); text(S.hero.x, feetY(S.hero) - 64, (mk === ITEMS.mekansm ? "梅肯斯姆" : "卫士胫甲") + " +" + mk.mek, "#7aff9a", true); if (Math.random() < 0.3) chatSay("辅助大神", "梅肯！这才是辅助装"); } } chatTick(dt); S.inc += dt * 1.5; if (S.inc >= 1) { S.gold += Math.floor(S.inc); S.inc -= Math.floor(S.inc); }
+    if (mk && S.mekT <= 0 && S.hero.respawn <= 0) { const team = [S.hero, ...S.units.filter((u) => u.team === "ally" && !u.dead)]; if (team.some((u) => u.hp < u.max * 0.75)) { S.mekT = mk.mekCd; for (const u of team) { u.hp = Math.min(u.max, u.hp + mk.mek); burst(u.x, feetY(u) - 20, ["#7aff9a", "#e6ffe6"], 5, 30, 0); } S.fx.push({ k: "zap", x: S.hero.x, y: feetY(S.hero) - 10, life: 0.5, r: 90, col: "#7aff9a" }); text(S.hero.x, feetY(S.hero) - 64, (mk === ITEMS.mekansm ? "梅肯斯姆" : "卫士胫甲") + " +" + mk.mek, "#7aff9a", true); if (Math.random() < 0.4) react("mek"); sfx("heal"); } } chatTick(dt); S.inc += dt * 1.5; if (S.inc >= 1) { S.gold += Math.floor(S.inc); S.inc -= Math.floor(S.inc); }
     updateHero(dt);
     for (const u of S.units) updateUnit(u, dt);
     // separazione leggera sulla corsia
@@ -521,6 +619,7 @@
     if (u.team === "ally" && auras().hpr) u.hp = Math.min(u.max, u.hp + auras().hpr * dt);
     if (u.helper) {
       if (u.drop > 0) { u.drop -= dt; if (u.drop <= 0) { u.drop = 0; land(u); } return; }
+      if (u.tp > 0) { u.tp -= dt; if (Math.random() < 0.6) S.parts.push({ x: u.x + rnd(-12, 12), y: feetY(u) - rnd(0, 40), vx: 0, vy: -rnd(20, 50), g: 0, life: 0.5, col: pick(["#9ad8ff", "#c084fc", "#ffffff"]), s: 1 }); if (u.tp <= 0) { u.tp = 0; land(u); } return; }
       u.life -= dt; u.blinkCd = Math.max(0, (u.blinkCd || 0) - dt);
       const Hp = HELP[u.helper];
       if (Hp && Math.random() < dt * 0.15) say(u, pick(Hp.lines), 2.2);
@@ -561,7 +660,8 @@
       u.cd = 1 / stat(u, "rate"); u.anim = "atk"; u.at = 0.35;
       const tx = target === "ancient" ? ANC.front : target.x; u.face = tx >= u.x ? 1 : -1;
       let dmg = stat(u, "dmg");
-      if (u.d.crit && Math.random() < u.d.crit) { dmg *= u.d.critMul; if (Math.random() < 0.3) react("crit"); text(target.x || u.x, feetY(u) - 56, "恩赐解脱 " + Math.round(dmg) + "!", "#ff3a5a", true); S.fx.push({ k: "slash", x: target.x, y: feetY(u) - 22, life: 0.25 }); S.shake = Math.max(S.shake || 0, 2); }
+      if (u.totem && target !== "ancient") { u.totem = false; dmg *= 4; for (const e of enemies()) if (e !== target && Math.abs(e.x - target.x) < 55) { hurt(e, dmg * 0.6, u); e.stun = Math.max(e.stun, 0.8); } target.stun = Math.max(target.stun, 1.2); S.fx.push({ k: "zap", x: target.x, y: feetY(target) - 4, life: 0.4, r: 55, col: "#fcd34d" }); burst(target.x, feetY(target) - 4, ["#8a6a3a", "#fcd34d", "#c9a060"], 18, 80, 140); S.shake = Math.max(S.shake || 0, 4); text(target.x, feetY(target) - 60, "图腾一击 " + Math.round(dmg), "#fcd34d", true); sfx("totem"); if (Math.random() < 0.4) react("totem"); }
+      if (u.d.crit && Math.random() < u.d.crit) { dmg *= u.d.critMul; sfx("crit"); if (Math.random() < 0.3) react("crit"); text(target.x || u.x, feetY(u) - 56, "恩赐解脱 " + Math.round(dmg) + "!", "#ff3a5a", true); S.fx.push({ k: "slash", x: target.x, y: feetY(u) - 22, life: 0.25 }); S.shake = Math.max(S.shake || 0, 2); }
       if (u.d.proj) { shoot(u, target, dmg, u.d.proj, u.d.splash ? { splash: u.d.splash } : {}); if (u.d.multi > 1 && target !== "ancient") enemies().filter((e) => e !== target && Math.abs(e.x - u.x) <= range).slice(0, u.d.multi - 1).forEach((e) => shoot(u, e, dmg, u.d.proj, u.d.splash ? { splash: u.d.splash } : {})); }
       else if (target === "ancient") hurtAncient(dmg);
       else { hurt(target, dmg, u); if (u.team !== "enemy" && S.empower > 0) for (const e of enemies()) if (e !== target && Math.abs(e.x - target.x) < 24) hurt(e, dmg * 0.4, u, { show: false }); }
@@ -569,7 +669,7 @@
   }
   function hurtAncient(dmg) {
     const a = S.ancient, real = Math.max(1, Math.round(dmg * armorMul(a.arm)));
-    const was = a.hp / a.max; a.hp -= real; a.flash = 0.1; if ((was > 0.5 && a.hp / a.max <= 0.5) || (was > 0.2 && a.hp / a.max <= 0.2)) react("low"); burst(ANC.x + 10, ANC.y - 40, ["#e6fff0", "#7ae0a0"], 3, 50);
+    const was = a.hp / a.max; a.hp -= real; a.flash = 0.1; sfx("ancient"); if ((was > 0.5 && a.hp / a.max <= 0.5) || (was > 0.2 && a.hp / a.max <= 0.2)) react("low"); burst(ANC.x + 10, ANC.y - 40, ["#e6fff0", "#7ae0a0"], 3, 50);
     if (a.hp <= 0 && !S.over) gameOver();
   }
 
@@ -577,6 +677,7 @@
   const PROJ = { arrow: { col: "#e8e0c8", spd: 300, kind: "arrow" }, spark: { col: "#9ad8ff", core: "#ffffff", spd: 260 }, magic: { col: "#7ad0ff", core: "#e6fbff", spd: 220 }, tower: { col: "#9ae8ff", core: "#ffffff", spd: 280 },
     green: { col: "#8aff5a", core: "#e8ffd0", spd: 200 }, rock: { col: "#8a8f99", spd: 160, arc: 40 }, fire: { col: "#ff8a2a", core: "#fff0a0", spd: 200 } };
   function shoot(u, target, dmg, kind, extra = {}) {
+    if (u.team === "hero") sfx("arrow"); else if (u.towerU) sfx("tower");
     const sx = u.x + u.face * (u.d.tower ? 4 : 10), sy = feetY(u) - (u.d.fly ? 50 : u.d.tower ? 74 : 24);
     S.proj.push({ x: sx, y: sy, sx, sy, from: u, target, dmg, kind, t: 0, splash: u.d.splash, ...extra });
   }
@@ -601,6 +702,7 @@
   }
   // vittoria all'ondata 20: finire o continuare
   function win() {
+    sfx("win");
     S.won = true; running = false; const D = S.diff;
     for (const [who, t] of D.chat) chatSay(who || null, t);
     $("win-title").textContent = D.winT;
@@ -610,7 +712,7 @@
     $("win").hidden = false;
   }
   function gameOver() {
-    react("over", { w: S.wave });
+    react("over", { w: S.wave }); sfx("lose");
     S.over = true; S.ancient.hp = 0;
     let best = 0; try { best = Math.max(+localStorage.getItem("g2:best") || 0, S.wave); localStorage.setItem("g2:best", best); } catch {}
     $("over-text").innerHTML = `${S.diff.name} · 大金神（${HD.name}）守到第 <b>${S.wave}</b> 波 · 击杀 <b>${S.kills}</b><br>最佳纪录：第 ${best} 波<br><span style="color:#ff9a6a">大金神：系统局！这把不算！</span>`;
@@ -728,6 +830,9 @@
     // aura dorata permanente intorno a 大金神 per vederlo meglio
     if (u.team === "hero") { const a = 0.22 + Math.sin(S.t * 3) * 0.06, gr = g.createRadialGradient(cx, fy - im.height / 2, 4, cx, fy - im.height / 2, im.height * 0.62); gr.addColorStop(0, `rgba(255,214,110,${a})`); gr.addColorStop(1, "rgba(255,214,110,0)"); g.fillStyle = gr; g.fillRect(cx - im.height, fy - im.height * 1.2, im.height * 2, im.height * 1.3); }
     if (u.lift > 0) { g.strokeStyle = "rgba(232,244,255,.7)"; for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(cx, fy - 4 - k * 6, 8 + k * 3, 2, 0, 0, 7); g.stroke(); } }
+    if (u.tp > 0) { const k = 1 - u.tp / 1.6; g.strokeStyle = `rgba(154,216,255,${0.5 + 0.4 * Math.sin(S.t * 20)})`; g.lineWidth = 2; for (let r = 0; r < 3; r++) { g.beginPath(); g.ellipse(cx, fy - 1, 14 + r * 5 - k * 4, 3 + r, 0, 0, 7); g.stroke(); } g.lineWidth = 1;
+      const gr = g.createLinearGradient(0, fy - 60, 0, fy); gr.addColorStop(0, "rgba(154,216,255,0)"); gr.addColorStop(1, `rgba(192,132,252,${0.35 + k * 0.35})`); g.fillStyle = gr; g.fillRect(cx - 12, fy - 60, 24, 60);
+      g.globalAlpha = k * 0.7; g.drawImage(im, cx - (im.width >> 1), fy - im.height + 2); g.globalAlpha = 1; return; }
     if (u.drop > 0) { g.fillStyle = `rgba(255,255,220,${0.25 + (1 - u.drop / 0.7) * 0.3})`; g.fillRect(cx - 10, 0, 20, fy); }
     g.save(); if (u.ghost > 0) g.globalAlpha = 0.4; g.translate(cx + o.dx, fy + 2 - fly + o.dy); g.rotate(u.lift > 0 ? 0 : o.rot); g.scale(o.sx, o.sy);
     const ox = -(im.width >> 1), oy = -im.height;
@@ -822,6 +927,8 @@
     if (k === "1") summon("melee"); if (k === "2") summon("ranged"); for (const [hk, Hp] of Object.entries(HELP)) if (k === Hp.key) summonHelp(hk); if (k === "u") upgradeBarracks(); if (k === "t") upgradeTower();
     if (k.startsWith("arrow")) e.preventDefault();
   });
+  addEventListener("pointerdown", () => SFX.init()); addEventListener("keydown", () => SFX.init());
+  const muteBtn = $("mute"); if (muteBtn) { muteBtn.textContent = SFX.muted ? "🔇" : "🔊"; muteBtn.onclick = (e) => { e.stopPropagation(); muteBtn.textContent = SFX.toggle() ? "🔇" : "🔊"; }; }
   addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
   for (const [id, dir] of [["left", -1], ["right", 1]]) { const b = $(id); const on = (e) => { e.preventDefault(); if (S) S.hero.mx = dir; }, off = () => { if (S && S.hero.mx === dir) S.hero.mx = 0; }; b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off); }
   function fit() { const maxW = Math.min(innerWidth - 16, 1500), maxH = innerHeight - 230, k = Math.min(maxW / W, maxH / H), s = k >= 2 ? Math.floor(k) : Math.max(1, k); cv.style.width = W * s + "px"; cv.style.height = H * s + "px"; }
