@@ -154,7 +154,7 @@
       hero: makeUnit("hero", { ...HD, look: HD.look }, 130, 4), units: [], proj: [], parts: [], texts: [], fx: [], items: [], empower: 0,
     };
     const h = S.hero; h.mmr = 3150; h.lvl = 2; h.xp = 0; h.cds = [0, 0, 0, 0]; h.buffs = {}; h.respawn = 0; h.mx = 0;
-    S.towerLv = 1; S.mekT = 5; spawnTower();
+    S.towerLv = 1; S.towerXp = 0; S.mekT = 5; spawnTower();
     viewers = 900 + Math.floor(Math.random() * 300); chatT = 1;
     say(h, pick(JIN.start)); renderShop(); hud(true);
   }
@@ -232,6 +232,7 @@
     u.dead = 0.9; u.deadDir = u.hitDir || (u.team === "enemy" ? 1 : -1);
     burst(u.x, feetY(u) - 4, ["#8a7a62", "#b8a888", "#5a4a3a"], u.d.boss ? 18 : 8, 30, 60);
     if (u.team === "enemy") {
+      const tw = towerUnit(); if (tw && S.towerLv < 3 && Math.abs(u.x - tw.x) < 190) S.towerXp += u.d.gold * (from === tw ? 2 : 1);
       S.gold += u.d.gold; S.kills++; if (S.kills % 30 === 0) react("streak", { k: S.kills }); text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
       burst(u.x, feetY(u) - 10, ["#fde047", "#ffb03a"], 4, 40);
       gainXp(u.d.gold * 2);
@@ -341,14 +342,15 @@
   }
   function sell(i) { const k = S.items[i]; if (!k) return; const v = Math.floor(ITEMS[k].cost / 2); S.items.splice(i, 1); S.gold += v; recalcHp(); text(S.hero.x, feetY(S.hero) - 52, `卖出 ${ITEMS[k].name} +${v}`, "#fde047"); renderShop(); }
   // torre: 3 livelli
-  const TOWER_LV = [null, { hp: 3000, dmg: 110, arm: 14, multi: 1, splash: 0 }, { hp: 4500, dmg: 160, arm: 18, multi: 2, splash: 0, cost: 500 }, { hp: 6500, dmg: 220, arm: 22, multi: 3, splash: 24, cost: 1200 }];
+  const TOWER_LV = [null, { hp: 3000, dmg: 110, arm: 14, multi: 1, splash: 0 }, { hp: 4500, dmg: 160, arm: 18, multi: 2, splash: 0, cost: 500, xp: 300 }, { hp: 6500, dmg: 220, arm: 22, multi: 3, splash: 24, cost: 1200, xp: 1500 }];
   const REBUILD = 600;
   const towerUnit = () => S.units.find((u) => u.towerU && !u.dead);
   function upgradeTower() {
     const t = towerUnit();
     if (!t) { if (S.gold < REBUILD) return flash("金币不够"); S.gold -= REBUILD; spawnTower(); banner("防御塔重建！", "大P神：小金金，这次守住"); renderShop(); return; }
-    if (S.towerLv >= 3) return flash("防御塔已经满级"); const L = TOWER_LV[S.towerLv + 1]; if (S.gold < L.cost) return flash("金币不够");
-    S.gold -= L.cost; S.towerLv++; const r = t.hp / t.max; t.d = towerData(); t.max = t.d.hp; t.hp = t.max; burst(t.x, feetY(t) - 50, ["#9ae8ff", "#ffffff", "#fde047"], 24, 60, 0);
+    if (S.towerLv >= 3) return flash("防御塔已经满级"); const L = TOWER_LV[S.towerLv + 1];
+    if (S.towerXp < L.xp) return flash(`防御塔经验不够（${Math.floor(S.towerXp)}/${L.xp}）`); if (S.gold < L.cost) return flash("金币不够");
+    S.gold -= L.cost; S.towerXp -= L.xp; S.towerLv++; const r = t.hp / t.max; t.d = towerData(); t.max = t.d.hp; t.hp = t.max; burst(t.x, feetY(t) - 50, ["#9ae8ff", "#ffffff", "#fde047"], 24, 60, 0);
     banner(`防御塔升到 ${S.towerLv} 级`, S.towerLv === 3 ? "三连射 + 溅射" : "双连射"); chatSay(null, `塔升${S.towerLv}级了，稳`); renderShop();
   }
   const towerData = () => ({ ...TOWER, ...TOWER_LV[S.towerLv], set: SET.tower });
@@ -689,7 +691,7 @@
         g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(t1, bx + ms + 5, by + 10); g.fillStyle = "#ffd76a"; g.fillText(t1, bx + ms + 4, by + 9);
         g.font = "bold 7px sans-serif"; g.fillStyle = "#000"; g.fillText(t2, bx + ms + 5, by + 19); g.fillStyle = "#cfe8ff"; g.fillText(t2, bx + ms + 4, by + 18); g.textAlign = "center";
       }
-      if (u.towerU && !u.dead) { g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(`一塔 Lv${S.towerLv}`, u.x + 1, top - 7); g.fillStyle = "#9ae8ff"; g.fillText(`一塔 Lv${S.towerLv}`, u.x, top - 8); }
+      if (u.towerU && !u.dead) { g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(`一塔 Lv${S.towerLv}`, u.x + 1, top - 7); g.fillStyle = "#9ae8ff"; g.fillText(`一塔 Lv${S.towerLv}`, u.x, top - 8); if (S.towerLv < 3) { const p = Math.min(1, S.towerXp / TOWER_LV[S.towerLv + 1].xp); g.fillStyle = "#111"; g.fillRect(Math.round(u.x - 11), Math.round(top + 1), 22, 3); g.fillStyle = p >= 1 ? "#fde047" : "#8a6aff"; g.fillRect(Math.round(u.x - 10), Math.round(top + 2), Math.round(20 * p), 1); } }
       const Hp = HELP[u.helper], dropY = u.drop > 0 ? (u.drop / 0.7) ** 2 * 170 : 0;
       if (Hp && !u.dead) { const t = `${Hp.name} ${Math.ceil(u.life)}s`; g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(t, u.x + 1, top - 7 - dropY); g.fillStyle = Hp.col; g.fillText(t, u.x, top - 8 - dropY); }
       if (u.bubble) bubble(u.x, top - dropY - (u.team === "hero" ? 36 : Hp ? 22 : 12), u.bubble.t, Hp ? Hp.col : u.team === "hero" ? "#f2b632" : "#ff6a3a");
@@ -761,7 +763,7 @@
   let lastKey = "";
   function hud(force) {
     const h = S.hero;
-    const key = [S.gold, Math.ceil(S.ancient.hp), S.towerLv, Math.ceil(h.hp), h.max, h.mmr, S.wave, Math.ceil(S.nextWave), h.cds.map(Math.ceil).join(","), Object.values(S.helpCd).map(Math.ceil).join(","), S.barracks, h.respawn > 0 ? Math.ceil(h.respawn) : 0].join("|");
+    const key = [S.gold, Math.ceil(S.ancient.hp), S.towerLv, Math.floor(S.towerXp), Math.ceil(h.hp), h.max, h.mmr, S.wave, Math.ceil(S.nextWave), h.cds.map(Math.ceil).join(","), Object.values(S.helpCd).map(Math.ceil).join(","), S.barracks, h.respawn > 0 ? Math.ceil(h.respawn) : 0].join("|");
     if (key === lastKey && !force) return; lastKey = key;
     $("gold").textContent = S.gold; $("wave").textContent = S.wave; $("next").textContent = Math.ceil(S.nextWave);
     $("anc").style.width = (S.ancient.hp / S.ancient.max) * 100 + "%"; $("anc-t").textContent = `${Math.max(0, Math.ceil(S.ancient.hp))}/${S.ancient.max}`;
@@ -770,7 +772,8 @@
     $("medal").src = `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${rk.tier}.png`; $("star").src = rk.star ? `https://www.opendota.com/assets/images/dota2/rank_icons/rank_star_${rk.star}.png` : ""; $("star").hidden = !rk.star;
     document.querySelectorAll(".skill").forEach((b, i) => { const cd = h.cds[i], locked = i === 3 && h.lvl < 6; b.classList.toggle("cd", cd > 0 || locked); b.querySelector(".cdn").textContent = locked ? "传奇3" : cd > 0 ? Math.ceil(cd) : ""; });
     document.querySelectorAll("[data-buy]").forEach((b) => { const k = b.dataset.buy, own = ITEMS[k].parts && S.items.includes(k); b.classList.toggle("poor", !own && S.gold < +b.dataset.price); b.classList.toggle("own", !!own); });
-    const tw = towerUnit(); $("twr").classList.toggle("poor", tw ? S.towerLv >= 3 || S.gold < TOWER_LV[S.towerLv + 1].cost : S.gold < REBUILD);
+    const tw = towerUnit(); $("twr").classList.toggle("poor", tw ? S.towerLv >= 3 || S.gold < TOWER_LV[S.towerLv + 1].cost || S.towerXp < TOWER_LV[S.towerLv + 1].xp : S.gold < REBUILD);
+    if (tw && S.towerLv < 3) { const need = TOWER_LV[S.towerLv + 1].xp; $("twr-xp").style.width = Math.min(100, (S.towerXp / need) * 100) + "%"; $("twr-xpt").textContent = `经验 ${Math.min(need, Math.floor(S.towerXp))}/${need}`; } else if ($("twr-xpt")) $("twr-xpt").textContent = tw ? "满级" : "";
     $("sum-melee").classList.toggle("poor", S.gold < ALLY.melee.cost); $("sum-ranged").classList.toggle("poor", S.gold < ALLY.ranged.cost);
     for (const [k, Hp] of Object.entries(HELP)) { $("help-" + k).classList.toggle("poor", S.gold < Hp.cost || S.helpCd[k] > 0); $("help-cd-" + k).textContent = S.helpCd[k] > 0 ? Math.ceil(S.helpCd[k]) + "s" : Hp.cost; }
     $("upg").classList.toggle("poor", S.barracks >= 2 || S.gold < BARRACKS_COST[S.barracks + 1]);
@@ -782,7 +785,7 @@
     $("units").innerHTML = `
       <button class="slot" id="sum-melee"><i>1</i><span class="pic" data-pic="${S.barracks >= 2 ? "rmegam" : "rmelee"}"></span><b>${LV[S.barracks].name}近战兵</b><em>${ALLY.melee.cost}</em></button>
       <button class="slot" id="sum-ranged"><i>2</i><span class="pic" data-pic="${S.barracks >= 2 ? "rmegar" : "rranged"}"></span><b>${LV[S.barracks].name}远程兵</b><em>${ALLY.ranged.cost}</em></button>
-      <button class="slot" id="twr"><i>T</i><span class="pic" data-pic="tower"></span><b>${!towerUnit() ? "重建防御塔" : S.towerLv >= 3 ? "防御塔满级" : `升级防御塔 → ${S.towerLv + 1}级`}</b><em>${!towerUnit() ? REBUILD : S.towerLv >= 3 ? "3级" : TOWER_LV[S.towerLv + 1].cost}</em><small>${S.towerLv >= 3 ? "三连射+溅射" : S.towerLv === 2 ? "下一级：三连射+溅射" : "下一级：双连射"}</small></button>
+      <button class="slot" id="twr"><i>T</i><span class="pic" data-pic="tower"></span><b>${!towerUnit() ? "重建防御塔" : S.towerLv >= 3 ? "防御塔满级" : `升级防御塔 → ${S.towerLv + 1}级`}</b><em>${!towerUnit() ? REBUILD : S.towerLv >= 3 ? "3级" : TOWER_LV[S.towerLv + 1].cost}</em><span class="meter xp" style="width:80px"><i id="twr-xp"></i></span><small id="twr-xpt"></small><small>${S.towerLv >= 3 ? "三连射+溅射" : S.towerLv === 2 ? "下一级：三连射+溅射" : "下一级：双连射"}</small></button>
       <button class="slot" id="upg"><i>U</i><span class="pic" data-pic="rmegam"></span><b>${S.barracks >= 2 ? "兵营满级" : "升级兵营 → " + LV[S.barracks + 1].name}</b><em id="upg-cost"></em></button>
       ${Object.entries(HELP).map(([k, Hp]) => `<button class="slot snail" id="help-${k}" style="border-color:${Hp.col}" title="${Hp.desc}"><i>${Hp.key}</i><span class="pic" data-pic="${Hp.look}"></span><b>${Hp.name}<br><small>${Hp.hero} · ${Hp.life}秒</small></b><em id="help-cd-${k}"></em><small>${Hp.desc}</small></button>`).join("")}`;
     const IMG = (k) => `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${k}.png`;
