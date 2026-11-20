@@ -49,12 +49,12 @@
   .slot img { width: 44px; height: 33px; }
   .slot .pic canvas { height: 44px; image-rendering: pixelated; }
   .slot.poor { opacity: .45; } .slot.own { border-color: var(--green); opacity: .7; }
-  .slot.snail { border-color: #93c5fd; }
+  .slot.snail { border-color: #93c5fd; width: 110px; } .slot b small { color: var(--muted); font-weight: 500; }
   .ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; text-align: center; line-height: 1.5; background: radial-gradient(ellipse at center, rgba(10,8,16,.82), rgba(5,4,8,.96)); overflow: auto; }
   .ov[hidden] { display: none; }
   .ov h1 { margin: 0; font: 900 clamp(26px, 5vw, 48px) "Noto Sans SC"; color: var(--gold); letter-spacing: 4px; text-shadow: 4px 4px 0 #5a2a0a; }
   .ov p { margin: 0; max-width: 660px; font-size: 13px; color: var(--muted); } .ov b { color: var(--gold); }
-  .pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 860px; width: 100%; }
+  .pick { display: grid; grid-template-columns: 1fr; gap: 8px; max-width: 240px; width: 100%; }
   .hero { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px; background: #1d1926; border: 3px solid var(--line); border-radius: 4px; color: var(--text); cursor: pointer; font: inherit; line-height: 1.3; }
   .hero:hover { border-color: var(--gold); }
   .hero .pic canvas { height: 72px; image-rendering: pixelated; }
@@ -62,7 +62,7 @@
   .abil img { width: 26px; height: 26px; margin: 0 1px; border: 1px solid #000; }
   .btn { font: 900 16px "Noto Sans SC"; padding: 8px 24px; background: var(--gold); color: #1a1208; border: 0; border-radius: 3px; cursor: pointer; }
   .back { position: fixed; right: 10px; bottom: 8px; font-size: 12px; color: var(--muted); }
-  @media (max-width: 760px) { .pick { grid-template-columns: repeat(2, 1fr); } .meter { width: 90px; } .slot { width: 76px; } }
+  @media (max-width: 760px) { .meter { width: 90px; } .slot { width: 76px; } }
 </style>
 </head>
 <body>
@@ -80,11 +80,11 @@
     <div class="move"><button id="left">◀</button><button id="right">▶</button></div>
     <div class="ov" id="intro">
       <h1>守护遗迹 <sup class="beta">BETA</sup></h1>
-      <p><b>大金神</b>要守住左边山坡上的<b>天辉遗迹</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵），钱够了还能叫<b>蜗牛大神</b>（影魔）来帮忙45秒。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
+      <p><b>大金神</b>（风行者）要守住左边山坡上的<b>天辉遗迹</b>，遗迹前面还有一座<b>防御塔</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵）。<br>钱够了就叫兄弟从天而降：<b>大B神</b>（幻影刺客，闪烁暴击）、<b>Yoki大神</b>（撼地者，砸下来直接回音击）、<b>蜗牛大神</b>（卡尔，十个技能全放）。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
       <p id="best"></p>
-      <p><b>大金神今天玩哪个英雄？</b></p>
+      <p><b>点击开始</b></p>
       <div class="pick" id="pick"></div>
-      <p style="font-size:11.5px">电脑：A/D 或 ←/→ 移动 · Q W E R 技能 · 1 近战兵 · 2 远程兵 · 3 蜗牛大神 · U 升级兵营<br>手机：屏幕下方按钮移动 · 点技能和按钮</p>
+      <p style="font-size:11.5px">电脑：A/D 或 ←/→ 移动 · Q W E R 技能 · 1 近战兵 · 2 远程兵 · 3 大B神 · 4 Yoki大神 · 5 蜗牛大神 · U 升级兵营<br>手机：屏幕下方按钮移动 · 点技能和按钮</p>
     </div>
     <div class="ov" id="over" hidden><h1>遗迹被摧毁了</h1><p id="over-text"></p><button class="btn" id="again">再来一局</button></div>
   </div>
@@ -95,7 +95,7 @@
     <div class="panel" style="flex:1;min-width:300px"><h3>商店</h3><div class="row" id="shop"></div></div>
   </div>
   <a class="back" href="../">← 回到刀塔法庭（所有内容）</a>
-  <script src="art.js?v=3"></script>
-  <script src="game.js?v=3"></script>
+  <script src="art.js?v=4"></script>
+  <script src="game.js?v=4"></script>
 </body>
 </html>
