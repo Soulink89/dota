@@ -115,10 +115,22 @@
   //  STATO
   // =====================================================================
   let S, HD;
-  function reset(heroKey) {
+  // difficoltà: 负冲统帅 (facile) · 冲击万古 (normale) · 冲击超凡 (difficile)
+  const DIFF = {
+    easy: { name: "负冲统帅", tier: 4, hp: 0.7, dmg: 0.75, gold: 1.2, budget: 0.8, desc: "最简单 · 适合大金神的真实水平",
+      winT: "恭喜大金神……成功负冲到统帅！", winS: ["大P神：小金金，统帅守住了，这就是你的真实水平", "大金神：我是故意掉分的，战术性负冲", "蜗牛大神：统帅局守20波，牛逼（棒读）"],
+      chat: [[0, "统帅守住了哈哈哈哈"], ["大P神", "小金金，统帅才是你的家"], [0, "负冲成功！"], [0, "这难度我奶奶都能过"], ["Ping大神", "理论上统帅不该这么难"], [0, "主播：这把不算"]] },
+    normal: { name: "冲击万古", tier: 6, hp: 1, dmg: 1, gold: 1, budget: 1, desc: "正常难度",
+      winT: "恭喜大金神达到万古！", winS: ["大金神：万古只是开始，超凡指日可待", "大P神：小金金，这次没送，奖励一锤", "金神大腿：这分有我一半"],
+      chat: [[0, "万古！！！"], [0, "恭喜金神上万古"], ["大P神", "万古一日游？"], ["Ping大神", "万古一日游，懂的都懂"], [0, "截图发群里了"], ["蜗牛大神", "可以，有点东西"]] },
+    hard: { name: "冲击超凡", tier: 7, hp: 1.25, dmg: 1.15, gold: 0.9, budget: 1.15, desc: "最难 · 嘴巴超凡的终极考验",
+      winT: "恭喜大金神达到超凡！", winS: ["大金神：我早就说了我是超凡水平", "大P神：小金金……这次真的服了", "蜗牛大神：中路我还是虐过你"],
+      chat: [[0, "超凡！！！真的超凡了！"], [0, "嘴巴超凡变成真超凡了"], ["大P神", "小金金……这次真的服了"], [0, "名场面！"], ["Yoki大神", "比我至宝还亮"], [0, "金神yyds"]] },
+  };
+  function reset(heroKey, dk = "normal") {
     HD = HEROES[heroKey];
     S = {
-      t: 0, gold: 260, inc: 0, wave: 0, nextWave: 12, queue: [], kills: 0, over: false, barracks: 0, helpCd: { bshen: 0, yoki: 0, snail: 0 }, later: [], alac: 0,
+      t: 0, gold: 260, inc: 0, diff: DIFF[dk], diffKey: dk, won: false, wave: 0, nextWave: 12, queue: [], kills: 0, over: false, barracks: 0, helpCd: { bshen: 0, yoki: 0, snail: 0 }, later: [], alac: 0,
       ancient: { hp: 5000, max: 5000, arm: 12, flash: 0 },
       hero: makeUnit("hero", { ...HD, look: HD.look }, 130, 4), units: [], proj: [], parts: [], texts: [], fx: [], items: [], empower: 0,
     };
@@ -224,7 +236,7 @@
   // =====================================================================
   function startWave() {
     S.wave++; const w = S.wave;
-    let budget = 3 + w * 2.3 + Math.max(0, w - 8) ** 1.6; const list = ["dmelee", "dmelee", "dranged"];
+    let budget = (3 + w * 2.3 + Math.max(0, w - 8) ** 1.3) * S.diff.budget; const list = ["dmelee", "dmelee", "dranged"];
     const pool = Object.entries(EN).filter(([, e]) => !e.boss && e.minW <= w);
     while (budget > 0) { const [k, e] = pool[Math.floor(Math.random() * pool.length)]; if (e.cost > budget + 1) { budget -= 0.5; continue; } list.push(k); budget -= e.cost; }
     if (w % 5 === 0) list.push("roshan");
@@ -234,7 +246,7 @@
     banner(`第 ${w} 波`, w % 5 === 0 ? "大P神：肉山来了，小金金别送！" : pick(PDS));
   }
   function spawnEnemy(k) {
-    const e = EN[k], sc = e.boss ? 1 + (S.wave / 5 - 1) * 0.35 : 1 + (S.wave - 1) * 0.1 + Math.max(0, S.wave - 8) ** 2 * 0.015, d = { ...e, hp: Math.round(e.hp * sc), dmg: Math.round(e.dmg * (e.boss ? 1 + (S.wave / 5 - 1) * 0.15 : 1 + (S.wave - 1) * 0.05)), gold: Math.round(e.gold * 1.4), set: SET[k] };
+    const e = EN[k], sc = e.boss ? 1 + (S.wave / 5 - 1) * 0.25 : 1 + (S.wave - 1) * 0.1 + Math.max(0, S.wave - 8) ** 2 * 0.006, d = { ...e, hp: Math.round(e.hp * sc * S.diff.hp), dmg: Math.round(S.diff.dmg * e.dmg * (e.boss ? 1 + (S.wave / 5 - 1) * 0.15 : 1 + (S.wave - 1) * 0.05)), gold: Math.round(e.gold * 1.4 * S.diff.gold), set: SET[k] };
     const u = makeUnit("enemy", d, W + 30 + rnd(0, 10), e.fly ? 2 : Math.floor(rnd(0, 10)), { type: k });
     S.units.push(u);
     if (e.boss) { say(u, "吼——！！", 3); S.shake = 4; }
@@ -403,7 +415,9 @@
   const keys = {};
   function update(dt) {
     S.t += dt; if (S.over) return;
-    S.nextWave -= dt; if (S.nextWave <= 0) startWave();
+    S.nextWave -= dt;
+    if (S.wave === 20 && !S.won) { S.nextWave = Math.max(S.nextWave, 1); if (!S.queue.length && !enemies().length) return win(); }
+    if (S.nextWave <= 0) startWave();
     while (S.queue.length && S.queue[0].at <= S.t) spawnEnemy(S.queue.shift().k);
     for (const k in S.helpCd) S.helpCd[k] = Math.max(0, S.helpCd[k] - dt); S.alac = Math.max(0, S.alac - dt);
     if (S.later.length) { const due = S.later.filter((l) => l.at <= S.t); S.later = S.later.filter((l) => l.at > S.t); due.forEach((l) => l.fn()); }
@@ -540,11 +554,21 @@
     if (p.splash) { const foes = p.from.team === "enemy" ? [S.hero, ...S.units.filter((u) => u.team === "ally")] : enemies(); for (const f of foes) if (f !== p.target && !f.dead && f.hp > 0 && Math.abs(f.x - x) < p.splash) hurt(f, p.dmg * 0.6, p.from, { show: false }); burst(x, y, p.kind === "rock" ? ["#8a8f99", "#5a5e68"] : ["#fff0a0", "#ff8a2a", "#d8402a"], 14, 70); S.shake = Math.max(S.shake || 0, 1.5); }
     else burst(x, y, [PROJ[p.kind].core || "#fff", PROJ[p.kind].col], 4, 30, 0);
   }
+  // vittoria all'ondata 20: finire o continuare
+  function win() {
+    S.won = true; running = false; const D = S.diff;
+    for (const [who, t] of D.chat) chatSay(who || null, t);
+    $("win-title").textContent = D.winT;
+    $("win-text").innerHTML = `难度：<b>${D.name}</b> · 守住 <b>20</b> 波 · 击杀 <b>${S.kills}</b> · <b>${S.hero.mmr}</b> MMR<br>` + D.winS.map((l) => `<span style="color:#ffd76a">${l}</span>`).join("<br>");
+    $("win-medal").src = `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${D.tier}.png`;
+    try { const k = "g2:win:" + S.diffKey; localStorage.setItem(k, Math.max(+localStorage.getItem(k) || 0, 1)); } catch {}
+    $("win").hidden = false;
+  }
   function gameOver() {
     react("over", { w: S.wave });
     S.over = true; S.ancient.hp = 0;
     let best = 0; try { best = Math.max(+localStorage.getItem("g2:best") || 0, S.wave); localStorage.setItem("g2:best", best); } catch {}
-    $("over-text").innerHTML = `大金神（${HD.name}）守到第 <b>${S.wave}</b> 波 · 击杀 <b>${S.kills}</b><br>最佳纪录：第 ${best} 波<br><span style="color:#ff9a6a">大金神：系统局！这把不算！</span>`;
+    $("over-text").innerHTML = `${S.diff.name} · 大金神（${HD.name}）守到第 <b>${S.wave}</b> 波 · 击杀 <b>${S.kills}</b><br>最佳纪录：第 ${best} 波<br><span style="color:#ff9a6a">大金神：系统局！这把不算！</span>`;
     $("over").hidden = false;
   }
 
@@ -744,15 +768,18 @@
 
   let running = false;
   Promise.all([ready, ancP]).then(() => {
-  $("pick").innerHTML = Object.entries(HEROES).map(([k, h]) => `<button class="hero" data-h="${k}"><span class="pic" data-hp="${h.look}"></span><b>${h.name}</b><small>${h.ranged ? "远程" : "近战"} · 生命${h.hp} · 攻击${h.dmg}</small><span class="abil">${h.sk.map((s) => `<img src="${ICON(s[0])}" title="${s[1]}：${s[3]}">`).join("")}</span></button>`).join("");
+  $("pick").innerHTML = `<div class="hero" style="cursor:default"><span class="pic" data-hp="hero_windrunner"></span><b>风行者</b><small>远程 · 束缚击 · 强力击 · 风行 · 集中火力</small></div>` +
+    Object.entries(DIFF).map(([k, d]) => `<button class="hero diff" data-d="${k}"><img src="https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${d.tier}.png" alt=""><b>${d.name}</b><small>${d.desc}</small></button>`).join("");
   document.querySelectorAll("[data-hp]").forEach((s) => s.appendChild(iconCanvas(SET[s.dataset.hp])));
-  document.querySelectorAll(".hero").forEach((b) => (b.onclick = () => { $("intro").hidden = true; reset(b.dataset.h); renderSkills(); running = true; banner("大金神 · " + HD.name, "大P神：小金金，守住遗迹！"); $("chat-list").innerHTML = ""; chatMsg("系统", "#ff6a3a", "大金神开播了 · 守护遗迹", true); react("start"); }));
+  document.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => { $("intro").hidden = true; reset("windranger", b.dataset.d); renderSkills(); running = true; banner("大金神 · " + S.diff.name, "大P神：小金金，守住遗迹！守20波就算你赢"); $("chat-list").innerHTML = ""; chatMsg("系统", "#ff6a3a", `大金神开播了 · 守护遗迹 · ${S.diff.name}`, true); react("start"); }));
+  $("win-end").onclick = () => { $("win").hidden = true; $("intro").hidden = false; running = false; };
+  $("win-go").onclick = () => { $("win").hidden = true; running = true; S.nextWave = 6; banner("无尽模式", "大P神：小金金，看你能守到第几波"); chatSay("大P神", "还不下播？那就继续锤"); };
   $("again").onclick = () => { $("over").hidden = true; $("intro").hidden = false; running = false; };
   try { const b = +localStorage.getItem("g2:best"); if (b) $("best").textContent = `最佳纪录：第 ${b} 波`; } catch {}
 
   let last = performance.now();
   function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (running && !document.hidden) { update(dt); draw(); } requestAnimationFrame(loop); }
-  reset("windranger"); renderSkills(); draw(); requestAnimationFrame(loop);
+  reset("windranger", "normal"); renderSkills(); draw(); requestAnimationFrame(loop);
   });
-  if (location.search.includes("debug")) window.__g2 = { get S() { return S; }, update, draw, startWave, summon, summonHelp, upgradeBarracks, buy, cast, spawnEnemy, reset };
+  if (location.search.includes("debug")) window.__g2 = { get S() { return S; }, update, draw, startWave, summon, summonHelp, upgradeBarracks, buy, cast, spawnEnemy, reset, win };
 })();
