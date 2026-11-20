@@ -17,34 +17,20 @@
   // =====================================================================
   //  ASPETTO DELLE UNITÀ
   // =====================================================================
-  const LOOK = {
-    windranger: { skin: "#f2c9a8", armor: "#3f7a3a", sleeve: "#3f7a3a", pants: "#5a4a2a", hair: "long", hairCol: "#c0392b", weapon: "bow", cape: "#2f6a3a", trim: "#d9b44a" },
-    storm: { skin: "#4a7ad8", armor: "#3a5aa8", pants: "#2a3a6a", weapon: "lightning", scarf: "#c0302a", ears: true, headR: 6 },
-    axe: { k: 1.15, skin: "#c0392b", armor: "#5a2a1a", pants: "#3a2a1a", hair: "topknot", hairCol: "#1a1a1a", weapon: "bigaxe", belly: 2, beard: "#1a1a1a" },
-    magnus: { k: 1.15, skin: "#6a5a4a", armor: "#4a3a2a", pants: "#3a2a1a", weapon: "spear", horn: true, beard: "#d8d0c0", belly: 3 },
-    snail: { k: 1.1, skin: "#f2c29b", armor: "#5a8ad8", sleeve: "#5a8ad8", pants: "#2a3a5a", hair: "short", hairCol: "#1a1a1a", weapon: "sword", cape: "#93c5fd", trim: "#e8e0f0", pauldron: "#cfe0ff" },
-    rm1: { skin: "#e0b48a", armor: "#3c7a3a", helmet: "steel", weapon: "sword", shield: "#2f6a9a", trim: "#d9b44a", pauldron: "#c9ced6", skirt: true },
-    rm2: { k: 1.1, skin: "#e0b48a", armor: "#2f8a5a", helmet: "steel", helmetCol: "#d6dae2", plume: "#3a8ad8", weapon: "sword", shield: "#3a8ad8", trim: "#e8e0f0", pauldron: "#e8ecf2", skirt: true },
-    rm3: { k: 1.25, skin: "#e0b48a", armor: "#d9a020", helmet: "gold", plume: "#e8e0f0", weapon: "sword", shield: "#e0b030", trim: "#fff4c0", pauldron: "#fff0a0", skirt: true },
-    rr1: { skin: "#e0b48a", armor: "#2f6a9a", helmet: "hood", hood: "#e8e0d0", weapon: "staff", orb: "#7ad0ff", orb2: "#e6fbff", trim: "#d9b44a" },
-    rr2: { k: 1.1, skin: "#e0b48a", armor: "#3a4aaa", helmet: "hood", hood: "#f4f0e8", weapon: "staff", orb: "#9ae0ff", orb2: "#ffffff", trim: "#e8e0f0", cape: "#3a8ad8" },
-    rr3: { k: 1.25, skin: "#e0b48a", armor: "#d9a020", helmet: "hood", hood: "#fff6c8", weapon: "staff", orb: "#fff07a", orb2: "#ffffff", trim: "#fff4c0", cape: "#e0b030" },
-    dmelee: { skin: "#8a6a5a", armor: "#4a2424", helmet: "horned", helmetCol: "#3a1a1a", weapon: "sword", shield: "#3a1a1a", trim: "#8a2a2a", eyeGlow: "#ff7a2a", pauldron: "#5a2a2a", skirt: true },
-    dranged: { skin: "#7a6a5a", armor: "#43244f", helmet: "hood", hood: "#24142e", weapon: "staff", orb: "#8aff5a", eyeGlow: "#8aff5a", trim: "#a07a2a" },
-    kobold: { k: 0.8, skin: "#9a6a3a", armor: "#4a3a5a", weapon: "spear", ears: true },
-    ogre: { k: 1.45, skin: "#4a82b8", armor: "#5a92c8", pants: "#8a5a2a", weapon: "club", belly: 5, tusks: true, belt: false },
-    roshan: { k: 1.9, skin: "#6a4428", armor: "#5a3a22", chest: "#b08a5a", pants: "#3a2414", helmet: "horned", helmetCol: "#5a3a22", belly: 5, eyeGlow: "#ff3a2a", belt: false },
-  };
   // sprite pixel ricavati dai modelli ufficiali di Dota 2 (sprites/*.png); FACE = verso in cui guarda il modello
   const FACE = { hero_windrunner: 1, hero_storm_spirit: 1, hero_axe: -1, hero_magnataur: -1, hero_nevermore: 1, rmelee: -1, rranged: -1, rmegam: -1, rmegar: -1,
     dmelee: -1, dranged: -1, siege: 1, kobold: 1, wolf: 1, centaur: -1, ogre: -1, golem: 1, dragon: -1, roshan: 1 };
-  const SET = {};
+  const VER = "3"; const SET = {};
   const loadSprite = (k) => new Promise((res) => { const im = new Image(); im.onload = () => {
     const [c, x] = A.mk(im.width, im.height); x.drawImage(im, 0, 0);
     const R = FACE[k] === 1 ? c : A.flip(c), L = FACE[k] === 1 ? A.flip(c) : c; // R = guarda a destra
-    SET[k] = { R, L, white: A.whiteOf(R), whiteL: A.whiteOf(L), gold: A.tint(R, "#ffe27a", 0.35), w: c.width, h: c.height }; res(); }; im.onerror = res; im.src = `sprites/${k}.png`; });
+    const gold = A.tint(R, "#ffe27a", 0.35), glowR = (col) => A.tint(R, col, 1), glowL = (col) => A.tint(L, col, 1);
+    SET[k] = { R, L, white: A.whiteOf(R), whiteL: A.whiteOf(L), gold, goldL: A.flip(gold), w: c.width, h: c.height,
+      glow: { "#ffd06a": [glowR("#ffd06a"), glowL("#ffd06a")], "#7aff9a": [glowR("#7aff9a"), glowL("#7aff9a")], "#93c5fd": [glowR("#93c5fd"), glowL("#93c5fd")] } }; res(); }; im.onerror = res; im.src = `sprites/${k}.png?v=${VER}`; });
   const ready = Promise.all(Object.keys(FACE).map(loadSprite));
-  let ancientImg = null; const ancP = new Promise((res) => { const im = new Image(); im.onload = () => { ancientImg = im; res(); }; im.onerror = res; im.src = "sprites/ancient.png"; });
+  let ancientImg = null; const ancP = new Promise((res) => { const im = new Image(); im.onload = () => { ancientImg = im; res(); }; im.onerror = res; im.src = "sprites/ancient.png?v=" + VER; });
+  // medaglie di rango (icone ufficiali Dota 2) sopra la testa di 大金神
+  const MEDAL = {}; for (let t = 1; t <= 8; t++) { const im = new Image(); im.src = `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${t}.png`; MEDAL["i" + t] = im; } for (let n = 1; n <= 5; n++) { const im = new Image(); im.src = `https://www.opendota.com/assets/images/dota2/rank_icons/rank_star_${n}.png`; MEDAL["s" + n] = im; }
 
   // =====================================================================
   //  EROI (大金神 sceglie chi interpretare)
@@ -168,7 +154,7 @@
     if (u.team === "hero" && u.buffs.windrun > 0 && Math.random() < 0.8) { text(u.x, feetY(u) - 40, "闪避", "#9ad8ff"); return 0; }
     if (u.team === "hero" && u.buffs.ball > 0) return 0;
     const real = Math.max(1, Math.round(dmg * (opts.pure ? 1 : armorMul(stat(u, "arm")))));
-    u.hp -= real; u.flash = 0.08;
+    u.hp -= real; u.flash = 0.08; u.hitT = S.t; u.hitDir = from ? (Math.sign(u.x - from.x) || 1) : (u.team === "enemy" ? 1 : -1);
     if (opts.show !== false && (u.team === "enemy" ? real >= 40 : u.team === "hero")) text(u.x, feetY(u) - (u.d.boss ? 70 : 38), "-" + real, u.team === "enemy" ? "#ffd06a" : "#ff6a5a", opts.crit);
     burst(u.x, feetY(u) - 14, u.team === "enemy" && (u.type === "golem") ? ["#8a8f99"] : ["#9a1414", "#c02424"], 3, 40);
     // lifesteal (祭品)
@@ -185,7 +171,8 @@
       u.respawn = 10; u.hp = 0; u.mmr = Math.max(0, u.mmr - 50); say(u, pick(JIN.die), 3); banner("大金神阵亡 · -50 MMR", "10秒后复活 · " + pick(JIN.die));
       return;
     }
-    u.dead = 0.9;
+    u.dead = 0.9; u.deadDir = u.hitDir || (u.team === "enemy" ? 1 : -1);
+    burst(u.x, feetY(u) - 4, ["#8a7a62", "#b8a888", "#5a4a3a"], u.d.boss ? 18 : 8, 30, 60);
     if (u.team === "enemy") {
       S.gold += u.d.gold; S.kills++; text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
       burst(u.x, feetY(u) - 10, ["#fde047", "#ffb03a"], 4, 40);
@@ -339,7 +326,7 @@
     h.cd -= dt;
     const t = nearestEnemy(h.x, stat(h, "range") + (HD.ranged ? 0 : 6), false);
     if (t && h.cd <= 0) {
-      h.cd = 1 / stat(h, "rate"); h.face = t.x >= h.x ? 1 : -1; h.anim = "atk"; h.at = 0.3;
+      h.cd = 1 / stat(h, "rate"); h.face = t.x >= h.x ? 1 : -1; h.anim = "atk"; h.at = 0.35;
       let dmg = stat(h, "dmg"), crit = false;
       if (S.items.includes("greater_crit") && Math.random() < 0.3) { dmg *= 2.25; crit = true; }
       if (HD.ranged) shoot(h, t, dmg, HD.proj, { crit });
@@ -432,15 +419,28 @@
   // =====================================================================
   function frameOf(u) {
     const set = u.d.set || SET[HD.look], R = u.face >= 0;
-    if (u.team === "ally" && S.barracks === 1 && !u.snail) return R ? set.gold : A.flip(set.gold);
+    if (u.team === "ally" && S.barracks === 1 && !u.snail) return R ? set.gold : set.goldL;
     return R ? set.R : set.L;
   }
-  // animazione: camminata = saltello, attacco = carica e affondo, cast = sollevato
-  function animOffset(u) {
-    if (u.anim === "atk") { const p = 1 - u.at / 0.35; return { dx: (p < 0.4 ? -2 : p < 0.7 ? 4 : 1) * (u.face >= 0 ? 1 : -1), dy: p < 0.4 ? -1 : 0, sq: p >= 0.4 && p < 0.7 }; }
-    if (u.anim === "cast") return { dx: 0, dy: -3, sq: false };
-    if (u.anim === "walk") { const f = Math.floor(u.frame) % 4; return { dx: 0, dy: f % 2 ? -1 : 0, sq: false }; }
-    return { dx: 0, dy: Math.round(Math.sin(S.t * 2 + u.x) * 0.6), sq: false };
+  // animazione a trasformazioni: ritorna spostamento, rotazione e squash/stretch (pivot ai piedi)
+  const ATK_T = 0.35;
+  function pose(u) {
+    const f = u.face >= 0 ? 1 : -1, o = { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, swing: -1 };
+    if (u.anim === "atk" && u.at > 0) {
+      const p = 1 - u.at / ATK_T; // 0..1
+      if (p < 0.45) { const k = p / 0.45; o.dx = -2.5 * k * f; o.rot = -0.12 * k * f; o.sy = 1 + 0.06 * k; o.sx = 1 - 0.04 * k; } // carica: indietro e allungato
+      else if (p < 0.7) { const k = (p - 0.45) / 0.25; o.dx = (-2.5 + 7.5 * k) * f; o.rot = (-0.12 + 0.3 * k) * f; o.sy = 1.06 - 0.16 * k; o.sx = 0.96 + 0.14 * k; o.swing = k; } // affondo: schiacciato in avanti
+      else { const k = (p - 0.7) / 0.3; o.dx = 5 * (1 - k) * f; o.rot = 0.18 * (1 - k) * f; o.sy = 0.9 + 0.1 * k; o.sx = 1.1 - 0.1 * k; } // ritorno
+    } else if (u.anim === "cast" && u.at > 0) {
+      const p = 1 - u.at / ATK_T; o.dy = -Math.sin(p * Math.PI) * 5; o.sy = 1 + Math.sin(p * Math.PI) * 0.08; o.sx = 1 - Math.sin(p * Math.PI) * 0.05; o.rot = -0.08 * f * Math.sin(p * Math.PI);
+    } else if (u.anim === "walk") {
+      const ph = u.frame * 1.6; // passo: dondolio + rimbalzo + squash all'appoggio
+      o.dy = -Math.abs(Math.sin(ph)) * 2.2; o.rot = Math.sin(ph) * 0.07 + 0.04 * f; const land = 1 - Math.abs(Math.sin(ph)); o.sy = 1 - land * 0.05; o.sx = 1 + land * 0.04;
+    } else { const b = Math.sin(S.t * 2.4 + u.x * 0.37); o.sy = 1 + b * 0.025; o.sx = 1 - b * 0.012; } // respiro
+    // contraccolpo quando viene colpito
+    const age = u.hitT != null ? S.t - u.hitT : 9;
+    if (age < 0.16 && !u.d.boss) { const k = 1 - age / 0.16; o.dx += (u.hitDir || 1) * 3 * k; o.rot += (u.hitDir || 1) * 0.1 * k; }
+    return o;
   }
   function draw() {
     g.save();
@@ -476,9 +476,16 @@
     for (const u of all) {
       const im = frameOf(u), top = feetY(u) - im.height - (isFly(u) ? 30 : 0);
       if (u.hp < u.max || u.team === "hero") bar(u.x - 10, top - 4, u.d.boss ? 36 : 20, u.hp / u.max, u.team === "enemy" ? "#e23b3b" : u.team === "hero" ? "#5fd068" : "#7ae0a0");
-      if (u.team === "hero") { g.font = "bold 7px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(`大金神 ${rankOf(u.mmr).name}`, u.x + 1, top - 7); g.fillStyle = "#f2b632"; g.fillText(`大金神 ${rankOf(u.mmr).name}`, u.x, top - 8); }
+      if (u.team === "hero") {
+        const rk = rankOf(u.mmr), t1 = `大金神 · ${rk.name}`, t2 = `${u.mmr} MMR`, mi = MEDAL["i" + rk.tier], si = rk.star ? MEDAL["s" + rk.star] : null;
+        g.font = "bold 8px sans-serif"; const tw = Math.max(g.measureText(t1).width, 40), ms = 20, bw = ms + 4 + tw + 6, bx = clamp(Math.round(u.x - bw / 2), 2, W - bw - 2), by = Math.round(top - 30);
+        g.fillStyle = "rgba(10,8,16,.72)"; g.fillRect(bx, by, bw, 22); g.fillStyle = "#f2b632"; g.fillRect(bx, by, bw, 1); g.fillRect(bx, by + 21, bw, 1);
+        if (mi && mi.complete && mi.naturalWidth) { g.imageSmoothingEnabled = true; g.drawImage(mi, bx + 1, by + 1, ms, ms); if (si && si.complete && si.naturalWidth) g.drawImage(si, bx + 1, by + 1, ms, ms); g.imageSmoothingEnabled = false; }
+        g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(t1, bx + ms + 5, by + 10); g.fillStyle = "#ffd76a"; g.fillText(t1, bx + ms + 4, by + 9);
+        g.font = "bold 7px sans-serif"; g.fillStyle = "#000"; g.fillText(t2, bx + ms + 5, by + 19); g.fillStyle = "#cfe8ff"; g.fillText(t2, bx + ms + 4, by + 18); g.textAlign = "center";
+      }
       if (u.snail) { g.font = "bold 7px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(`蜗牛大神 ${Math.ceil(u.life)}s`, u.x + 1, top - 7); g.fillStyle = "#93c5fd"; g.fillText(`蜗牛大神 ${Math.ceil(u.life)}s`, u.x, top - 8); }
-      if (u.bubble) bubble(u.x, top - (u.team === "hero" || u.snail ? 22 : 12), u.bubble.t, u.snail ? "#93c5fd" : u.team === "hero" ? "#f2b632" : "#ff6a3a");
+      if (u.bubble) bubble(u.x, top - (u.team === "hero" ? 36 : u.snail ? 22 : 12), u.bubble.t, u.snail ? "#93c5fd" : u.team === "hero" ? "#f2b632" : "#ff6a3a");
     }
     bar(ANC.x - 24, ANC.y - 116, 48, S.ancient.hp / S.ancient.max, "#7ae0a0");
     g.font = "bold 9px sans-serif"; g.textAlign = "center";
@@ -486,18 +493,45 @@
     g.globalAlpha = 1; g.restore();
   }
   function drawUnit(u) {
-    const im = frameOf(u), fly = isFly(u) ? 30 + Math.round(Math.sin(S.t * 3) * 3) : 0, o = animOffset(u);
-    let x = Math.round(u.x) - (im.width >> 1) + o.dx, y = feetY(u) - im.height + 2 - fly + o.dy;
-    if (u.dead) { g.save(); g.globalAlpha = Math.max(0, u.dead); g.translate(Math.round(u.x), feetY(u)); g.rotate((u.team === "enemy" ? 1 : -1) * (1 - u.dead) * 1.5); g.drawImage(im, -(im.width >> 1), -im.height + 2); g.restore(); return; }
-    g.fillStyle = "rgba(0,0,0,.3)"; g.beginPath(); g.ellipse(Math.round(u.x), feetY(u), Math.max(8, im.width * 0.35), 3, 0, 0, 7); g.fill();
-    if (u.team === "hero" && u.buffs.windrun > 0) { g.globalAlpha = 0.4; g.drawImage(im, x - u.face * 5, y); g.globalAlpha = 1; }
-    if (u.team === "hero" && u.buffs.ball > 0) { g.fillStyle = "rgba(170,220,255,.8)"; g.beginPath(); g.arc(u.x, feetY(u) - 18, 10, 0, 7); g.fill(); return; }
-    if (o.sq) g.drawImage(im, x - 1, y + 1, im.width + 2, im.height - 1); else g.drawImage(im, x, y);
-    if (u.flash > 0) { const set = u.d.set || SET[HD.look]; g.globalAlpha = 0.45; g.drawImage(u.face >= 0 ? set.white : set.whiteL, x, y); g.globalAlpha = 1; } // lampo leggero quando viene colpito
-    if ((u.team !== "enemy" && S.empower > 0) || (u.team === "hero" && u.buffs.focus > 0)) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.3; g.drawImage(A.tint(im, u.buffs && u.buffs.focus > 0 ? "#7aff9a" : "#ffd06a", 1), x, y); g.globalAlpha = 1; g.globalCompositeOperation = "source-over"; }
-    if (u.snail) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.25 + Math.sin(S.t * 6) * 0.1; g.drawImage(A.tint(im, "#93c5fd", 1), x, y); g.globalAlpha = 1; g.globalCompositeOperation = "source-over"; }
-    if (u.stun > 0) { g.fillStyle = "#ffe27a"; for (let k = 0; k < 3; k++) { const a = S.t * 6 + k * 2.1; g.fillRect(Math.round(u.x + Math.cos(a) * 7), Math.round(y - 3 + Math.sin(a) * 2), 2, 2); } }
-    if (u.slow > 0 || u.dot > 0) { g.fillStyle = u.dot > 0 ? "rgba(255,70,50,.55)" : "rgba(122,208,255,.55)"; g.fillRect(x + 4, y + im.height - 5, im.width - 8, 2); }
+    const im = frameOf(u), set = u.d.set || SET[HD.look], R = u.face >= 0, fly = isFly(u) ? 30 + Math.sin(S.t * 3) * 3 : 0, fy = feetY(u), cx = Math.round(u.x);
+    if (u.dead) { // caduta: si inclina all'indietro, affonda e svanisce
+      const k = 1 - Math.max(0, u.dead) / 0.9, dir = u.deadDir || 1;
+      g.save(); g.globalAlpha = Math.max(0, Math.min(1, u.dead * 1.6)); g.translate(cx + dir * k * 6, fy + k * 4 - fly * (1 - k));
+      g.rotate(dir * Math.min(1, k * 1.8) * 1.45); g.scale(1, 1 - k * 0.15); g.drawImage(im, -(im.width >> 1), -im.height + 2);
+      if (k < 0.25) { g.globalAlpha = 0.6 * (1 - k * 4); g.drawImage(R ? set.white : set.whiteL, -(im.width >> 1), -im.height + 2); }
+      g.restore(); return;
+    }
+    const o = pose(u);
+    g.fillStyle = "rgba(0,0,0,.32)"; g.beginPath(); g.ellipse(cx + o.dx * 0.5, fy, Math.max(8, im.width * 0.36) * (fly ? 0.7 : 1) * (1 - Math.min(0.3, -o.dy / 20)), 3, 0, 0, 7); g.fill();
+    if (u.team === "hero" && u.buffs.ball > 0) { g.fillStyle = "rgba(170,220,255,.8)"; g.beginPath(); g.arc(u.x, fy - 18, 10, 0, 7); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.arc(u.x, fy - 18, 4 + Math.sin(S.t * 30), 0, 7); g.fill(); return; }
+    // alone del cast
+    if (u.anim === "cast" && u.at > 0) { const p = 1 - u.at / ATK_T; g.strokeStyle = `rgba(150,220,255,${0.9 * (1 - p)})`; g.lineWidth = 2; g.beginPath(); g.ellipse(cx, fy - 1, 10 + p * 22, 3 + p * 6, 0, 0, 7); g.stroke(); g.lineWidth = 1; }
+    // aura dorata permanente intorno a 大金神 per vederlo meglio
+    if (u.team === "hero") { const a = 0.22 + Math.sin(S.t * 3) * 0.06, gr = g.createRadialGradient(cx, fy - im.height / 2, 4, cx, fy - im.height / 2, im.height * 0.62); gr.addColorStop(0, `rgba(255,214,110,${a})`); gr.addColorStop(1, "rgba(255,214,110,0)"); g.fillStyle = gr; g.fillRect(cx - im.height, fy - im.height * 1.2, im.height * 2, im.height * 1.3); }
+    g.save(); g.translate(cx + o.dx, fy + 2 - fly + o.dy); g.rotate(o.rot); g.scale(o.sx, o.sy);
+    const ox = -(im.width >> 1), oy = -im.height;
+    if (u.team === "hero" && u.buffs.windrun > 0) { g.globalAlpha = 0.35; g.drawImage(im, ox - u.face * 6, oy); g.drawImage(im, ox - u.face * 12, oy); g.globalAlpha = 1; }
+    if (u.team === "hero") { // contorno chiaro per staccarlo dallo sfondo
+      g.globalAlpha = 0.9; const wh = R ? set.white : set.whiteL; for (const [ddx, ddy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) g.drawImage(wh, ox + ddx, oy + ddy); g.globalAlpha = 1;
+    }
+    g.drawImage(im, ox, oy);
+    const age = u.hitT != null ? S.t - u.hitT : 9;
+    if (age < 0.1) { g.globalAlpha = 0.5 * (1 - age / 0.1); g.drawImage(R ? set.white : set.whiteL, ox, oy); g.globalAlpha = 1; } // lampo breve quando viene colpito
+    const glow = (col, al) => { const gl = set.glow && set.glow[col]; if (!gl) return; g.globalCompositeOperation = "lighter"; g.globalAlpha = al; g.drawImage(gl[R ? 0 : 1], ox, oy); g.globalAlpha = 1; g.globalCompositeOperation = "source-over"; };
+    if (u.team === "hero" && u.buffs.focus > 0) glow("#7aff9a", 0.3); else if (u.team !== "enemy" && S.empower > 0) glow("#ffd06a", 0.3);
+    if (u.snail) glow("#93c5fd", 0.22 + Math.sin(S.t * 6) * 0.1);
+    g.restore();
+    // scia dell'arma (mischia) / lampo di sparo (distanza)
+    if (o.swing >= 0) {
+      const f = u.face >= 0 ? 1 : -1, r = Math.max(12, im.height * 0.42), hx = cx + f * im.width * 0.18, hy = fy - im.height * 0.5;
+      if (!u.d.ranged && !(u.team === "hero" && HD.ranged)) {
+        g.strokeStyle = `rgba(255,255,255,${0.85 * (1 - o.swing * 0.6)})`; g.lineWidth = 2; g.beginPath();
+        const a0 = f > 0 ? -1.3 : Math.PI + 1.3, a1 = f > 0 ? -1.3 + 2.2 * o.swing : Math.PI + 1.3 - 2.2 * o.swing; g.arc(hx, hy, r, Math.min(a0, a1), Math.max(a0, a1)); g.stroke();
+        g.strokeStyle = `rgba(255,220,140,${0.5 * (1 - o.swing)})`; g.beginPath(); g.arc(hx, hy, r - 3, Math.min(a0, a1), Math.max(a0, a1)); g.stroke(); g.lineWidth = 1;
+      } else if (o.swing < 0.5) { g.fillStyle = `rgba(255,240,180,${1 - o.swing * 2})`; g.beginPath(); g.arc(cx + f * im.width * 0.42, hy - 2, 3 + o.swing * 4, 0, 7); g.fill(); }
+    }
+    if (u.stun > 0) { g.fillStyle = "#ffe27a"; for (let k = 0; k < 3; k++) { const a = S.t * 6 + k * 2.1; g.fillRect(Math.round(u.x + Math.cos(a) * 8), Math.round(fy - im.height - 3 - fly + Math.sin(a) * 2), 2, 2); } }
+    if (u.slow > 0 || u.dot > 0) { g.fillStyle = u.dot > 0 ? "rgba(255,70,50,.55)" : "rgba(122,208,255,.55)"; g.fillRect(cx - (im.width >> 1) + 4, fy - 3 - fly, im.width - 8, 2); }
   }
   function bar(x, y, w, p, col) { x = Math.round(x); y = Math.round(y); g.fillStyle = "#111"; g.fillRect(x - 1, y - 1, w + 2, 4); g.fillStyle = "#3a1010"; g.fillRect(x, y, w, 2); g.fillStyle = col; g.fillRect(x, y, Math.max(1, Math.round(w * clamp(p, 0, 1))), 2); }
   function bubble(x, y, t, col) {
