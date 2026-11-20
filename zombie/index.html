@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<title>僵尸围城</title>
-<meta name="description" content="像素风僵尸塔防：建墙、架机枪、埋地雷，守住你的地堡。" />
+<title>篝火守卫</title>
+<meta name="description" content="像素风刀塔生存塔防：白天砍树挖石造防御，夜里守住篝火，抵挡夜魇军团、远古野怪和肉山。" />
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@500;900&display=swap" rel="stylesheet" />
 <style>
   :root { --bg: #0b0a12; --panel: #17141f; --line: #2c2638; --gold: #f7c84a; --red: #e23b3b; --green: #5fd068; --text: #ece3d0; --muted: #9a90a8; }
@@ -12,82 +12,115 @@
   html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Noto Sans SC", system-ui, sans-serif; overscroll-behavior: none; }
   body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 8px 8px 16px; user-select: none; }
   .px { font-family: "Press Start 2P", monospace; }
-  /* barra superiore */
-  .hud { width: 100%; max-width: 1400px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; margin-bottom: 8px;
+  .hud { width: 100%; max-width: 1500px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; margin-bottom: 8px;
     background: var(--panel); border: 3px solid var(--line); border-radius: 4px; box-shadow: inset 0 -3px 0 #0d0b13; }
-  .title { font: 900 18px "Noto Sans SC"; color: var(--gold); letter-spacing: 2px; text-shadow: 2px 2px 0 #5a2a0a; margin-right: 6px; }
+  .title { font: 900 18px "Noto Sans SC"; color: var(--gold); letter-spacing: 2px; text-shadow: 2px 2px 0 #5a2a0a; }
+  .res { display: flex; gap: 10px; }
+  .res span { display: flex; align-items: center; gap: 4px; font: 11px "Press Start 2P"; }
+  .res i { width: 12px; height: 12px; display: inline-block; border: 2px solid #0d0b13; }
+  .c-wood i, i.c-wood { background: #a8723a; } .c-stone i, i.c-stone { background: #8a8f99; } .c-gold i, i.c-gold { background: #e8b030; }
   .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .stat b { font: 12px "Press Start 2P"; color: var(--text); }
-  .stat.gold b { color: var(--gold); }
   .meter { position: relative; width: 120px; height: 14px; background: #2a0f12; border: 2px solid #0d0b13; }
-  .meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#ff6a5a, #c8262a); transition: width .2s; }
+  .meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#ffc06a, #d8701a); transition: width .2s; }
   .meter.hp i { background: linear-gradient(#8ef08a, #2e9a3c); }
-  .meter span { position: absolute; inset: 0; display: grid; place-items: center; font: 8px "Press Start 2P"; color: #fff; text-shadow: 1px 1px 0 #000; }
-  .status { margin-left: auto; font-size: 13px; color: var(--text); }
+  .meter span { position: absolute; inset: 0; display: grid; place-items: center; font: 7px "Press Start 2P"; color: #fff; text-shadow: 1px 1px 0 #000; }
+  .status { font-size: 13px; font-weight: 900; padding: 3px 10px; border-radius: 3px; }
+  .status.day { background: #3a5a2a; color: #e8f8c8; } .status.night { background: #3a1a3a; color: #ffb0d0; }
   .btn { font: 900 13px "Noto Sans SC"; padding: 6px 12px; background: var(--gold); color: #1a1208; border: 0; border-radius: 3px; cursor: pointer; box-shadow: inset 0 -3px 0 #a87814; }
   .btn.ghost { background: #2a2536; color: var(--text); box-shadow: inset 0 -3px 0 #15121c; }
-  /* palco */
+  #minimap { width: 132px; height: 84px; image-rendering: pixelated; border: 2px solid #0d0b13; margin-left: auto; }
   .stage { position: relative; line-height: 0; border: 4px solid #2c2638; border-radius: 4px; box-shadow: 0 0 0 4px #0d0b13, 0 20px 50px rgba(0,0,0,.6); touch-action: none; }
   canvas#cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; cursor: crosshair; }
-  .banner { position: absolute; left: 50%; top: 18%; transform: translate(-50%, -10px); font: 900 clamp(18px, 4vw, 36px) "Noto Sans SC"; color: var(--gold); white-space: nowrap;
-    text-shadow: 3px 3px 0 #000, 0 0 18px rgba(247,200,74,.5); opacity: 0; transition: .3s; pointer-events: none; line-height: 1.2; }
+  .banner { position: absolute; left: 50%; top: 14%; transform: translate(-50%, -10px); text-align: center; font: 900 clamp(20px, 4vw, 38px) "Noto Sans SC"; color: var(--gold); white-space: nowrap;
+    text-shadow: 3px 3px 0 #000, 0 0 18px rgba(247,200,74,.5); opacity: 0; transition: .3s; pointer-events: none; line-height: 1.25; }
+  .banner small { display: block; font-size: 14px; color: #ece3d0; text-shadow: 2px 2px 0 #000; }
   .banner.show { opacity: 1; transform: translate(-50%, 0); }
   .joy { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); background: rgba(0,0,0,.2); pointer-events: none; }
   .joy i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px; border-radius: 50%; background: rgba(255,255,255,.4); }
-  /* barra costruzioni */
-  .tools { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
-  .tool { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 74px; padding: 6px 4px 5px; cursor: pointer;
-    background: var(--panel); color: var(--text); border: 3px solid var(--line); border-radius: 4px; box-shadow: inset 0 -3px 0 #0d0b13; font: inherit; }
-  .tool canvas { width: 40px; height: 40px; image-rendering: pixelated; }
-  .tool span { font-size: 12px; font-weight: 900; }
-  .tool b { font: 9px "Press Start 2P"; color: var(--gold); }
-  .tool i { position: absolute; left: 4px; top: 3px; font: 7px "Press Start 2P"; font-style: normal; color: var(--muted); }
-  .tool.on { border-color: var(--gold); background: #2a2210; }
-  .tool.poor { opacity: .5; }
-  .help { max-width: 760px; margin-top: 10px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.7; }
-  /* overlay */
-  .ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; line-height: 1.6;
-    background: radial-gradient(ellipse at center, rgba(10,8,16,.75), rgba(5,4,8,.95)); }
+  .actions { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; line-height: 1.2; }
+  .act { position: relative; width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--gold); background: rgba(20,16,28,.85); color: var(--text); font: 900 11px "Noto Sans SC"; cursor: pointer; display: grid; place-items: center; padding: 4px; text-align: center; }
+  .act b { position: absolute; top: -6px; left: -4px; font: 8px "Press Start 2P"; background: var(--gold); color: #111; padding: 2px 4px; border-radius: 3px; }
+  .act .cdn { position: absolute; inset: 0; display: grid; place-items: center; font: 14px "Press Start 2P"; color: #fff; text-shadow: 2px 2px 0 #000; }
+  .act.cd { border-color: #555; opacity: .75; }
+  #salve img { width: 28px; height: 22px; image-rendering: pixelated; }
+  /* barra in basso */
+  .dock { width: 100%; max-width: 1500px; margin-top: 10px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab { font: 900 13px "Noto Sans SC"; padding: 6px 16px; background: #1d1926; color: var(--muted); border: 3px solid var(--line); border-bottom: 0; border-radius: 4px 4px 0 0; cursor: pointer; }
+  .tab.on { background: var(--panel); color: var(--gold); }
+  .slots { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px; background: var(--panel); border: 3px solid var(--line); border-radius: 0 4px 4px 4px; }
+  .slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 84px; padding: 6px 4px 5px; cursor: pointer;
+    background: #1d1926; color: var(--text); border: 3px solid var(--line); border-radius: 4px; box-shadow: inset 0 -3px 0 #0d0b13; font: inherit; }
+  .slot canvas { width: 33px; height: 45px; image-rendering: pixelated; }
+  .slot img { width: 44px; height: 33px; border-radius: 3px; image-rendering: auto; margin: 6px 0; }
+  .slot span { font-size: 12px; font-weight: 900; }
+  .slot .cost { display: flex; gap: 4px; font-weight: 500; }
+  .slot .cost em { font: 8px "Press Start 2P"; font-style: normal; display: flex; align-items: center; gap: 2px; }
+  .slot .cost em::before { content: ""; width: 7px; height: 7px; border: 1px solid #000; }
+  .slot .cost em.c-wood::before { background: #a8723a; } .slot .cost em.c-stone::before { background: #8a8f99; } .slot .cost em.c-gold::before { background: #e8b030; }
+  .slot i { position: absolute; left: 4px; top: 3px; font: 7px "Press Start 2P"; font-style: normal; color: var(--muted); }
+  .slot .own { position: absolute; right: 4px; top: 3px; font: 8px "Press Start 2P"; color: var(--green); }
+  .slot.on { border-color: var(--gold); background: #2a2210; }
+  .slot.poor { opacity: .45; }
+  .slot.aegis { cursor: default; border-color: var(--gold); }
+  .help { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.7; }
+  .ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; text-align: center; line-height: 1.5;
+    background: radial-gradient(ellipse at center, rgba(10,8,16,.8), rgba(5,4,8,.96)); overflow: auto; }
   .ov[hidden] { display: none; }
-  .ov h1 { margin: 0; font: 900 clamp(28px, 6vw, 54px) "Noto Sans SC"; color: var(--gold); letter-spacing: 4px; text-shadow: 4px 4px 0 #5a2a0a, 0 0 30px rgba(247,200,74,.35); }
-  .ov p { margin: 0; max-width: 560px; font-size: 14px; color: var(--muted); }
+  .ov h1 { margin: 0; font: 900 clamp(26px, 5vw, 50px) "Noto Sans SC"; color: var(--gold); letter-spacing: 4px; text-shadow: 4px 4px 0 #5a2a0a, 0 0 30px rgba(247,200,74,.35); }
+  .ov p { margin: 0; max-width: 640px; font-size: 13px; color: var(--muted); }
   .ov b { color: var(--gold); }
-  .ov .btn { font-size: 18px; padding: 10px 28px; }
+  .roster { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 900px; width: 100%; }
+  .hero-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; background: #1d1926; border: 3px solid var(--line); border-radius: 4px; color: var(--text); cursor: pointer; font: inherit; line-height: 1.3; }
+  .hero-card:hover { border-color: var(--pc); background: #262033; }
+  .hero-card canvas { width: 54px; height: 54px; image-rendering: pixelated; }
+  .hero-card b { font-size: 14px; color: var(--pc); }
+  .hero-card .cls { font-size: 11px; color: var(--muted); } .hero-card .sk { font-size: 12px; font-weight: 900; color: var(--gold); }
+  .hero-card small { font-size: 10.5px; color: var(--muted); }
   .back { position: fixed; right: 10px; bottom: 8px; font-size: 12px; color: var(--muted); }
-  @media (max-width: 700px) { .hud { gap: 6px 10px; padding: 6px 8px; } .meter { width: 80px; } .status { margin-left: 0; width: 100%; } .tool { width: 62px; } .help { display: none; } }
+  @media (max-width: 760px) { .roster { grid-template-columns: repeat(2, 1fr); } .meter { width: 80px; } #minimap { width: 88px; height: 56px; } .slot { width: 70px; } .help { display: none; } .act { width: 50px; height: 50px; } }
 </style>
 </head>
 <body>
   <div class="hud">
-    <span class="title">僵尸围城</span>
-    <span class="stat">波次 <b class="px" id="h-wave">0</b></span>
-    <span class="stat gold">金币 <b class="px" id="h-gold">0</b></span>
-    <span class="stat">地堡 <span class="meter"><i id="h-base"></i><span id="h-base-t"></span></span></span>
+    <span class="title">篝火守卫</span>
+    <span class="status day" id="status"></span>
+    <span class="res"><span class="c-wood" title="木头"><i></i><b id="r-wood">0</b></span><span class="c-stone" title="石头"><i></i><b id="r-stone">0</b></span><span class="c-gold" title="金币"><i></i><b id="r-gold">0</b></span></span>
+    <span class="stat">篝火 <span class="meter"><i id="h-camp"></i><span id="h-camp-t"></span></span></span>
     <span class="stat">生命 <span class="meter hp"><i id="h-hp"></i><span id="h-hp-t"></span></span></span>
-    <span class="status" id="status"></span>
-    <button class="btn" id="next">开始下一波 ▶</button>
     <button class="btn ghost" id="mute" title="声音">🔊</button>
+    <canvas id="minimap" width="88" height="56"></canvas>
   </div>
   <div class="stage" id="stage">
     <canvas id="cv"></canvas>
     <div class="banner" id="banner"></div>
     <div class="joy" id="joy" hidden><i></i></div>
+    <div class="actions">
+      <button class="act" id="salve" title="治疗药膏（H）"><b>H</b><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/flask.png" alt=""><span class="cdn" id="salve-n">0</span></button>
+      <button class="act" id="skill"><b>Q</b><span id="skill-name">技能</span><span class="cdn" id="skill-cd"></span></button>
+    </div>
     <div class="ov" id="intro">
-      <h1>僵尸围城</h1>
-      <p>夜幕降临，尸潮来袭。守住你的<b>地堡</b>！<br>你会自动朝最近的僵尸开枪。用金币修<b>木墙</b>、<b>石墙</b>，架<b>机枪</b>，埋<b>地雷</b>。<br>僵尸会绕路，绕不过去就砸墙。</p>
+      <h1>篝火守卫</h1>
+      <p>白天<b>砍树、挖石</b>，用材料造<b>栅栏、石墙、尖刺、箭塔、法师塔</b>，打怪赚金币买<b>刀塔道具</b>。<br>入夜后<b>夜魇军团</b>、野怪、远古生物会冲向篝火，每第5夜还有<b>肉山</b>。篝火熄灭就输了。</p>
       <p id="intro-best"></p>
-      <button class="btn" id="start">开始守城</button>
-      <p style="font-size:12px">电脑：WASD / 方向键移动 · 数字键 1-5 选建筑 · 点击放置 · 右键取消 · 空格开始下一波<br>手机：左手拖动 = 移动 · 先选建筑再点地面放置</p>
+      <p><b>选择你的大神：</b></p>
+      <div class="roster" id="roster"></div>
+      <p style="font-size:11.5px">电脑：WASD 移动 · 点树/石头 = 自动采集（或靠近按 E）· 1-6 选建筑，点击放置，右键取消 · Q 技能 · H 药膏<br>手机：拖动移动 · 点树/石头采集 · 先选建筑再点地面</p>
     </div>
     <div class="ov" id="over" hidden>
-      <h1>地堡失守</h1>
+      <h1>篝火熄灭了</h1>
       <p id="over-text"></p>
-      <button class="btn" id="again">再守一次</button>
+      <button class="btn" id="again">重新选人</button>
     </div>
   </div>
-  <div class="tools" id="tools"></div>
-  <div class="help">击杀僵尸得金币，每波结束有奖励。机枪自动扫射范围内的僵尸；地雷踩到就炸。选“拆除”再点建筑可以返还一半金币。</div>
+  <div class="dock">
+    <div class="tabs"><button class="tab on" data-t="build">建造</button><button class="tab" data-t="items">道具</button></div>
+    <div class="slots" id="tab-build"></div>
+    <div class="slots" id="tab-items" hidden></div>
+  </div>
+  <div class="help">靠近篝火会慢慢回血。敌人会绕开障碍走向篝火，绕不过去就砸墙；攻城车专打建筑，黑龙会飞过城墙。</div>
   <a class="back" href="../">← 刀塔法庭</a>
+  <script src="../js/config.js"></script>
   <script src="art.js"></script>
   <script src="game.js"></script>
 </body>
