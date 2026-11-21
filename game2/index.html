@@ -42,7 +42,7 @@
   .move button { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(255,255,255,.45); background: #2a2238; color: #fff; font-size: 22px; touch-action: none; }
   .move button:active { background: #4a3a6a; }
   @media (pointer: coarse) { .move { display: flex; } }
-  .shopbtn, .p-shop h3 .close, .inv-m { display: none; }
+  .shopbtn, .p-shop h3 .close, .p-shop .inv-m { display: none; }
   .p-shop { flex: 1; min-width: 300px; }
   .bar { width: 100%; max-width: 1500px; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: flex-start; }
   .panel { background: var(--panel); border: 3px solid var(--line); border-radius: 4px; padding: 8px; }
@@ -80,7 +80,12 @@
   .hero b { color: var(--gold); font-size: 15px; } .hero small { font-size: 11px; color: var(--muted); }
   .abil img { width: 26px; height: 26px; margin: 0 1px; border: 1px solid #000; }
   .btn { font: 900 16px "Noto Sans SC"; padding: 8px 24px; background: var(--gold); color: #1a1208; border: 0; border-radius: 3px; cursor: pointer; }
-  .back { position: fixed; right: 10px; bottom: 8px; font-size: 12px; color: var(--muted); }
+  .back { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .sp { font-size: 12px; color: #c4b5fd; font-weight: 900; } .aegis { font-size: 12px; color: #fde047; font-weight: 900; }
+  .bb { font: 900 13px "Noto Sans SC"; background: #d92b2b; color: #fff; border: 0; border-radius: 4px; padding: 4px 10px; cursor: pointer; animation: live 0.6s infinite alternate; } .bb.poor { background: #5a2a2a; animation: none; }
+  .skw { position: relative; }
+  .pips { position: absolute; left: 3px; right: 3px; bottom: 3px; display: flex; gap: 2px; } .pips b { flex: 1; height: 4px; background: #222; border: 1px solid #000; } .pips b.on { background: #fde047; }
+  .plus { position: absolute; right: -6px; top: -8px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; background: #7c3aed; color: #fff; font: 900 15px/1 sans-serif; cursor: pointer; animation: live .7s infinite alternate; padding: 0; z-index: 2; }
   @media (max-width: 760px) { .meter { width: 90px; } .slot { width: 76px; } }
   /* ===== smartphone: barra comandi fissa in basso, negozio a comparsa ===== */
   @media (max-width: 760px), (max-height: 520px) {
@@ -100,7 +105,7 @@
     .ctl { align-items: center; gap: 6px; justify-content: space-between; }
     .move { display: flex; } .move button { width: 50px; height: 50px; font-size: 20px; }
     .p-skills #skills { padding-bottom: 0; gap: 5px; flex-wrap: nowrap; }
-    .skill { width: 46px; height: 46px; border-width: 2px; } .skill small { display: none; } .skill .cdn { font-size: 10px; }
+    .skill { width: 46px; height: 46px; border-width: 2px; } .plus { top: -2px; right: -4px; width: 20px; height: 20px; font-size: 13px; } .bar { padding-top: 10px; } .skill small { display: none; } .skill .cdn { font-size: 10px; }
     .shopbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; height: 50px; border: 2px solid var(--gold); border-radius: 6px; background: #2a2010; color: #fff; font-size: 20px; line-height: 1; }
     .shopbtn small { font-size: 9px; color: var(--gold); margin-top: 2px; }
     .p-units .row { flex-wrap: nowrap; overflow-x: auto; gap: 5px; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -112,9 +117,9 @@
     .p-shop.open { display: block; position: fixed; left: 0; right: 0; bottom: 0; top: 22vh; z-index: 40; overflow-y: auto; padding: 10px 8px 30px; background: var(--panel) !important; border-top: 3px solid var(--gold) !important; border-radius: 10px 10px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.7); }
     .p-shop.open > h3 { display: flex !important; justify-content: space-between; align-items: center; font-size: 15px; position: sticky; top: -10px; background: var(--panel); padding: 4px 0; z-index: 1; }
     .p-shop h3 .close { display: block; font: inherit; font-size: 13px; background: #2a2238; color: #fff; border: 2px solid var(--line); border-radius: 4px; padding: 4px 10px; }
-    .inv-m { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 8px; } .inv-m img, .inv-m span { width: 100%; height: 36px; }
+    .p-shop .inv-m { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 8px; } .inv-m img, .inv-m span { width: 100%; height: 36px; }
     #shop .slot { width: calc(33.3% - 4px); } #shop .slot.big { width: calc(50% - 3px); }
-    .back { position: static; display: block; text-align: center; margin: 10px 0; }
+    .back { font-size: 11px; }
     .chat { font-size: 11px; }
   }
   @media (max-height: 520px) and (orientation: landscape) {
@@ -135,6 +140,8 @@
     <span class="stat">遗迹 <span class="meter"><i id="anc"></i><span id="anc-t"></span></span></span>
     <span class="stat mmr"><span class="medal"><img id="medal" alt=""><img id="star" alt=""></span>大金神 <b id="mmr">3150</b> MMR · <span id="rank"></span></span>
     <span class="stat"><span class="meter hp"><i id="hp"></i><span id="hp-t"></span></span></span>
+    <span class="sp" id="sp"></span><span class="aegis" id="aegis" hidden>🛡 不朽之守护</span><button class="bb" id="buyback" hidden>买活</button>
+    <a class="back" href="../">← 刀塔法庭</a>
   </div>
   <div class="stage">
     <canvas id="cv"></canvas>
@@ -142,13 +149,14 @@
     <div class="chat"><div class="chat-h"><i></i>大金神直播间 · 守护遗迹 · 👁 <span id="viewers">50.0万</span><span class="rot">📱↻ 横屏更爽</span></div><div class="chat-list" id="chat-list"></div></div>
     <div class="ov" id="intro">
       <h1>守护遗迹 <sup class="beta">BETA</sup></h1>
-      <p><b>大金神</b>（风行者）要守住左边山坡上的<b>天辉遗迹</b>，遗迹前面还有一座<b>防御塔</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵）。<br>钱够了就叫兄弟从天而降：<b>大B神</b>（幻影刺客，闪烁暴击）、<b>Yoki大神</b>（撼地者，砸下来直接回音击）、<b>蜗牛大神</b>（卡尔，落地先放熔炉精灵、超震声波、灵动迅捷，再用飓风、陨石、天火、冰墙轰炸）。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，越打越高，<b>传奇3</b> 解锁大招；阵亡掉 50 分。</p>
+      <p><b>大金神</b>（风行者）要守住左边山坡上的<b>天辉遗迹</b>，遗迹前面还有一座<b>防御塔</b>。夜魇小兵、野怪、远古生物和<b>肉山</b>会从右边一波波杀过来。<br>打怪赚金币：召唤天辉小兵（兵营可升到超级巨型兵）、买刀塔装备（光环能加成小兵）。<br>钱够了就叫兄弟从天而降：<b>大B神</b>（幻影刺客，闪烁暴击）、<b>Yoki大神</b>（撼地者，砸下来直接回音击）、<b>蜗牛大神</b>（卡尔，落地先放熔炉精灵、超震声波、灵动迅捷，再用飓风、陨石、天火、冰墙轰炸）。<br>打怪上分：大金神从 <b>3150 MMR（传奇1）</b> 开始，每升一级得<b>技能点</b>（点技能上的 <b>+</b>），10/15/20/25/30/35 级选<b>天赋</b>，技能满了自动加属性；阵亡掉 50 分。<br>第 5 波以后夜魇<b>英雄</b>也会来：帕吉、斧王、狙击手、莉娜、虚空假面。杀肉山得<b>不朽之守护</b>；钱多了买知识之书、神杖、奶酪、兵营科技，死了还能<b>买活</b>。</p>
       <p id="best"></p>
       <p><b>选择难度</b> · 守住 20 波就算赢</p>
       <div class="pick" id="pick"></div>
-      <p style="font-size:11.5px">电脑：A/D 或 ←/→ 移动 · Q W E R 技能 · 1 近战兵 · 2 远程兵 · 3 大B神 · 4 Yoki大神 · 5 蜗牛大神 · U 升级兵营 · T 升级防御塔<br>手机：屏幕下方按钮移动 · 点技能和按钮</p>
+      <p style="font-size:11.5px">电脑：A/D 或 ←/→ 移动 · Q W E R 技能（Ctrl+QWER 加点）· B 买活 · 1 近战兵 · 2 远程兵 · 3 大B神 · 4 Yoki大神 · 5 蜗牛大神 · U 升级兵营 · T 升级防御塔<br>手机：屏幕下方按钮移动 · 点技能和按钮</p>
     </div>
     <div class="ov" id="win" hidden><img id="win-medal" alt="" style="width:96px;height:96px"><h1 id="win-title"></h1><p id="win-text"></p><div style="display:flex;gap:10px"><button class="btn" id="win-end">结束游戏</button><button class="btn" id="win-go" style="background:#5fd068">继续守（无尽模式）</button></div></div>
+    <div class="ov" id="talent" hidden><h1 id="tal-title"></h1><p>升级了！选一个天赋（像刀塔天赋树一样）</p><div id="tal-opts" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></div></div>
     <div class="ov" id="over" hidden><h1>遗迹被摧毁了</h1><p id="over-text"></p><button class="btn" id="again">再来一局</button></div>
   </div>
   <div class="bar" id="bar">
@@ -157,8 +165,7 @@
     <div class="panel p-units"><h3>兵营 · 召唤</h3><div class="row" id="units"></div></div>
     <div class="panel p-shop" id="shoppanel"><h3>商店 <button class="close" id="shopclose">✕ 关闭</button></h3><div class="inv inv-m"></div><div class="row" id="shop"></div></div>
   </div>
-  <a class="back" href="../">← 回到刀塔法庭（所有内容）</a>
   <script src="art.js?v=4"></script>
-  <script src="game.js?v=22"></script>
+  <script src="game.js?v=28"></script>
 </body>
 </html>

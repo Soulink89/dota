@@ -7,7 +7,7 @@
 (() => {
   const A = window.ART2;
   const W = 480, H = 220, GY = 184; // GY = linea del terreno (piedi)
-  const HILL = { w: 100, h: 44 }, ANC = { x: 46, y: GY - 42, front: 96 };
+  const HILL = { w: 0, h: 0 }, ANC = { x: 46, y: GY + 2, front: 96 };
   const cv = document.getElementById("cv"), g = cv.getContext("2d");
   cv.width = W; cv.height = H; g.imageSmoothingEnabled = false;
   const $ = (id) => document.getElementById(id);
@@ -19,7 +19,7 @@
   // =====================================================================
   // sprite pixel ricavati dai modelli ufficiali di Dota 2 (sprites/*.png); FACE = verso in cui guarda il modello
   const FACE = { hero_windrunner: 1, hero_phantom_assassin: -1, hero_earthshaker: 1, hero_invoker: 1, rmelee: -1, rranged: -1, rmegam: -1, rmegar: -1,
-    dmelee: -1, dranged: -1, siege: 1, kobold: -1, wolf: -1, centaur: -1, ogre: -1, golem: 1, dragon: -1, roshan: -1, tower: 1 };
+    dmelee: -1, dranged: -1, siege: 1, kobold: -1, wolf: -1, centaur: -1, ogre: -1, golem: 1, dragon: -1, roshan: -1, tower: 1, hero_pudge: -1, hero_axe: -1, hero_sniper: -1, hero_lina: 1, hero_faceless_void: 1 };
   const VER = "4"; const SET = {};
   const loadSprite = (k) => new Promise((res) => { const im = new Image(); im.onload = () => {
     const [c, x] = A.mk(im.width, im.height); x.drawImage(im, 0, 0);
@@ -52,6 +52,11 @@
     ogre: { name: "食人魔", hp: 1150, dmg: 55, arm: 3, rate: 0.7, range: 18, spd: 24, gold: 45, minW: 4, cost: 5 },
     golem: { name: "岩石傀儡", hp: 1900, dmg: 85, arm: 6, rate: 0.55, range: 20, spd: 18, gold: 80, minW: 6, cost: 8 },
     dragon: { name: "远古黑龙", hp: 2100, dmg: 75, arm: 4, rate: 0.6, range: 100, spd: 28, gold: 110, proj: "fire", splash: 22, fly: true, minW: 7, cost: 11 },
+    pudge: { name: "帕吉", hero: true, look: "hero_pudge", hp: 1900, dmg: 60, arm: 3, rate: 0.8, range: 20, spd: 26, gold: 160, abCd: 9, line: "新鲜的肉！" },
+    axe: { name: "斧王", hero: true, look: "hero_axe", hp: 2200, dmg: 65, arm: 6, rate: 0.9, range: 20, spd: 28, gold: 170, abCd: 11, line: "来吧，打我！" },
+    sniper: { name: "狙击手", hero: true, look: "hero_sniper", hp: 1100, dmg: 50, arm: 1, rate: 1, range: 190, spd: 22, gold: 150, proj: "bullet", abCd: 14, line: "瞄准中……" },
+    lina: { name: "莉娜", hero: true, look: "hero_lina", hp: 1250, dmg: 48, arm: 1, rate: 1, range: 120, spd: 26, gold: 160, proj: "fire", abCd: 8, line: "烧死你们！" },
+    void: { name: "虚空假面", hero: true, look: "hero_faceless_void", hp: 2000, dmg: 65, arm: 4, rate: 1, range: 20, spd: 32, gold: 180, abCd: 20, line: "时间，由我掌控" },
     roshan: { name: "肉山", hp: 5200, dmg: 130, arm: 8, rate: 0.6, range: 24, spd: 18, gold: 600, boss: true },
   };
   // creep del Radiant evocabili (per livello della caserma)
@@ -102,6 +107,14 @@
     greater_crit: { name: "代达罗斯之殇", parts: ["demon_edge", "blades_of_attack"], rc: 400, desc: "攻击+60，30%几率2.25倍暴击", dmg: 60, crit: 0.3 },
     monkey_king_bar: { name: "金箍棒", parts: ["demon_edge", "javelin"], rc: 300, desc: "攻击+55，35%几率额外70伤害", dmg: 55, mkb: true },
     heart: { name: "恐鳌之心", parts: ["reaver", "vitality_booster"], rc: 400, desc: "生命+700，每秒回复2%", hp: 700, regen: 0.02 },
+    dragon_lance: { name: "魔龙枪", parts: ["ogre_axe", "javelin"], rc: 200, desc: "射程+60、攻击+10、生命+150", range: 60, dmg: 10, hp: 150 },
+    hurricane_pike: { name: "飓风长戟", parts: ["dragon_lance", "vitality_booster"], rc: 800, desc: "射程+100、攻击+20、生命+400", range: 100, dmg: 20, hp: 400 },
+    butterfly: { name: "蝴蝶", parts: ["demon_edge", "hyperstone"], rc: 800, desc: "攻击+40、攻速+50%、闪避35%", dmg: 40, as: 0.5 },
+    skadi: { name: "斯嘉蒂之眼", parts: ["reaver", "ogre_axe"], rc: 1000, desc: "生命+600、攻击+20，攻击让敌人减速", hp: 600, dmg: 20 },
+    abyssal_blade: { name: "深渊之刃", parts: ["mithril_hammer", "reaver"], rc: 1500, desc: "攻击+40、生命+300，25%几率重击眩晕", dmg: 40, hp: 300 },
+    satanic: { name: "撒旦之邪力", parts: ["reaver", "vladmir"], rc: 900, desc: "生命+350、攻击+25、吸血30%，保留祭品光环", hp: 350, dmg: 25, ls: 0.3, aura: { dmgp: 0.2, ls: 0.15, hpr: 3 } },
+    refresher: { name: "刷新球", parts: ["ring_of_regen", "hyperstone"], rc: 1600, desc: "技能冷却-35%、每秒回血8", cdr: 0.35, hpReg: 8 },
+    rapier: { name: "圣剑", parts: ["relic", "demon_edge"], rc: 2500, desc: "攻击力+350！阵亡会掉（像刀塔一样）", dmg: 350, rapier: true },
     radiance: { name: "辉耀", parts: ["relic"], rc: 900, desc: "攻击+60，灼烧周围敌人每秒50", dmg: 60, burn: 50 },
   };
   // prezzo totale (ricorsivo) e quanto manca considerando ciò che hai già
@@ -209,7 +222,7 @@
     normal: { name: "冲击万古", tier: 6, hp: 1, dmg: 1, gold: 1, budget: 1, desc: "正常难度",
       winT: "恭喜大金神达到万古！", winS: ["大金神：万古只是开始，超凡指日可待", "大P神：小金金，这次没送，奖励一锤", "金神大腿：这分有我一半"],
       chat: [[0, "万古！！！"], [0, "恭喜金神上万古"], ["大P神", "万古一日游？"], ["Ping大神", "万古一日游，懂的都懂"], [0, "截图发群里了"], ["蜗牛大神", "可以，有点东西"]] },
-    hard: { name: "冲击超凡", tier: 7, hp: 1.25, dmg: 1.15, gold: 0.9, budget: 1.15, desc: "最难 · 嘴巴超凡的终极考验",
+    hard: { name: "冲击超凡", tier: 7, hp: 1.15, dmg: 1.1, gold: 0.9, budget: 1.15, desc: "最难 · 嘴巴超凡的终极考验",
       winT: "恭喜大金神达到超凡！", winS: ["大金神：我早就说了我是超凡水平", "大P神：小金金……这次真的服了", "蜗牛大神：中路我还是虐过你"],
       chat: [[0, "超凡！！！真的超凡了！"], [0, "嘴巴超凡变成真超凡了"], ["大P神", "小金金……这次真的服了"], [0, "名场面！"], ["Yoki大神", "比我至宝还亮"], [0, "金神yyds"]] },
   };
@@ -220,8 +233,8 @@
       ancient: { hp: 5000, max: 5000, arm: 12, flash: 0 },
       hero: makeUnit("hero", { ...HD, look: HD.look }, 130, 4), units: [], proj: [], parts: [], texts: [], fx: [], items: [], empower: 0,
     };
-    const h = S.hero; h.mmr = 3150; h.lvl = 2; h.xp = 0; h.cds = [0, 0, 0, 0]; h.buffs = {}; h.respawn = 0; h.mx = 0;
-    S.towerLv = 1; S.towerXp = 0; S.mekT = 5; spawnTower();
+    const h = S.hero; h.mmr = 3150; h.lvl = 2; h.xp = 0; h.sk = [1, 1, 1, 0]; h.sp = 0; h.attr = 0; h.tal = {}; h.cds = [0, 0, 0, 0]; h.buffs = {}; h.respawn = 0; h.mx = 0;
+    S.towerLv = 1; S.towerXp = 0; S.mekT = 5; S.talentQ = []; S.moon = false; S.aghs = false; S.shard = false; S.tomes = 0; S.cheese = 0; S.tech = 0; S.aegis = false; S.buybacks = 0; spawnTower();
     viewers = 480000 + Math.floor(Math.random() * 60000); chatT = 1;
     say(h, pick(JIN.start)); renderShop(); hud(true);
   }
@@ -235,11 +248,13 @@
   function stat(u, k) {
     const au = u.team === "enemy" ? {} : auras();
     let v = u.d[k] || 0;
+    if (k === "arm" && u.callT > 0) v += 20;
     if (u.team === "hero") {
       const it = S.items.map((i) => ITEMS[i]), lvl = u.lvl - 1;
-      if (k === "dmg") v = v + lvl * 3 + it.reduce((t, i) => t + (i.dmg || 0), 0);
-      if (k === "arm") v = v + lvl * 0.5 + it.reduce((t, i) => t + (i.arm || 0), 0) + (u.buffs.call > 0 ? 20 : 0);
-      if (k === "rate") v = v * (1 + it.reduce((t, i) => t + (i.as || 0), 0)) * (u.buffs.focus > 0 ? 3 : 1);
+      if (k === "dmg") v = v + lvl * 3 + u.attr * 5 + talSum("dmg") + it.reduce((t, i) => t + (i.dmg || 0), 0);
+      if (k === "arm") v = v + lvl * 0.5 + u.attr + talSum("arm") + it.reduce((t, i) => t + (i.arm || 0), 0) + (u.buffs.call > 0 ? 20 : 0);
+      if (k === "rate") v = v * (1 + it.reduce((t, i) => t + (i.as || 0), 0) + talSum("as")) * (u.buffs.focus > 0 ? 3 : 1) * (S.moon ? 1.4 : 1);
+      if (k === "range") v = v + itemSum("range") + talSum("range");
       if (k === "spd") v = v * (u.buffs.windrun > 0 ? 1.6 : 1) * (1 + itemSum("ms"));
     }
     if (u.team !== "enemy") {
@@ -273,7 +288,7 @@
   // =====================================================================
   function hurt(u, dmg, from, opts = {}) {
     if (!u || u.dead || u.hp <= 0) return 0;
-    if (u.team === "hero" && u.buffs.windrun > 0 && Math.random() < 0.8) { text(u.x, feetY(u) - 40, "闪避", "#9ad8ff"); return 0; }
+    if (u.team === "hero" && u.buffs.windrun > 0 && Math.random() < (talSum("wr") ? 1 : 0.8)) { text(u.x, feetY(u) - 40, "闪避", "#9ad8ff"); return 0; }
     if (u.team === "hero" && has("butterfly") && !opts.pure && Math.random() < 0.35) { text(u.x, feetY(u) - 40, "闪避", "#9ad8ff"); return 0; }
     if (u.drop > 0 || u.tp > 0) return 0;
     const dr = u.team !== "enemy" ? auras().dr || 0 : 0;
@@ -285,12 +300,15 @@
     const ls = from && from.team !== "enemy" && !opts.noLs ? (auras().ls || 0) + (from.team === "hero" ? itemSum("ls") : 0) : 0;
     if (ls && from.hp > 0) from.hp = Math.min(from.max, from.hp + real * ls);
     // spirale di Axe: quando lo colpiscono
+    if (u.type === "axe" && from && from.team !== "enemy" && Math.random() < 0.15 && !u.dead) { for (const a of [S.hero, ...S.units.filter((q) => q.team === "ally" && !q.dead)]) if (Math.abs(a.x - u.x) < 40 && a.hp > 0) hurt(a, 140, u, { pure: true, show: false }); S.fx.push({ k: "spin", x: u.x, y: feetY(u) - 16, life: 0.3 }); }
     if (u.team === "hero" && u.hp < u.max * 0.3 && !u.saidHurt) { u.saidHurt = 1; say(u, pick(JIN.hurt)); }
     if (u.hp <= 0) kill(u, from);
     return real;
   }
   function kill(u, from) {
     if (u.team === "hero") {
+      if (S.aegis) { S.aegis = false; u.hp = u.max; u.stun = 0; banner("不朽之守护！", "大金神原地复活"); burst(u.x, feetY(u) - 30, ["#fde047", "#ffffff"], 30, 70, 0); sfx("rank"); react("aegis"); return; }
+      if (S.items.includes("rapier")) { S.items.splice(S.items.indexOf("rapier"), 1); recalcHp(); banner("圣剑掉了！！", "大P神：小金金，圣剑都能掉？"); react("rapier"); renderShop(); }
       u.respawn = 8; u.hp = 0; u.mmr = Math.max(0, u.mmr - 50); say(u, pick(JIN.die), 3); react("die"); sfx("heroDie"); banner("大金神阵亡 · -50 MMR", "8秒后复活 · " + pick(JIN.die));
       return;
     }
@@ -303,18 +321,44 @@
       S.gold += u.d.gold; S.kills++; sfx("die"); sfx("gold"); if (S.kills % 30 === 0) react("streak", { k: S.kills }); text(u.x, feetY(u) - 30, "+" + u.d.gold + "金", "#fde047");
       burst(u.x, feetY(u) - 10, ["#fde047", "#ffb03a"], 4, 40);
       gainXp(u.d.gold * 2);
-      if (u.d.boss) { react("roshanDie"); banner("击杀肉山！", "+600金 · 大P神：小金金这次没送"); S.ancient.hp = Math.min(S.ancient.max, S.ancient.hp + 1500); }
+      if (u.d.boss) { S.aegis = true; react("roshanDie"); banner("击杀肉山！获得不朽之守护", "死了会原地复活一次 · 大P神：小金金这次没送"); S.ancient.hp = Math.min(S.ancient.max, S.ancient.hp + 1500); }
       if (from && from.team === "hero" && Math.random() < 0.12) say(from, pick(JIN.kill));
     }
   }
   // progressione in MMR (come la classificata di Dota 2): ogni 100 MMR = un "livello" di statistiche
   const RANKS = [["先锋", 0], ["卫士", 770], ["中军", 1540], ["统帅", 2310], ["传奇", 3080], ["万古流芳", 3850], ["超凡入圣", 4620], ["冠绝一世", 5420]];
   function rankOf(m) { let t = 0; RANKS.forEach((r, i) => { if (m >= r[1]) t = i; }); const star = t >= 7 ? 0 : Math.min(5, Math.floor((m - RANKS[t][1]) / 154) + 1); return { tier: t + 1, star, name: RANKS[t][0] + (star ? star : "") }; }
-  const lvlOf = (m) => clamp(1 + Math.floor((m - 3000) / 100), 1, 25); // 3150 = 传奇1 (Lv2), 3500 = 传奇3 (Lv6, ultimate)
+  const lvlOf = (m) => { const d = m - 3000; let n = 0; while (100 * (n + 1) + 3 * (n + 1) ** 2 <= d) n++; return Math.max(1, n + 1); }; // ogni livello costa un po' di più // 3150 = 传奇1 (Lv2), 3500 = 传奇3 (Lv6, ultimate)
+  // talenti come in Dota (livello 10/15/20/25) — si sceglie uno dei due
+  const TALENT = {
+    10: [["攻击力 +30", { dmg: 30 }], ["生命 +300", { hp: 300 }]],
+    15: [["强力击伤害 +300", { ps: 300 }], ["攻击速度 +35%", { as: 0.35 }]],
+    20: [["束缚击眩晕 +1.5秒", { shk: 1.5 }], ["风行 100%闪避", { wr: 1 }]],
+    25: [["集中火力 持续+5秒", { ff: 5 }], ["强力击 不衰减、冷却-4秒", { psx: 1 }]],
+    30: [["攻击力 +80", { dmg: 80 }], ["护甲 +15", { arm: 15 }]],
+    35: [["暴击 25% ×2.5", { crit: 1 }], ["射程 +80", { range: 80 }]],
+  };
+  const talSum = (f) => Object.values(S.hero.tal).reduce((t, o) => t + (o[f] || 0), 0);
+  const SKMAX = [4, 4, 4, 3];
+  const skillMaxed = () => S.hero.sk.every((v, i) => v >= SKMAX[i]);
+  function canLearn(i) { const h = S.hero; if (h.sp <= 0 || h.sk[i] >= SKMAX[i]) return false; if (i === 3) return h.lvl >= 6 + h.sk[3] * 6; return h.lvl >= h.sk[i] * 2 - 1; }
+  function learn(i) { const h = S.hero; if (!canLearn(i)) return; h.sp--; h.sk[i]++; sfx("upgrade"); text(h.x, feetY(h) - 60, `${HD.sk[i][1]} Lv${h.sk[i]}`, "#c4b5fd", true); autoAttr(); hud(true); }
+  // tutte le abilità al massimo → i punti diventano attributi (+5 攻击, +1 护甲, +60 生命)
+  function autoAttr() { const h = S.hero; if (!skillMaxed()) return; while (h.sp > 0) { h.sp--; h.attr++; } recalcHp(); }
+  function showTalent() {
+    const lv = S.talentQ[0]; if (!lv) return; running = false;
+    $("tal-title").textContent = `Lv${lv} 天赋：选一个`;
+    $("tal-opts").innerHTML = TALENT[lv].map((o, i) => `<button class="btn" data-tal="${i}">${o[0]}</button>`).join("");
+    document.querySelectorAll("[data-tal]").forEach((b) => (b.onclick = () => { S.hero.tal[lv] = TALENT[lv][+b.dataset.tal][1]; S.talentQ.shift(); recalcHp(); $("talent").hidden = true; sfx("craft"); text(S.hero.x, feetY(S.hero) - 70, TALENT[lv][+b.dataset.tal][0], "#fde047", true); if (S.talentQ.length) showTalent(); else running = true; }));
+    $("talent").hidden = false; sfx("rank");
+  }
   function gainXp(x) {
     const h = S.hero, before = rankOf(h.mmr).name; h.mmr += Math.max(1, Math.round(x / 5));
     const nl = lvlOf(h.mmr);
-    while (h.lvl < nl) { h.lvl++; const r = h.hp / h.max; h.max = Math.round(HD.hp * (1 + (h.lvl - 1) * 0.08)) + itemSum("hp"); h.hp = h.max * r; burst(h.x, feetY(h) - 20, ["#fde047", "#fff6c8"], 14); if (h.lvl === 6) banner("传奇3！大招解锁", "大金神：超凡指日可待"); }
+    while (h.lvl < nl) { h.lvl++; h.sp++; recalcHp(); burst(h.x, feetY(h) - 20, ["#fde047", "#fff6c8"], 14); text(h.x, feetY(h) - 70, `Lv${h.lvl} · 技能点+1`, "#c4b5fd", true);
+      if (h.lvl === 6) banner("传奇3！可以学大招了", "点技能上的 + 学习集中火力");
+      if (TALENT[h.lvl] && !h.tal[h.lvl]) S.talentQ.push(h.lvl); }
+    autoAttr(); if (S.talentQ.length && running) showTalent();
     const after = rankOf(h.mmr).name; if (after !== before) { react("rank", { r: after }); sfx("rank"); text(h.x, feetY(h) - 58, "上分！" + after, "#fde047", true); if (Math.random() < 0.6) say(h, pick(JIN.lvl)); }
   }
 
@@ -327,6 +371,7 @@
     const pool = Object.entries(EN).filter(([, e]) => !e.boss && e.minW <= w);
     while (budget > 0) { const [k, e] = pool[Math.floor(Math.random() * pool.length)]; if (e.cost > budget + 1) { budget -= 0.5; continue; } list.push(k); budget -= e.cost; }
     if (w % 5 === 0) list.push("roshan");
+    if (w > 5) { const HK = ["pudge", "axe", "sniper", "lina", "void"], n = w >= 17 ? 3 : w >= 12 ? 2 : 1; for (let i = 0; i < n; i++) list.splice(Math.floor(list.length * (0.4 + i * 0.2)), 0, pick(HK)); }
     S.queue = list.map((k, i) => ({ k, at: S.t + i * 0.9 + rnd(0, 0.3) }));
     S.nextWave = 34;
     react(w % 5 === 0 ? "roshan" : "wave", { w }); sfx("wave");
@@ -337,13 +382,14 @@
     const u = makeUnit("enemy", d, W + 30 + rnd(0, 10), e.fly ? 2 : Math.floor(rnd(0, 10)), { type: k });
     S.units.push(u);
     if (e.boss) { say(u, "吼——！！", 3); S.shake = 4; sfx("roshan"); }
+    if (e.hero) { u.d.set = SET[e.look]; u.abT = e.abCd * 0.6; say(u, e.line, 2.6); react("enemyHero", { n: e.name }); sfx("wave"); }
   }
   function summon(kind) {
     const a = ALLY[kind], lv = LV[S.barracks];
     if (S.gold < a.cost) return flash("金币不够");
     if (S.units.filter((u) => u.kind).length >= 12) return flash("最多12个兵");
     S.gold -= a.cost;
-    const d = { ...a, hp: Math.round(a.hp * lv.hp), dmg: Math.round(a.dmg * lv.dmg), arm: a.arm + lv.arm, set: allySet(kind) };
+    const tm = 1.15 ** S.tech, d = { ...a, hp: Math.round(a.hp * lv.hp * tm), dmg: Math.round(a.dmg * lv.dmg * tm), arm: a.arm + lv.arm, set: allySet(kind) };
     const guard = kind === "melee" ? rnd(122, 150) : rnd(100, 116);
     const u = makeUnit("ally", d, ANC.front - 6, Math.floor(rnd(0, 10)), { kind, guard });
     S.units.push(u); burst(u.x, feetY(u) - 20, ["#fff6c8", "#7ae0a0"], 10, 30, 0); hud(true); sfx("summon");
@@ -402,10 +448,10 @@
     if (S.barracks >= 2) return flash("已经是超级巨型兵了");
     const c = BARRACKS_COST[S.barracks + 1]; if (S.gold < c) return flash("金币不够");
     S.gold -= c; S.barracks++;
-    for (const u of S.units) if (u.kind) { const a = ALLY[u.kind], lv = LV[S.barracks]; u.d = { ...a, hp: Math.round(a.hp * lv.hp), dmg: Math.round(a.dmg * lv.dmg), arm: a.arm + lv.arm, set: allySet(u.kind) }; u.max = u.d.hp; u.hp = u.max; }
+    for (const u of S.units) if (u.kind) { const a = ALLY[u.kind], lv = LV[S.barracks]; u.d = { ...a, hp: Math.round(a.hp * lv.hp * 1.15 ** S.tech), dmg: Math.round(a.dmg * lv.dmg * 1.15 ** S.tech), arm: a.arm + lv.arm, set: allySet(u.kind) }; u.max = u.d.hp; u.hp = u.max; }
     banner(`兵营升级：${LV[S.barracks].name}兵`, S.barracks === 2 ? "超级巨型兵出场！" : "超级兵出场！"); renderShop();
   }
-  function recalcHp() { const h = S.hero, r = h.hp / h.max; h.max = Math.round(HD.hp * (1 + (h.lvl - 1) * 0.08)) + itemSum("hp"); h.hp = Math.max(1, h.max * r); }
+  function recalcHp() { const h = S.hero, r = h.max ? h.hp / h.max : 1; h.max = Math.round(HD.hp * (1 + (h.lvl - 1) * 0.08)) + itemSum("hp") + h.attr * 60 + talSum("hp"); h.hp = Math.max(1, h.max * r); }
   function buy(k) {
     const it = ITEMS[k], plan = planBuy(k, S.items);
     if (it.parts && S.items.includes(k)) return flash("已经有了");
@@ -417,6 +463,18 @@
     renderShop(); if (it.parts || Math.random() < 0.3) react("buy", { i: it.name });
   }
   function sell(i) { const k = S.items[i]; if (!k) return; const v = Math.floor(ITEMS[k].cost / 2); S.items.splice(i, 1); S.gold += v; recalcHp(); text(S.hero.x, feetY(S.hero) - 52, `卖出 ${ITEMS[k].name} +${v}`, "#fde047"); renderShop(); }
+  // consumabili e potenziamenti senza slot (per spendere l'oro accumulato)
+  const CONS = {
+    tome_of_knowledge: { name: "知识之书", desc: "+150 MMR（直接升级）", cost: () => 400 + S.tomes * 150, ok: () => true, use: () => { S.tomes++; gainXp(750); } },
+    moon_shard: { name: "银月之晶", desc: "永久攻速+40%", cost: () => 3000, ok: () => !S.moon, use: () => { S.moon = true; } },
+    aghanims_shard: { name: "阿哈利姆魔晶", desc: "束缚击多连一个敌人、眩晕+1秒", cost: () => 1500, ok: () => !S.shard, use: () => { S.shard = true; } },
+    ultimate_scepter: { name: "阿哈利姆神杖", desc: "集中火力时每次多射一支箭", cost: () => 4000, ok: () => !S.aghs, use: () => { S.aghs = true; } },
+    cheese: { name: "奶酪", desc: "遗迹、防御塔、大金神回满血", cost: () => 800 + S.cheese * 400, ok: () => true, use: () => { S.cheese++; S.ancient.hp = S.ancient.max; const t = towerUnit(); if (t) t.hp = t.max; if (S.hero.respawn <= 0) S.hero.hp = S.hero.max; } },
+    tech: { name: "兵营科技", icon: "quelling_blade", desc: "所有召唤小兵攻击、生命+15%（可叠加）", cost: () => 500 + S.tech * 300, ok: () => true, use: () => { S.tech++; for (const u of S.units) if (u.kind) { u.d = { ...u.d, dmg: Math.round(u.d.dmg * 1.15), hp: Math.round(u.d.hp * 1.15) }; u.max = u.d.hp; u.hp = Math.min(u.max, u.hp * 1.15); } } },
+  };
+  function buyCons(k) { const c = CONS[k]; if (!c.ok()) return flash("已经有了"); const cost = c.cost(); if (S.gold < cost) return flash(`金币不够（还差${cost - S.gold}）`); S.gold -= cost; c.use(); sfx("craft"); banner(c.name, c.desc); react("buy", { i: c.name }); renderShop(); }
+  const buybackCost = () => 150 + S.wave * 40 + S.buybacks * 100;
+  function buyback() { const h = S.hero; if (h.respawn <= 0) return; const c = buybackCost(); if (S.gold < c) return flash("金币不够买活"); S.gold -= c; S.buybacks++; h.respawn = 0; h.hp = h.max; h.x = ANC.front + 20; h.saidHurt = 0; say(h, "买活！这把我来carry"); banner("大金神买活！", `-${c}金`); chatSay("大P神", "小金金买活了，这次别再送"); sfx("tpEnd"); hud(true); }
   // torre: 3 livelli
   const TOWER_LV = [null, { hp: 3000, dmg: 110, arm: 14, multi: 1, splash: 0 }, { hp: 4500, dmg: 160, arm: 18, multi: 2, splash: 0, cost: 500, xp: 300 }, { hp: 6500, dmg: 220, arm: 22, multi: 3, splash: 24, cost: 1200, xp: 1500 }];
   const REBUILD = 600;
@@ -441,19 +499,28 @@
   function cast(i) {
     const h = S.hero; if (h.respawn > 0 || h.stun > 0) return;
     const sk = HD.sk[i]; if (!sk[2]) return flash("被动技能");
-    if (i === 3 && h.lvl < 6) return flash("MMR 3500（传奇3）解锁大招");
+    if (!h.sk[i]) return flash(i === 3 ? (h.lvl < 6 ? "传奇3（Lv6）才能学大招" : "点技能上的 + 学习大招") : "还没学这个技能");
     if (h.cds[i] > 0) return;
     const ok = doSkill(i); if (ok !== false) sfx(["shackle", "powershot", "windrun", "focus"][i]);
     if (ok === false) return flash("附近没有目标");
-    h.cds[i] = sk[2]; h.anim = "cast"; h.at = 0.35;
+    h.cds[i] = sk[2] * (1 - itemSum("cdr")) - (i === 1 && talSum("psx") ? 4 : 0); h.anim = "cast"; h.at = 0.35;
   }
   function doSkill(i) {
     const h = S.hero, x = h.x, y = feetY(h) - 18, lvl = h.lvl;
     if (HD === HEROES.windranger) {
-      if (i === 0) { const t = nearestEnemy(x, 170, true); if (!t) return false; const t2 = enemies().filter((e) => e !== t && e.x > t.x && e.x - t.x < 60)[0]; for (const e of [t, t2]) if (e) { e.stun = 2.5; hurt(e, 80 + lvl * 8, h); S.fx.push({ k: "chain", x1: t.x, x2: e.x, y: feetY(e) - 20, life: 2.5 }); } S.fx.push({ k: "beam", x1: x, x2: t.x, y, col: "#d8c8a0", life: 0.15 }); }
-      if (i === 1) { let dmg = 220 + lvl * 18; for (const e of enemies().filter((e) => e.x > x && e.x < x + 260).sort((a, b) => a.x - b.x)) { hurt(e, dmg, h); dmg *= 0.88; } S.fx.push({ k: "beam", x1: x, x2: x + 260, y, col: "#e8fbff", life: 0.35, w: 3 }); }
-      if (i === 2) { h.buffs.windrun = 4; burst(x, y, ["#e8fbff", "#9ad8ff"], 12, 40, 0); }
-      if (i === 3) { react("ult"); h.buffs.focus = 8; text(x, y - 30, "集中火力!", "#9ae0a0", true); }
+      const L = h.sk[i];
+      if (i === 0) { // 束缚击: freccia che vola, poi corda tra due nemici
+        const t = nearestEnemy(x, 190 + itemSum("range"), true); if (!t) return false;
+        const others = enemies().filter((e) => e !== t && e.x > t.x && e.x - t.x < 70).sort((a, b) => a.x - b.x).slice(0, S.shard ? 2 : 1);
+        S.fx.push({ k: "sarrow", x1: x, x2: t.x, y, ty: feetY(t) - 20, life: 0.2, max: 0.2 });
+        later(0.2, () => { const st = 1.4 + L * 0.4 + talSum("shk") + (S.shard ? 1 : 0); [t, ...others].forEach((e, n) => { if (e.dead) return; e.stun = Math.max(e.stun, st); hurt(e, 60 + L * 60 + lvl * 4, h); if (n) S.fx.push({ k: "rope", a: [t, e][0], b: e, life: st }); }); if (!others.length) S.fx.push({ k: "rope", a: t, b: null, life: st }); burst(t.x, feetY(t) - 20, ["#c9a060", "#fff6c8"], 10, 40, 0); });
+      }
+      if (i === 1) { // 强力击: carica, poi grande freccia di vento che attraversa i nemici
+        h.buffs.charge = 0.45; S.fx.push({ k: "charge", life: 0.45, max: 0.45 });
+        later(0.45, () => { if (h.respawn > 0) return; S.fx.push({ k: "pshot", x: h.x + 8, y: feetY(h) - 26, v: 520, life: 0.7, hit: [], dmg: 150 + L * 120 + lvl * 6 + talSum("ps"), fall: talSum("psx") ? 1 : 0.88, from: h }); S.shake = Math.max(S.shake || 0, 2); });
+      }
+      if (i === 2) { h.buffs.windrun = 2 + L * 1; burst(x, y, ["#e8fbff", "#9ad8ff"], 16, 50, 0); }
+      if (i === 3) { react("ult"); h.buffs.focus = 4 + L * 2 + talSum("ff"); text(x, y - 30, "集中火力!", "#9ae0a0", true); S.fx.push({ k: "zap", x, y: feetY(h) - 2, life: 0.5, r: 40, col: "#7aff9a" }); }
     }
   }
 
@@ -504,6 +571,9 @@
     streak: [[0, "主播杀疯了"], [0, "{k}杀了"], [0, "这才像超凡"], [0, "金神今天开挂了？"], ["大P神", "{k}杀？小金金今天吃药了"]],
     ult: [[0, "风行大招！"], [0, "集中火力！！"], [0, "射爆！"], [0, "这攻速谁顶得住"]],
     over: [[0, "GG"], [0, "系统局！"], [0, "主播又要说：这把不算"], [0, "下播吧"], ["大P神", "锤！🔨"], [0, "第{w}波，还行吧"], ["蜗牛大神", "叫我我就守住了"]],
+    enemyHero: [[0, "对面来{n}了！"], [0, "{n}来了，小心"], ["大P神", "小金金，{n}专门来抓你"], ["Ping大神", "理论上{n}打不过风行"], [0, "英雄局开始了"]],
+    aegis: [[0, "盾！原地复活！"], [0, "不朽之守护救了主播"], ["大P神", "没盾你早没了"]],
+    rapier: [[0, "圣剑掉了哈哈哈哈"], [0, "名场面！圣剑掉了"], ["大P神", "小金金，圣剑都能掉？"], ["蜗牛大神", "这圣剑归我了"]],
     tp: [[0, "TP来了！"], [0, "大B神TP支援！"], ["大B神", "TP到了，奶瓶先放下"], [0, "这TP速度比喂奶还快"], ["Ping大神", "理论上应该早点TP"]],
     totem: [[0, "图腾一锤！"], [0, "Yoki这锤子比大P神的还狠"], ["大P神", "这锤子我认可"]],
     mek: [[0, "梅肯奶了一口"], ["辅助大神", "梅肯！这才是辅助装"], [0, "主播终于会出辅助装了"]],
@@ -559,6 +629,8 @@
     if (S.later.length) { const due = S.later.filter((l) => l.at <= S.t); S.later = S.later.filter((l) => l.at > S.t); due.forEach((l) => l.fn()); }
     for (const f of S.fx) if (f.k === "meteor") { const age = f.max - f.life; if (age < f.fall) continue; const px = f.x0 + ((age - f.fall) / (f.max - f.fall)) * (f.x1 - f.x0); if (!f.landed) { f.landed = 1; S.shake = 6; sfx("meteor"); burst(f.x0, GY - 4, ["#ff8a2a", "#fff0a0", "#3a1a0a"], 24, 90, 120); for (const e of enemies()) if (Math.abs(e.x - f.x0) < 45) hurt(e, 200, f.from, { pure: true }); } f.tick = (f.tick || 0) - dt; if (f.tick <= 0) { f.tick = 0.2; for (const e of enemies()) if (Math.abs(e.x - px) < 40) { hurt(e, 110, f.from, { show: false, pure: true }); e.dot = Math.max(e.dot, 2.5); } } }
     // ciclone e onda sonora: proiettili che avanzano e colpiscono chi attraversano
+    for (const f of S.fx) if (f.k === "pshot") { f.x += f.v * dt; for (const e of enemies()) if (!f.hit.includes(e) && Math.abs(e.x - f.x) < 14) { f.hit.push(e); hurt(e, f.dmg, f.from, { crit: true }); f.dmg *= f.fall; burst(e.x, feetY(e) - 24, ["#e8fbff", "#9ad8ff", "#ffffff"], 10, 70, 0); } }
+    for (const f of S.fx) if (f.k === "slave") { f.x += f.v * dt; for (const a of [S.hero, ...S.units.filter((q) => q.team === "ally" && !q.dead)]) if (!f.hit.includes(a) && Math.abs(a.x - f.x) < 16 && !(a.respawn > 0)) { f.hit.push(a); hurt(a, 160 * (1 + S.wave * 0.03), f.from); } }
     for (const f of S.fx) if (f.k === "cyclone" || f.k === "blast") { f.x += f.v * dt; for (const e of enemies()) if (!f.hit.includes(e) && Math.abs(e.x - f.x) < (f.k === "blast" ? 18 : 16)) { f.hit.push(e); if (f.k === "cyclone") { hurt(e, 180, f.from); if (!e.d.boss) { e.stun = Math.max(e.stun, 2.4); e.lift = 2.4; } else e.stun = Math.max(e.stun, 0.8); } else { hurt(e, 220, f.from); e.stun = Math.max(e.stun, 0.6); if (!e.d.boss) e.x = Math.min(W + 20, e.x + 45); burst(e.x, feetY(e) - 20, ["#ff6ad5", "#7ad0ff", "#fde047", "#7aff9a"], 8, 50, 0); } } }
     S.empower = Math.max(0, S.empower - dt); S.shake = Math.max(0, (S.shake || 0) - dt * 10);
     S.ancient.flash = Math.max(0, S.ancient.flash - dt);
@@ -583,7 +655,7 @@
     const h = S.hero;
     for (const b in h.buffs) h.buffs[b] -= dt;
     h.cds = h.cds.map((c) => Math.max(0, c - dt)); h.flash = Math.max(0, h.flash - dt);
-    if (h.respawn > 0) { h.respawn -= dt; if (h.respawn <= 0) { h.hp = h.max; h.x = ANC.front + 20; h.saidHurt = 0; say(h, "我回来了，这次认真打"); } return; }
+    if (h.respawn > 0) { const bb = $("buyback"); if (bb && bb.hidden) { bb.hidden = false; } h.respawn -= dt; if (h.respawn <= 0) { h.hp = h.max; h.x = ANC.front + 20; h.saidHurt = 0; say(h, "我回来了，这次认真打"); } return; }
     if (has("heart")) h.hp = Math.min(h.max, h.hp + h.max * 0.02 * dt);
     if (itemSum("hpReg")) h.hp = Math.min(h.max, h.hp + itemSum("hpReg") * dt);
     if (auras().hpr) h.hp = Math.min(h.max, h.hp + auras().hpr * dt);
@@ -606,7 +678,11 @@
       if (has("javelin") && Math.random() < 0.2) dmg += 40;
       if (has("desolator")) t.armDown = 5;
       if (has("maelstrom") && Math.random() < 0.25) { let prev = t; const hit = [t]; for (let k = 0; k < 3; k++) { const nx = enemies().filter((e) => !hit.includes(e) && Math.abs(e.x - prev.x) < 70)[0]; if (!nx) break; hit.push(nx); prev = nx; } hit.forEach((e, k) => { hurt(e, 120, h, { show: false }); if (k) S.fx.push({ k: "beam", x1: hit[k - 1].x, x2: e.x, y: feetY(e) - 22, col: "#bfe8ff", life: 0.15, w: 1 }); }); }
-      if (HD.ranged) shoot(h, t, dmg, HD.proj, { crit });
+      if (has("abyssal_blade") && Math.random() < 0.25) t.stun = Math.max(t.stun, 1);
+      if (has("skadi")) t.slow = Math.max(t.slow, 2);
+      if (talSum("crit") && Math.random() < 0.25) { dmg *= 2.5; crit = true; }
+      const pk = h.buffs.focus > 0 ? "farrow" : HD.proj;
+      if (HD.ranged) { shoot(h, t, dmg, pk, { crit }); if (S.aghs && h.buffs.focus > 0) { const t2 = enemies().filter((e) => e !== t && Math.abs(e.x - h.x) <= stat(h, "range"))[0]; if (t2) shoot(h, t2, dmg, pk, {}); } }
       else { hurt(t, dmg, h, { crit }); if (S.empower > 0) for (const e of enemies()) if (e !== t && Math.abs(e.x - t.x) < 26) hurt(e, dmg * 0.5, h, { show: false }); S.fx.push({ k: "slash", x: t.x, y: feetY(t) - 20, life: 0.18 }); }
       }
   }
@@ -615,7 +691,7 @@
     if (u.dead) return;
     u.flash = Math.max(0, u.flash - dt); u.slow = Math.max(0, u.slow - dt); u.taunt = Math.max(0, u.taunt - dt); u.at = Math.max(0, u.at - dt);
     if (u.dot > 0) { u.dot -= dt; hurt(u, 30 * dt * (1 + S.hero.lvl * 0.05), S.hero, { pure: true, show: false }); if (u.hp <= 0) return; }
-    u.armDown = Math.max(0, (u.armDown || 0) - dt); u.lift = Math.max(0, (u.lift || 0) - dt); u.ghost = Math.max(0, (u.ghost || 0) - dt);
+    u.armDown = Math.max(0, (u.armDown || 0) - dt); u.callT = Math.max(0, (u.callT || 0) - dt); u.lift = Math.max(0, (u.lift || 0) - dt); u.ghost = Math.max(0, (u.ghost || 0) - dt);
     if (u.team === "ally" && auras().hpr) u.hp = Math.min(u.max, u.hp + auras().hpr * dt);
     if (u.helper) {
       if (u.drop > 0) { u.drop -= dt; if (u.drop <= 0) { u.drop = 0; land(u); } return; }
@@ -630,6 +706,7 @@
     u.cd -= dt;
     const range = u.d.range, h = S.hero;
     let target = null;
+    if (u.team === "enemy" && u.d.hero) { u.abT -= dt; if (u.abT <= 0 && enemyAbility(u)) u.abT = u.d.abCd; else if (u.abT <= 0) u.abT = 1; }
     if (u.team === "enemy") {
       // il nemico cerca: eroe (se provocato), unità alleate davanti, poi l'Antico
       const foes = [h.respawn > 0 ? null : h, ...S.units.filter((a) => a.team === "ally" && !a.dead)].filter(Boolean);
@@ -647,8 +724,9 @@
       }
     } else {
       // alleati: difendono la loro posizione davanti all'Antico
-      const aggro = u.d.aggro || (range > 30 ? range : 70);
-      target = enemies().filter((e) => (u.helper || e.x >= u.x - 20) && Math.abs(e.x - u.x) <= aggro).sort((a, b) => Math.abs(a.x - u.x) - Math.abs(b.x - u.x))[0];
+      const aggro = u.d.aggro || (u.kind ? W : range > 30 ? range : 70); // i creep evocati avanzano come in corsia
+      if (u.forceTime > 0) { u.forceTime -= dt; if (u.forceT && !u.forceT.dead) { target = u.forceT; } }
+      if (!target) target = enemies().filter((e) => (u.helper || e.x >= u.x - 20) && Math.abs(e.x - u.x) <= aggro && (!u.kind || e.x < 330)).sort((a, b) => Math.abs(a.x - u.x) - Math.abs(b.x - u.x))[0];
       if (target && Math.abs(target.x - u.x) > range + 2 && u.d.blink && u.blinkCd <= 0) { // 幻影突袭:闪到敌人身边
         const fx0 = u.x; u.x = target.x + (target.x > u.x ? -14 : 14); u.face = target.x >= u.x ? 1 : -1; u.blinkCd = 1.2; u.cd = 0;
         S.fx.push({ k: "beam", x1: fx0, x2: u.x, y: feetY(u) - 24, col: "rgba(192,132,252,.7)", life: 0.18, w: 3 }); burst(fx0, feetY(u) - 24, ["#c084fc", "#1e1b4b"], 10, 40, 0);
@@ -667,6 +745,19 @@
       else { hurt(target, dmg, u); if (u.team !== "enemy" && S.empower > 0) for (const e of enemies()) if (e !== target && Math.abs(e.x - target.x) < 24) hurt(e, dmg * 0.4, u, { show: false }); }
     } else if (target && u.at <= 0) u.anim = "idle";
   }
+  // abilità degli eroi del Dire
+  function enemyAbility(u) {
+    const h = S.hero, allies = [h.respawn > 0 ? null : h, ...S.units.filter((a) => a.team === "ally" && !a.dead && !a.towerU && !(a.drop > 0) && !(a.tp > 0))].filter(Boolean);
+    const near = (r) => allies.filter((a) => Math.abs(a.x - u.x) <= r).sort((a, b) => Math.abs(a.x - u.x) - Math.abs(b.x - u.x));
+    const k = u.type;
+    if (k === "pudge") { const t = near(230).find((a) => a.x < u.x); if (!t) return false; S.fx.push({ k: "hook", x1: u.x, x2: t.x, y: feetY(t) - 22, life: 0.45 }); later(0.25, () => { if (t.dead || t.hp <= 0) return; t.x = Math.min(u.x - 16, W); hurt(t, 150 * (1 + S.wave * 0.03), u); t.stun = Math.max(t.stun || 0, 0.6); text(u.x, feetY(u) - 80, "肉钩！", "#ff5a5a", true); if (t === h) chatSay("疯子大神", "这钩子，屠夫叼霸天"); }); sfx("shackle"); return true; }
+    if (k === "axe") { if (!near(90).length) return false; u.callT = 3; text(u.x, feetY(u) - 80, "狂战士之吼！", "#ff5a3a", true); S.fx.push({ k: "zap", x: u.x, y: feetY(u) - 20, life: 0.4, r: 90, col: "#ff5a3a" }); for (const a of near(90)) a.forceT = u, a.forceTime = 3; sfx("roshan"); return true; }
+    if (k === "sniper") { if (h.respawn > 0 || Math.abs(h.x - u.x) > 420) return false; S.fx.push({ k: "aim", from: u, to: h, life: 1.5 }); text(u.x, feetY(u) - 80, "暗杀……", "#ff5a5a", true); later(1.5, () => { if (u.dead || h.respawn > 0) return; hurt(h, 300 * (1 + S.wave * 0.03), u, { pure: true }); S.fx.push({ k: "beam", x1: u.x, x2: h.x, y: feetY(h) - 24, col: "#ffd06a", life: 0.2, w: 2 }); sfx("crit"); chatSay(null, "狙击手打中主播了哈哈"); }); return true; }
+    if (k === "lina") { const ts = near(220).filter((a) => a.x < u.x); if (!ts.length) return false; if (!u.lagT || S.t - u.lagT > 18) { u.lagT = S.t; const t = ts.sort((a, b) => b.hp - a.hp)[0]; S.fx.push({ k: "laguna", x1: u.x, x2: t.x, y: feetY(t) - 24, life: 0.5 }); hurt(t, 400 * (1 + S.wave * 0.03), u, { pure: true }); text(u.x, feetY(u) - 80, "神灭斩！", "#ff3a2a", true); sfx("blast"); }
+      else { S.fx.push({ k: "slave", x: u.x, v: -240, y: feetY(u) - 16, life: 0.9, hit: [], from: u }); text(u.x, feetY(u) - 80, "龙破斩", "#ffb03a", true); sfx("meteorFall"); } return true; }
+    if (k === "void") { const ts = near(150); if (!ts.length) return false; const cx = ts[0].x; S.fx.push({ k: "chrono", x: cx, life: 3 }); for (const a of allies) if (Math.abs(a.x - cx) < 70) a.stun = Math.max(a.stun || 0, 2.2); text(cx, GY - 90, "时间结界！", "#c084fc", true); sfx("tp"); chatSay("Ping大神", "理论上结界里是可以买活的"); return true; }
+    return false;
+  }
   function hurtAncient(dmg) {
     const a = S.ancient, real = Math.max(1, Math.round(dmg * armorMul(a.arm)));
     const was = a.hp / a.max; a.hp -= real; a.flash = 0.1; sfx("ancient"); if ((was > 0.5 && a.hp / a.max <= 0.5) || (was > 0.2 && a.hp / a.max <= 0.2)) react("low"); burst(ANC.x + 10, ANC.y - 40, ["#e6fff0", "#7ae0a0"], 3, 50);
@@ -674,7 +765,7 @@
   }
 
   // ---------- proiettili ----------
-  const PROJ = { arrow: { col: "#e8e0c8", spd: 300, kind: "arrow" }, spark: { col: "#9ad8ff", core: "#ffffff", spd: 260 }, magic: { col: "#7ad0ff", core: "#e6fbff", spd: 220 }, tower: { col: "#9ae8ff", core: "#ffffff", spd: 280 },
+  const PROJ = { arrow: { col: "#e8e0c8", spd: 320, kind: "arrow" }, farrow: { col: "#7aff9a", spd: 380, kind: "arrow" }, bullet: { col: "#ffd06a", core: "#ffffff", spd: 420 }, spark: { col: "#9ad8ff", core: "#ffffff", spd: 260 }, magic: { col: "#7ad0ff", core: "#e6fbff", spd: 220 }, tower: { col: "#9ae8ff", core: "#ffffff", spd: 280 },
     green: { col: "#8aff5a", core: "#e8ffd0", spd: 200 }, rock: { col: "#8a8f99", spd: 160, arc: 40 }, fire: { col: "#ff8a2a", core: "#fff0a0", spd: 200 } };
   function shoot(u, target, dmg, kind, extra = {}) {
     if (u.team === "hero") sfx("arrow"); else if (u.towerU) sfx("tower");
@@ -695,6 +786,7 @@
     S.proj = S.proj.filter((p) => !p.done);
   }
   function impact(p, x, y) {
+    S.fx.push({ k: "spark", x, y, life: 0.15, col: PROJ[p.kind].core || PROJ[p.kind].col });
     if (p.target === "ancient") hurtAncient(p.dmg); else hurt(p.target, p.dmg, p.from, { crit: p.crit });
     if (p.crit) text(x, y - 18, "暴击!", "#ff5a3a", true);
     if (p.splash) { const foes = p.from.team === "enemy" ? [S.hero, ...S.units.filter((u) => u.team === "ally")] : enemies(); for (const f of foes) if (f !== p.target && !f.dead && f.hp > 0 && Math.abs(f.x - x) < p.splash) hurt(f, p.dmg * 0.6, p.from, { show: false }); burst(x, y, p.kind === "rock" ? ["#8a8f99", "#5a5e68"] : ["#fff0a0", "#ff8a2a", "#d8402a"], 14, 70); S.shake = Math.max(S.shake || 0, 1.5); }
@@ -766,7 +858,7 @@
     // proiettili
     for (const p of S.proj) {
       const P = PROJ[p.kind], x = Math.round(p.x), y = Math.round(p.y);
-      if (P.kind === "arrow") { g.fillStyle = P.col; for (let k = 0; k < 7; k++) g.fillRect(Math.round(x - Math.cos(p.ang) * k), Math.round(y - Math.sin(p.ang) * k), 1, 1); g.fillStyle = "#fff"; g.fillRect(x, y, 1, 1); }
+      if (P.kind === "arrow") { for (let k = 0; k < 14; k++) { g.globalAlpha = 0.5 * (1 - k / 14); g.fillStyle = k < 3 ? "#ffffff" : P.col; g.fillRect(Math.round(x - Math.cos(p.ang) * (k + 6)), Math.round(y - Math.sin(p.ang) * (k + 6)), 1, 1); } g.globalAlpha = 1; g.fillStyle = P.col; for (let k = 0; k < 7; k++) g.fillRect(Math.round(x - Math.cos(p.ang) * k), Math.round(y - Math.sin(p.ang) * k), 1, 1); g.fillStyle = "#fff"; g.fillRect(x, y, 1, 1); }
       else { g.fillStyle = P.col; g.fillRect(x - 2, y - 2, 4, 4); g.fillStyle = P.core || P.col; g.fillRect(x - 1, y - 1, 2, 2); }
     }
     // effetti
@@ -787,6 +879,16 @@
       if (f.k === "sun") { const a = Math.min(1, f.life * 3); g.globalAlpha = a * 0.5; g.fillStyle = "#ffd76a"; g.fillRect(f.x - 16, 0, 32, GY); g.globalAlpha = a; g.fillStyle = "#fff6b0"; g.fillRect(f.x - 9, 0, 18, GY); g.fillStyle = "#ffffff"; g.fillRect(f.x - 3, 0, 6, GY); g.fillStyle = "#ffb703"; g.beginPath(); g.ellipse(f.x, GY - 2, 26, 6, 0, 0, 7); g.fill(); g.globalAlpha = 1; }
       if (f.k === "emp") { g.strokeStyle = "rgba(192,132,252,.9)"; g.beginPath(); g.arc(f.x, f.y, 6 + (1 - f.life) * 50, 0, 7); g.stroke(); }
       if (f.k === "ice") { g.globalAlpha = Math.min(1, f.life); for (let x = f.x1; x < f.x2; x += 8) { g.fillStyle = "#bfe8ff"; g.fillRect(x, GY - 14, 6, 14); g.fillStyle = "#e8fbff"; g.fillRect(x + 1, GY - 13, 2, 10); } g.globalAlpha = 1; }
+      if (f.k === "sarrow") { const k = 1 - f.life / f.max, ax = f.x1 + (f.x2 - f.x1) * k, ay = f.y + (f.ty - f.y) * k; g.strokeStyle = "#c9a060"; g.beginPath(); g.moveTo(f.x1, f.y); g.lineTo(ax, ay); g.stroke(); g.fillStyle = "#fff6c8"; g.fillRect(ax - 2, ay - 1, 5, 3); }
+      if (f.k === "rope") { const a = f.a, b = f.b; if (a && !a.dead) { const ax = a.x, ay = feetY(a) - 20, bx = b && !b.dead ? b.x : a.x + 26, by = b && !b.dead ? feetY(b) - 20 : feetY(a) - 30; g.strokeStyle = "#b8935a"; g.lineWidth = 2; g.beginPath(); for (let t = 0; t <= 12; t++) { const px = ax + (bx - ax) * (t / 12), py = ay + (by - ay) * (t / 12) + Math.sin(t * 1.2 + S.t * 8) * 2; t ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); g.lineWidth = 1; if (!b) { g.fillStyle = "#3a6a2a"; g.fillRect(bx - 4, by - 14, 8, 20); g.fillStyle = "#2f6a3a"; g.beginPath(); g.arc(bx, by - 16, 9, 0, 7); g.fill(); } } }
+      if (f.k === "charge") { const h = S.hero, k = 1 - f.life / f.max; g.strokeStyle = `rgba(200,240,255,${0.4 + k * 0.6})`; g.lineWidth = 2; g.beginPath(); g.arc(h.x + h.face * 10, feetY(h) - 26, 14 * (1 - k) + 3, 0, 7); g.stroke(); g.lineWidth = 1; for (let n = 0; n < 4; n++) { const an = S.t * 10 + n * 1.6; g.fillStyle = "#e8fbff"; g.fillRect(Math.round(h.x + h.face * 10 + Math.cos(an) * 14 * (1 - k)), Math.round(feetY(h) - 26 + Math.sin(an) * 14 * (1 - k)), 2, 2); } }
+      if (f.k === "pshot") { for (let t = 0; t < 30; t++) { g.globalAlpha = 0.6 * (1 - t / 30); g.fillStyle = t < 6 ? "#ffffff" : "#9ad8ff"; g.fillRect(Math.round(f.x - t * 3), Math.round(f.y + Math.sin(t * 0.6 + S.t * 20) * (t / 10)), 3, 3); } g.globalAlpha = 1; g.fillStyle = "#ffffff"; g.beginPath(); g.moveTo(f.x + 8, f.y + 1); g.lineTo(f.x - 4, f.y - 4); g.lineTo(f.x - 4, f.y + 6); g.fill(); for (let n = 0; n < 3; n++) { g.strokeStyle = "rgba(220,245,255,.6)"; g.beginPath(); g.arc(f.x - 10 - n * 10, f.y + 1, 6 + n * 2, -1, 1); g.stroke(); } }
+      if (f.k === "spark") { g.fillStyle = f.col; const r = 2 + (0.15 - f.life) * 30; g.fillRect(Math.round(f.x - r), Math.round(f.y), Math.round(r * 2), 1); g.fillRect(Math.round(f.x), Math.round(f.y - r), 1, Math.round(r * 2)); }
+      if (f.k === "hook") { const k = Math.min(1, (0.45 - f.life) / 0.25), hx = f.x1 + (f.x2 - f.x1) * k; g.strokeStyle = "#8a8f99"; g.lineWidth = 2; g.beginPath(); g.moveTo(f.x1, f.y); g.lineTo(hx, f.y); g.stroke(); g.lineWidth = 1; g.strokeStyle = "#c9cdd6"; g.beginPath(); g.arc(hx, f.y + 3, 4, Math.PI, Math.PI * 2.2); g.stroke(); }
+      if (f.k === "aim") { const a = f.from, b = f.to; if (!a.dead) { g.strokeStyle = `rgba(255,40,40,${0.3 + 0.5 * Math.abs(Math.sin(S.t * 12))})`; g.beginPath(); g.moveTo(a.x, feetY(a) - 26); g.lineTo(b.x, feetY(b) - 24); g.stroke(); g.strokeStyle = "#ff3a3a"; g.beginPath(); g.arc(b.x, feetY(b) - 24, 6 + f.life * 4, 0, 7); g.moveTo(b.x - 10, feetY(b) - 24); g.lineTo(b.x + 10, feetY(b) - 24); g.moveTo(b.x, feetY(b) - 34); g.lineTo(b.x, feetY(b) - 14); g.stroke(); } }
+      if (f.k === "laguna") { g.globalAlpha = Math.min(1, f.life * 3); for (let n = 0; n < 3; n++) { g.strokeStyle = ["#ff3a2a", "#ffd06a", "#ffffff"][n]; g.lineWidth = 4 - n; g.beginPath(); g.moveTo(f.x1, f.y - 10); for (let t = 1; t <= 10; t++) g.lineTo(f.x1 + (f.x2 - f.x1) * t / 10, f.y - 10 + 10 * t / 10 + (t < 10 ? rnd(-4, 4) : 0)); g.stroke(); } g.lineWidth = 1; g.globalAlpha = 1; }
+      if (f.k === "slave") { for (let t = 0; t < 10; t++) { g.fillStyle = t % 2 ? "rgba(255,138,42,.6)" : "rgba(255,220,120,.5)"; g.beginPath(); g.arc(f.x + t * 5, f.y - Math.sin(t + S.t * 15) * 3, 9 - t * 0.6, 0, 7); g.fill(); } }
+      if (f.k === "chrono") { const a = Math.min(1, f.life * 2); g.fillStyle = `rgba(120,60,200,${0.25 * a})`; g.strokeStyle = `rgba(192,132,252,${0.9 * a})`; g.lineWidth = 2; g.beginPath(); g.ellipse(f.x, GY, 70, 70, 0, Math.PI, Math.PI * 2); g.fill(); g.stroke(); g.lineWidth = 1; }
       if (f.k === "chain") { g.fillStyle = "#c9a060"; g.fillRect(Math.min(f.x1, f.x2), f.y, Math.abs(f.x2 - f.x1) || 1, 1); }
     }
     for (const p of S.parts) { g.fillStyle = p.col; g.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); }
@@ -802,6 +904,7 @@
         g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(t1, bx + ms + 5, by + 10); g.fillStyle = "#ffd76a"; g.fillText(t1, bx + ms + 4, by + 9);
         g.font = "bold 7px sans-serif"; g.fillStyle = "#000"; g.fillText(t2, bx + ms + 5, by + 19); g.fillStyle = "#cfe8ff"; g.fillText(t2, bx + ms + 4, by + 18); g.textAlign = "center";
       }
+      if (u.d.hero && !u.dead) { g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(u.d.name, u.x + 1, top - 7); g.fillStyle = "#ff6a6a"; g.fillText(u.d.name, u.x, top - 8); }
       if (u.towerU && !u.dead) { g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(`一塔 Lv${S.towerLv}`, u.x + 1, top - 7); g.fillStyle = "#9ae8ff"; g.fillText(`一塔 Lv${S.towerLv}`, u.x, top - 8); if (S.towerLv < 3) { const p = Math.min(1, S.towerXp / TOWER_LV[S.towerLv + 1].xp); g.fillStyle = "#111"; g.fillRect(Math.round(u.x - 11), Math.round(top + 1), 22, 3); g.fillStyle = p >= 1 ? "#fde047" : "#8a6aff"; g.fillRect(Math.round(u.x - 10), Math.round(top + 2), Math.round(20 * p), 1); } }
       const Hp = HELP[u.helper], dropY = u.drop > 0 ? (u.drop / 0.7) ** 2 * 170 : 0;
       if (Hp && !u.dead) { const t = `${Hp.name} ${Math.ceil(u.life)}s`; g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(t, u.x + 1, top - 7 - dropY); g.fillStyle = Hp.col; g.fillText(t, u.x, top - 8 - dropY); }
@@ -836,7 +939,8 @@
     if (u.drop > 0) { g.fillStyle = `rgba(255,255,220,${0.25 + (1 - u.drop / 0.7) * 0.3})`; g.fillRect(cx - 10, 0, 20, fy); }
     g.save(); if (u.ghost > 0) g.globalAlpha = 0.4; g.translate(cx + o.dx, fy + 2 - fly + o.dy); g.rotate(u.lift > 0 ? 0 : o.rot); g.scale(o.sx, o.sy);
     const ox = -(im.width >> 1), oy = -im.height;
-    if (u.team === "hero" && u.buffs.windrun > 0) { g.globalAlpha = 0.35; g.drawImage(im, ox - u.face * 6, oy); g.drawImage(im, ox - u.face * 12, oy); g.globalAlpha = 1; }
+    if (u.team === "hero" && u.buffs.focus > 0) { g.strokeStyle = `rgba(122,255,154,${0.5 + Math.sin(S.t * 12) * 0.2})`; g.beginPath(); g.ellipse(0, -2, im.width * 0.5, 4, 0, 0, 7); g.stroke(); }
+    if (u.team === "hero" && u.buffs.windrun > 0) { g.strokeStyle = "rgba(220,245,255,.75)"; for (let n = 0; n < 4; n++) { const yy = oy + 10 + n * 12, ph = (S.t * 6 + n) % 1; g.beginPath(); g.arc(-u.face * (10 + ph * 16), yy, 8, -0.8, 0.8); g.stroke(); } g.globalAlpha = 0.35; g.drawImage(im, ox - u.face * 6, oy); g.drawImage(im, ox - u.face * 12, oy); g.globalAlpha = 1; }
     if (u.team === "hero") { // contorno chiaro per staccarlo dallo sfondo
       g.globalAlpha = 0.9; const wh = R ? set.white : set.whiteL; for (const [ddx, ddy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) g.drawImage(wh, ox + ddx, oy + ddy); g.globalAlpha = 1;
     }
@@ -877,14 +981,18 @@
   let lastKey = "";
   function hud(force) {
     const h = S.hero;
-    const key = [S.gold, Math.ceil(S.ancient.hp), S.towerLv, Math.floor(S.towerXp), Math.ceil(h.hp), h.max, h.mmr, S.wave, Math.ceil(S.nextWave), h.cds.map(Math.ceil).join(","), Object.values(S.helpCd).map(Math.ceil).join(","), S.barracks, h.respawn > 0 ? Math.ceil(h.respawn) : 0].join("|");
+    const key = [S.gold, Math.ceil(S.ancient.hp), S.towerLv, Math.floor(S.towerXp), Math.ceil(h.hp), h.max, h.mmr, S.wave, Math.ceil(S.nextWave), h.cds.map(Math.ceil).join(","), h.sk.join(""), h.sp, h.attr, S.aegis, Object.values(S.helpCd).map(Math.ceil).join(","), S.barracks, h.respawn > 0 ? Math.ceil(h.respawn) : 0].join("|");
     if (key === lastKey && !force) return; lastKey = key;
     $("gold").textContent = S.gold; $("wave").textContent = S.wave; $("next").textContent = Math.ceil(S.nextWave);
     $("anc").style.width = (S.ancient.hp / S.ancient.max) * 100 + "%"; $("anc-t").textContent = `${Math.max(0, Math.ceil(S.ancient.hp))}/${S.ancient.max}`;
     $("hp").style.width = Math.max(0, h.hp / h.max) * 100 + "%"; $("hp-t").textContent = h.respawn > 0 ? `复活 ${Math.ceil(h.respawn)}` : `${Math.ceil(h.hp)}/${h.max}`;
     const rk = rankOf(h.mmr); $("mmr").textContent = h.mmr; $("rank").textContent = rk.name;
     $("medal").src = `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${rk.tier}.png`; $("star").src = rk.star ? `https://www.opendota.com/assets/images/dota2/rank_icons/rank_star_${rk.star}.png` : ""; $("star").hidden = !rk.star;
-    document.querySelectorAll(".skill").forEach((b, i) => { const cd = h.cds[i], locked = i === 3 && h.lvl < 6; b.classList.toggle("cd", cd > 0 || locked); b.querySelector(".cdn").textContent = locked ? "传奇3" : cd > 0 ? Math.ceil(cd) : ""; });
+    document.querySelectorAll(".skill").forEach((b, i) => { const cd = h.cds[i], locked = !h.sk[i]; b.classList.toggle("cd", cd > 0 || locked); b.querySelector(".cdn").textContent = locked ? (i === 3 && h.lvl < 6 ? "Lv6" : "") : cd > 0 ? Math.ceil(cd) : "";
+      b.querySelector(".pips").innerHTML = Array.from({ length: SKMAX[i] }, (_, n) => `<b class="${n < h.sk[i] ? "on" : ""}"></b>`).join(""); b.parentNode.querySelector(".plus").hidden = !canLearn(i); });
+    $("sp").textContent = h.sp > 0 ? `技能点 ${h.sp}` : h.attr ? `属性 +${h.attr}` : ""; $("aegis").hidden = !S.aegis;
+    const bb = $("buyback"); bb.hidden = !(h.respawn > 0); if (h.respawn > 0) { bb.textContent = `买活 ${buybackCost()}`; bb.classList.toggle("poor", S.gold < buybackCost()); }
+    document.querySelectorAll("[data-cons]").forEach((b) => { const c = CONS[b.dataset.cons]; b.classList.toggle("poor", !c.ok() || S.gold < c.cost()); b.classList.toggle("own", !c.ok()); });
     document.querySelectorAll("[data-buy]").forEach((b) => { const k = b.dataset.buy, own = ITEMS[k].parts && S.items.includes(k); b.classList.toggle("poor", !own && S.gold < +b.dataset.price); b.classList.toggle("own", !!own); });
     const tw = towerUnit(); $("twr").classList.toggle("poor", tw ? S.towerLv >= 3 || S.gold < TOWER_LV[S.towerLv + 1].cost || S.towerXp < TOWER_LV[S.towerLv + 1].xp : S.gold < REBUILD);
     if (tw && S.towerLv < 3) { const need = TOWER_LV[S.towerLv + 1].xp; $("twr-xp").style.width = Math.min(100, (S.towerXp / need) * 100) + "%"; $("twr-xpt").textContent = `经验 ${Math.min(need, Math.floor(S.towerXp))}/${need}`; } else if ($("twr-xpt")) $("twr-xpt").textContent = tw ? "满级" : "";
@@ -905,17 +1013,20 @@
     const IMG = (k) => `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${k}.png`;
     const card = ([k, it]) => { const pl = planBuy(k, S.items); return `<button class="slot item${it.parts ? " big" : ""}" data-buy="${k}" data-price="${pl.cost}" title="${it.desc}"><img src="${IMG(k)}" alt=""><b>${it.name}</b><em>${pl.cost}${pl.cost < it.cost ? `<s>${it.cost}</s>` : ""}</em>${it.parts ? `<span class="parts">${it.parts.map((p) => `<img src="${IMG(p)}" title="${ITEMS[p].name}" class="${S.items.includes(p) ? "have" : ""}">`).join("+")}+<img src="${IMG("recipe")}" title="卷轴 ${it.rc}"></span>` : ""}<small>${it.desc}</small></button>`; };
     const all = Object.entries(ITEMS).sort((a, b) => a[1].cost - b[1].cost);
-    $("shop").innerHTML = `<div class="shop-h">基础物品</div>${all.filter(([, it]) => !it.parts).map(card).join("")}<div class="shop-h">合成物品 · 已有的零件会自动合成，只付差价</div>${all.filter(([, it]) => it.parts).map(card).join("")}`;
+    const consHtml = Object.entries(CONS).map(([k, c]) => `<button class="slot item" data-cons="${k}" title="${c.desc}"><img src="${IMG(c.icon || k)}" alt=""><b>${c.name}</b><em>${c.ok() ? c.cost() : "已有"}</em><small>${c.desc}</small></button>`).join("");
+    $("shop").innerHTML = `<div class="shop-h">消耗品 · 永久强化（不占格子）</div>${consHtml}<div class="shop-h">基础物品</div>${all.filter(([, it]) => !it.parts).map(card).join("")}<div class="shop-h">合成物品 · 已有的零件会自动合成，只付差价</div>${all.filter(([, it]) => it.parts).map(card).join("")}`;
     const invHtml = Array.from({ length: 6 }, (_, i) => S.items[i] ? `<img src="${IMG(S.items[i])}" data-sell="${i}" title="${ITEMS[S.items[i]].name} · 点击卖出 +${Math.floor(ITEMS[S.items[i]].cost / 2)}">` : `<span></span>`).join(""); document.querySelectorAll(".inv").forEach((el) => (el.innerHTML = invHtml));
     document.querySelectorAll("[data-sell]").forEach((b) => (b.onclick = () => { if (confirm(`卖出 ${ITEMS[S.items[+b.dataset.sell]].name}？`)) sell(+b.dataset.sell); }));
     document.querySelectorAll("[data-pic]").forEach((s) => { s.appendChild(iconCanvas(SET[s.dataset.pic])); });
     $("sum-melee").onclick = () => summon("melee"); $("sum-ranged").onclick = () => summon("ranged"); for (const k in HELP) $("help-" + k).onclick = () => summonHelp(k); $("twr").onclick = upgradeTower; $("upg").onclick = upgradeBarracks;
     document.querySelectorAll("[data-buy]").forEach((b) => (b.onclick = () => buy(b.dataset.buy)));
+    document.querySelectorAll("[data-cons]").forEach((b) => (b.onclick = () => buyCons(b.dataset.cons)));
     hud(true); requestAnimationFrame(fit);
   }
   function renderSkills() {
-    $("skills").innerHTML = HD.sk.map((s, i) => `<button class="skill" title="${s[1]}：${s[3]}"><img src="${ICON(s[0])}" alt=""><i>${"QWER"[i]}</i><span class="cdn"></span><small>${s[1]}</small></button>`).join("");
+    $("skills").innerHTML = HD.sk.map((s, i) => `<div class="skw"><button class="skill" title="${s[1]}：${s[3]}"><img src="${ICON(s[0])}" alt=""><i>${"QWER"[i]}</i><span class="cdn"></span><span class="pips"></span><small>${s[1]}</small></button><button class="plus" data-learn="${i}" hidden>+</button></div>`).join("");
     document.querySelectorAll(".skill").forEach((b, i) => (b.onclick = () => cast(i)));
+    document.querySelectorAll("[data-learn]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); learn(+b.dataset.learn); }));
   }
 
   // =====================================================================
@@ -923,7 +1034,8 @@
   // =====================================================================
   addEventListener("keydown", (e) => {
     if (!S || !running) return; const k = e.key.toLowerCase(); keys[k] = true;
-    const qi = "qwer".indexOf(k); if (qi >= 0) cast(qi);
+    const qi = "qwer".indexOf(k); if (qi >= 0) { if (e.ctrlKey || e.altKey) { learn(qi); e.preventDefault(); } else cast(qi); }
+    if (k === "b") buyback();
     if (k === "1") summon("melee"); if (k === "2") summon("ranged"); for (const [hk, Hp] of Object.entries(HELP)) if (k === Hp.key) summonHelp(hk); if (k === "u") upgradeBarracks(); if (k === "t") upgradeTower();
     if (k.startsWith("arrow")) e.preventDefault();
   });
@@ -941,6 +1053,7 @@
     // in verticale la chat riempie lo spazio libero tra il campo e la barra comandi
     if (mob && getComputedStyle(chat).position === "static") { const free = innerHeight - hudH - H * sc - bar.offsetHeight - 40; chat.style.height = Math.max(84, Math.min(320, free)) + "px"; } else chat.style.height = "";
   }
+  $("buyback").onclick = () => buyback();
   $("shopbtn").onclick = () => { $("shoppanel").classList.add("open"); }; $("shopclose").onclick = () => $("shoppanel").classList.remove("open");
   addEventListener("orientationchange", () => setTimeout(fit, 300));
   addEventListener("resize", fit); fit();
@@ -960,5 +1073,5 @@
   function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (running && !document.hidden) { update(dt); draw(); } requestAnimationFrame(loop); }
   reset("windranger", "normal"); renderSkills(); draw(); requestAnimationFrame(loop);
   });
-  if (location.search.includes("debug")) window.__g2 = { get S() { return S; }, update, draw, startWave, summon, summonHelp, upgradeBarracks, upgradeTower, sell, buy, cast, spawnEnemy, reset, win };
+  if (location.search.includes("debug")) window.__g2 = { get S() { return S; }, update, draw, startWave, summon, summonHelp, upgradeBarracks, upgradeTower, sell, buy, buyCons, buyback, learn, cast, spawnEnemy, reset, win };
 })();
